@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
-import { toast } from "sonner";
 import { backdropImage, imageUrl, landscapeImage, posterImage } from "@/api/images";
 import { Button } from "@/components/Button";
 import { Spinner } from "@/components/Spinner";
@@ -325,11 +324,24 @@ function Player({ item }: { item: BaseItemDto }) {
     return () => video.removeEventListener("load", applyCueAdjustments, true);
   }, [applyCueAdjustments, subtitleIndex]);
 
-  const changeSubtitleOffset = useCallback((value: number) => {
-    const rounded = Math.round(value * 100) / 100;
-    setSubtitleOffset(rounded);
-    toast(`Subtitle timing: ${offsetLabel(rounded)}`, { id: "subtitle-offset", duration: 1500 });
+  // On-screen messages; toasts would be hidden in fullscreen.
+  const [osd, setOsd] = useState<string | null>(null);
+  const osdTimer = useRef<number | undefined>(undefined);
+  const showOsd = useCallback((message: string) => {
+    setOsd(message);
+    window.clearTimeout(osdTimer.current);
+    osdTimer.current = window.setTimeout(() => setOsd(null), 1800);
   }, []);
+  useEffect(() => () => window.clearTimeout(osdTimer.current), []);
+
+  const changeSubtitleOffset = useCallback(
+    (value: number) => {
+      const rounded = Math.round(value * 100) / 100;
+      setSubtitleOffset(rounded);
+      showOsd(`Subtitle timing: ${offsetLabel(rounded)}`);
+    },
+    [showOsd],
+  );
 
   useEffect(() => {
     const video = videoRef.current;
@@ -550,6 +562,14 @@ function Player({ item }: { item: BaseItemDto }) {
       ? undefined
       : segments.find((segment) => current >= segment.start && current < segment.end - 1);
   const autoSkip = finoraPrefs.skipSegments === "auto";
+  // Skip each segment once; seeking back into it afterwards plays it.
+  const skippedSegments = useRef(new Set<number>());
+  useEffect(() => {
+    if (!autoSkip || !activeSegment || skippedSegments.current.has(activeSegment.start)) return;
+    skippedSegments.current.add(activeSegment.start);
+    seekTo(activeSegment.end);
+    showOsd(SEGMENT_DONE[activeSegment.type]);
+  });
   const remaining = duration - current;
   const showUpNext =
     Boolean(nextEpisode) &&
@@ -798,8 +818,13 @@ function Player({ item }: { item: BaseItemDto }) {
         </div>
       </div>
 
-      {activeSegment && !showUpNext && autoSkip && (
-        <AutoSkip segment={activeSegment} onSkip={() => seekTo(activeSegment.end)} />
+      {osd && (
+        <p
+          role="status"
+          className="pointer-events-none absolute top-6 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-4 py-2 text-label-md text-white"
+        >
+          {osd}
+        </p>
       )}
 
       {activeSegment && !showUpNext && !autoSkip && (
@@ -833,18 +858,6 @@ const SEGMENT_LABEL: Record<SkippableSegment["type"], string> = {
   Preview: "Skip preview",
   Commercial: "Skip ad",
 };
-
-/** Skips each segment once on entry; seeking back into it afterwards plays it. */
-function AutoSkip({ segment, onSkip }: { segment: SkippableSegment; onSkip: () => void }) {
-  const skipped = useRef(new Set<number>());
-  useEffect(() => {
-    if (skipped.current.has(segment.start)) return;
-    skipped.current.add(segment.start);
-    onSkip();
-    toast(SEGMENT_DONE[segment.type], { id: "segment-skip", duration: 2500 });
-  }, [segment, onSkip]);
-  return null;
-}
 
 const SEGMENT_DONE: Record<SkippableSegment["type"], string> = {
   Intro: "Skipped intro",
