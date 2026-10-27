@@ -1,0 +1,25 @@
+# systemd unit for the Finora API binary (for example in an LXC container).
+# Install: copy the binary to /usr/local/bin/finora-api and this file to
+# /etc/systemd/system/, put settings in /etc/finora/api.env, then run
+# `systemctl enable --now finora-api`.
+[Unit]
+Description=Finora API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+StateDirectory=finora
+Environment=FINORA_DATA_DIR=/var/lib/finora
+Environment=FINORA_LISTEN=:8080
+EnvironmentFile=-/etc/finora/api.env
+ExecStart=/usr/local/bin/finora-api
+Restart=on-failure
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

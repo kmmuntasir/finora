@@ -1,10 +1,12 @@
 import { createBrowserRouter, Navigate } from "react-router";
 import { AdminLayout } from "@/features/admin/AdminLayout";
+import { FinoraAdminPage } from "@/features/admin/FinoraAdminPage";
 import { LibrariesAdminPage } from "@/features/admin/LibrariesAdminPage";
 import { SessionsPage } from "@/features/admin/SessionsPage";
 import { UserEditPage } from "@/features/admin/UserEditPage";
 import { UsersPage } from "@/features/admin/UsersPage";
 import { RedirectIfSignedIn, RequireAuth } from "@/features/auth/guards";
+import { GoogleCallbackPage } from "@/features/auth/GoogleCallbackPage";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { AppShell } from "./AppShell";
 import { HomePage } from "@/features/home/HomePage";
@@ -21,6 +23,7 @@ import { SignedInLayout } from "./SignedInLayout";
 import { NotFoundPage } from "./NotFoundPage";
 
 export const router = createBrowserRouter([
+  { path: "/auth/google", element: <GoogleCallbackPage /> },
   {
     element: <RedirectIfSignedIn />,
     children: [{ path: "/login", element: <LoginPage /> }],
@@ -53,6 +56,7 @@ export const router = createBrowserRouter([
                   { path: "users/:userId", element: <UserEditPage /> },
                   { path: "sessions", element: <SessionsPage /> },
                   { path: "libraries", element: <LibrariesAdminPage /> },
+                  { path: "finora", element: <FinoraAdminPage /> },
                 ],
               },
             ],

@@ -9,6 +9,8 @@ export interface StoredSession {
   userId: string;
   userName: string;
   accessToken: string;
+  /** Set for sessions created through Google admin sign-in (separate device). */
+  deviceId?: string;
 }
 
 const SESSION_KEY = "finora.session";

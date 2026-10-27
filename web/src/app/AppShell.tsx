@@ -2,6 +2,7 @@ import { House, LayoutGrid, Search, Server, Settings, ShieldCheck, UserRound } f
 import { useEffect, type ComponentType, type SVGProps } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router";
 import { Logo } from "@/components/Logo";
+import { AnnouncementBanner } from "@/features/announcements/AnnouncementBanner";
 import { useSession } from "@/features/auth/context";
 import { UserMenu } from "@/features/auth/UserMenu";
 import { useUserViews } from "@/features/home/queries";
@@ -135,6 +136,7 @@ export function AppShell() {
             "pb-[calc(4rem+var(--spacing-player-bar)+env(safe-area-inset-bottom))] md:pb-[var(--spacing-player-bar)]",
         )}
       >
+        <AnnouncementBanner />
         <Outlet />
       </main>
 

@@ -10,8 +10,13 @@ import { isUnauthorized } from "./errors";
 import { clearSession, readSession, writeSession } from "./session-storage";
 
 /** Creates an authenticated client that signs the user out when the token stops working. */
-function createSessionApi(baseUrl: string, token: string, onExpired: () => void): Api {
-  const api = createJellyfinApi(baseUrl, token);
+function createSessionApi(
+  baseUrl: string,
+  token: string,
+  onExpired: () => void,
+  deviceId?: string,
+): Api {
+  const api = createJellyfinApi(baseUrl, token, deviceId);
   api.axiosInstance.interceptors.response.use(undefined, (error: unknown) => {
     if (isUnauthorized(error)) onExpired();
     return Promise.reject(error);
@@ -39,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!stored) return;
 
     let cancelled = false;
-    const api = createSessionApi(config.jellyfinUrl, stored.accessToken, expire);
+    const api = createSessionApi(config.jellyfinUrl, stored.accessToken, expire, stored.deviceId);
     getUserApi(api)
       .getCurrentUser()
       .then(({ data: user }) => {
@@ -56,11 +61,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [config.jellyfinUrl, expire, restoreAttempt]);
 
   const completeSignIn = useCallback(
-    (result: AuthenticationResult, remember: boolean) => {
+    (result: AuthenticationResult, remember: boolean, deviceId?: string) => {
       const { AccessToken: token, User: user } = result;
       if (!token || !user?.Id || !user.Name) throw new Error("Incomplete authentication result");
       writeSession(
-        { serverUrl: config.jellyfinUrl, userId: user.Id, userName: user.Name, accessToken: token },
+        {
+          serverUrl: config.jellyfinUrl,
+          userId: user.Id,
+          userName: user.Name,
+          accessToken: token,
+          deviceId,
+        },
         remember,
       );
       setState({

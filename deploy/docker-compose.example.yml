@@ -1,0 +1,36 @@
+# Example: Finora Web and the optional Finora API on one host.
+# From the repository root:
+#   cp deploy/docker-compose.example.yml docker-compose.yml
+#   cp web/public/config.example.json config.json   # then edit both
+#   docker compose up -d --build
+services:
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    ports:
+      - "<web-port>:80"
+    volumes:
+      # { "jellyfinUrl": "http://<public-ip>:<port>", "apiUrl": "https://finora-api.example.com" }
+      - ./config.json:/usr/share/nginx/html/config.json:ro
+    restart: unless-stopped
+
+  api:
+    build:
+      context: api
+    ports:
+      - "<api-port>:8080"
+    environment:
+      FINORA_JELLYFIN_URL: "http://<public-ip>:<port>"
+      FINORA_JELLYFIN_API_KEY: "<jellyfin-api-key>"
+      FINORA_ALLOWED_ORIGINS: "http://<public-ip>:<web-port>"
+      # Needed only for Google sign-in (the public URL must be HTTPS):
+      # FINORA_PUBLIC_URL: "https://finora-api.example.com"
+      # FINORA_GOOGLE_CLIENT_ID: "<client-id>"
+      # FINORA_GOOGLE_CLIENT_SECRET: "<client-secret>"
+    volumes:
+      - finora-data:/data
+    restart: unless-stopped
+
+volumes:
+  finora-data:

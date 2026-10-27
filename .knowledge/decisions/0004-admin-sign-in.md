@@ -27,6 +27,22 @@ Google flow, with no password involved:
 6. The API revokes the device with `DELETE /Devices?id=…` when the session
    lifetime (default 12 h) ends.
 
+## Implementation notes (2026-10-28)
+
+- "Over HTTP" means a non-secure browser context: Finora Web checks
+  `window.isSecureContext`, the API checks the request `Origin` (HTTPS or
+  loopback counts as secure), so `localhost` development works with
+  password sessions.
+- The Google callback approves the Quick Connect code and stores a
+  single-use **grant** (code + Jellyfin user, 5 minutes). The browser
+  completes Quick Connect, then calls `POST /api/v1/auth/google/confirm`
+  with its new token, the code and its device ID. The API redeems the grant
+  only for the same user and checks the device belongs to that user via
+  `GET /Devices?userId=…` before recording the Google session.
+- Google sign-in uses PKCE and a single-use OAuth state (10 minutes).
+- A janitor revokes expired Google sessions every minute with
+  `DELETE /Devices?id=…`.
+
 ## Why it works
 
 Verified in Jellyfin 10.11.11 source; see

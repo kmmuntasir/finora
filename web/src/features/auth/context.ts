@@ -13,7 +13,7 @@ export type AuthState =
 export interface AuthContextValue {
   state: AuthState;
   /** Stores a successful authentication and switches to the signed-in state. */
-  completeSignIn: (result: AuthenticationResult, remember: boolean) => void;
+  completeSignIn: (result: AuthenticationResult, remember: boolean, deviceId?: string) => void;
   signOut: () => Promise<void>;
   /** Retries restoring a stored session after the server was unreachable. */
   retryRestore: () => void;

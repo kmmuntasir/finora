@@ -1,0 +1,8 @@
+**/node_modules
+web/dist
+web/public/config.json
+api/data
+.env
+.secrets.md
+.playwright-mcp
+.git

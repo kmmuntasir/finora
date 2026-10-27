@@ -2,17 +2,29 @@ import { ExternalLink } from "lucide-react";
 import { NavLink, Outlet } from "react-router";
 import { useRuntimeConfig } from "@/config/context";
 import { cn } from "@/lib/cn";
+import { Spinner } from "@/components/Spinner";
 import { useAdminAccess } from "./access";
+import { useGoogleSession } from "./useGoogleSession";
 
 const TABS = [
   { to: "/admin/users", label: "Users" },
   { to: "/admin/sessions", label: "Active sessions" },
   { to: "/admin/libraries", label: "Libraries" },
+  { to: "/admin/finora", label: "Finora", needsApi: true },
 ];
 
 export function AdminLayout() {
-  const access = useAdminAccess();
+  const googleSession = useGoogleSession();
+  const access = useAdminAccess(googleSession.data?.google === true);
   const { config } = useRuntimeConfig();
+
+  if (!access.allowed && googleSession.isFetching) {
+    return (
+      <div className="grid min-h-[50vh] place-items-center">
+        <Spinner />
+      </div>
+    );
+  }
 
   if (!access.allowed) {
     return (
@@ -42,7 +54,7 @@ export function AdminLayout() {
         </a>
       </div>
       <nav aria-label="Admin" className="mt-5 flex gap-1 border-b border-border">
-        {TABS.map((tab) => (
+        {TABS.filter((tab) => !tab.needsApi || config.apiUrl).map((tab) => (
           <NavLink
             key={tab.to}
             to={tab.to}

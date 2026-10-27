@@ -27,6 +27,7 @@ their reasons, research, and a running log.
 
 - [docs/concept.md](../docs/concept.md) — product concept, feature tiers (Tier 1 = Must), delivery phases
 - [docs/ui-plan.md](../docs/ui-plan.md) — UI approach, visual direction, quality gates
+- [api/README.md](../api/README.md) — Finora API configuration and environment variables
 - [log.md](log.md) — chronological project log
 
 ### Decisions

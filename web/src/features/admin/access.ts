@@ -17,10 +17,11 @@ export function markGoogleAdminSession(active: boolean): void {
  * Secure contexts (HTTPS, and localhost during development) allow password
  * sessions. This is a Finora guard rail, not a security boundary.
  */
-export function useAdminAccess(): AdminAccess {
+export function useAdminAccess(googleSessionConfirmed = false): AdminAccess {
   const { user } = useSession();
   if (!user.Policy?.IsAdministrator) return { allowed: false, reason: "not-admin" };
   if (window.isSecureContext) return { allowed: true };
-  if (window.sessionStorage.getItem(GOOGLE_SESSION_KEY) === "1") return { allowed: true };
+  if (googleSessionConfirmed || window.sessionStorage.getItem(GOOGLE_SESSION_KEY) === "1")
+    return { allowed: true };
   return { allowed: false, reason: "insecure-connection" };
 }

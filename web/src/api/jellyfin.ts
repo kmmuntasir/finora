@@ -1,4 +1,4 @@
-import { Jellyfin, type Api } from "@jellyfin/sdk";
+import { Api, Jellyfin } from "@jellyfin/sdk";
 import axios from "axios";
 import { describeDevice, getDeviceId } from "./device";
 
@@ -18,6 +18,15 @@ export function getJellyfin(): Jellyfin {
  * Each client gets its own Axios instance so interceptors (such as the
  * session-expiry handler) never leak between clients.
  */
-export function createJellyfinApi(baseUrl: string, accessToken?: string): Api {
-  return getJellyfin().createApi(baseUrl, accessToken, axios.create());
+export function createJellyfinApi(baseUrl: string, accessToken?: string, deviceId?: string): Api {
+  const jellyfin = getJellyfin();
+  if (!deviceId) return jellyfin.createApi(baseUrl, accessToken, axios.create());
+  // A separate device identity (Google admin sessions) so it can be revoked on its own.
+  return new Api(
+    baseUrl,
+    jellyfin.clientInfo,
+    { ...jellyfin.deviceInfo, id: deviceId },
+    accessToken,
+    axios.create(),
+  );
 }

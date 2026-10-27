@@ -9,11 +9,15 @@ import { usePublicServerInfo } from "@/features/server/useServerInfo";
 import { useAuth } from "./context";
 import { describeSignInError } from "./errors";
 import { QuickConnectPanel } from "./QuickConnectPanel";
+import { startGoogleSignIn } from "./google-signin";
 import { useLoginInfo } from "./useLoginInfo";
+import { useFinoraConfig } from "@/api/finora";
 import { useQuickConnect } from "./useQuickConnect";
 
 export function LoginPage() {
-  const { publicApi } = useRuntimeConfig();
+  const { publicApi, config } = useRuntimeConfig();
+  const finora = useFinoraConfig();
+  const [googleError, setGoogleError] = useState<string | null>(null);
   const { state, completeSignIn } = useAuth();
   const serverInfo = usePublicServerInfo();
   const { quickConnectEnabled, disclaimer } = useLoginInfo();
@@ -123,6 +127,27 @@ export function LoginPage() {
                 </Button>
               </form>
 
+              {finora.data?.googleSignIn && (
+                <>
+                  <Button
+                    variant="secondary"
+                    className="mt-3 w-full"
+                    onClick={() => {
+                      setGoogleError(null);
+                      startGoogleSignIn(config.jellyfinUrl, config.apiUrl!, remember).catch(() =>
+                        setGoogleError("Couldn't start Google sign-in. Is Quick Connect enabled?"),
+                      );
+                    }}
+                  >
+                    Administrator? Sign in with Google
+                  </Button>
+                  {googleError && (
+                    <p role="alert" className="mt-2 text-body-sm text-error">
+                      {googleError}
+                    </p>
+                  )}
+                </>
+              )}
               {quickConnectEnabled && (
                 <>
                   <div className="my-6 flex items-center gap-3 text-caption text-on-surface-subtle">

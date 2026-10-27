@@ -10,6 +10,16 @@ links to the notes that changed.
 
 ## 2026-10-28
 
+- **Phase 6b (Finora API) built.** Go 1.27 (installed to `~/.local/go1.27.3`),
+  stdlib HTTP, SQLite (`modernc.org/sqlite`), embedded migrations; first-run
+  setup code; settings with environment overrides; CORS allowlist; Jellyfin
+  token checks; admin rule over insecure origins; announcements; Google
+  sign-in via Quick Connect with PKCE, grants and revocation janitor. Go tests
+  (race-clean) cover setup, CORS, admin rules, announcements and the full
+  Google flow against fakes. Frontend: announcement banner, Google sign-in
+  button and callback, admin Finora tab. Verified announcements end to end;
+  Google sign-in itself needs a real OAuth client. Deployment files in
+  `deploy/`, Dockerfiles in `api/` and `web/`.
 - **Phase 6a (admin console) built.** Users list with search and online
   status, user editor (create, rename, enable, admin, hidden, library access,
   permissions, password set, delete with confirmation), active sessions with
