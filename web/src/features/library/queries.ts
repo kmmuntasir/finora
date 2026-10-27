@@ -5,6 +5,7 @@ import {
   SortOrder,
   type BaseItemDto,
 } from "@jellyfin/sdk/lib/generated-client/models";
+import { getFilterApi } from "@jellyfin/sdk/lib/utils/api/filter-api";
 import { getGenresApi } from "@jellyfin/sdk/lib/utils/api/genres-api";
 import { getItemsApi } from "@jellyfin/sdk/lib/utils/api/items-api";
 import { getLibraryApi } from "@jellyfin/sdk/lib/utils/api/library-api";
@@ -48,6 +49,14 @@ export function useLibraryItems(view: BaseItemDto, kind: LibraryKind, state: Lib
             : [SortOrder.Descending, state.reversed ? flip(sort.order) : sort.order],
           filters: state.filters.map((filter) => FILTER_MAP[filter]),
           genres: state.genre ? [state.genre] : undefined,
+          years: state.year ? [state.year] : undefined,
+          officialRatings: state.rating ? [state.rating] : undefined,
+          // isHd=true already excludes 4K (BaseItemRepository resolution filter).
+          isHd: state.resolution === "sd" ? false : state.resolution === "hd" ? true : undefined,
+          is4K: state.resolution === "4k" ? true : undefined,
+          // Jellyfin 10.11 ignores resolution filters when hasSubtitles is set,
+          // so the toolbar never sends both (see .knowledge/jellyfin/api-notes.md).
+          hasSubtitles: state.subtitles && !state.resolution ? true : undefined,
           nameStartsWith: letter && letter !== "#" ? letter : undefined,
           nameLessThan: letter === "#" ? "A" : undefined,
           fields: [ItemFields.PrimaryImageAspectRatio, ItemFields.ChildCount],
@@ -87,6 +96,26 @@ export function useLibraryItems(view: BaseItemDto, kind: LibraryKind, state: Lib
     },
     // Random order must not reshuffle on every background refetch.
     staleTime: state.sort === "random" ? Infinity : 60 * 1000,
+  });
+}
+
+/** Years and age ratings that actually occur in this library. */
+export function useLibraryFilterValues(view: BaseItemDto, kind: LibraryKind) {
+  const { api, user } = useSession();
+  return useQuery({
+    queryKey: ["library-filters", user.Id, view.Id],
+    queryFn: async ({ signal }) => {
+      const { data } = await getFilterApi(api).getQueryFiltersLegacy(
+        { userId: user.Id, parentId: view.Id, includeItemTypes: kind.itemTypes ?? undefined },
+        { signal },
+      );
+      return {
+        years: [...(data.Years ?? [])].sort((a, b) => b - a),
+        ratings: [...(data.OfficialRatings ?? [])].sort(),
+      };
+    },
+    enabled: kind.advancedFilters,
+    staleTime: 10 * 60 * 1000,
   });
 }
 

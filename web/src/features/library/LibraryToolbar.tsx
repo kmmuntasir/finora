@@ -2,7 +2,14 @@ import { ArrowDownUp, Check, ChevronDown } from "lucide-react";
 import { DropdownMenu } from "radix-ui";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
-import { FILTERS, SORTS, type LibraryKind, type SortKey } from "./library-config";
+import {
+  FILTERS,
+  RESOLUTIONS,
+  SORTS,
+  type LibraryKind,
+  type Resolution,
+  type SortKey,
+} from "./library-config";
 import type { LibraryState } from "./library-state";
 
 interface LibraryToolbarProps {
@@ -10,6 +17,48 @@ interface LibraryToolbarProps {
   state: LibraryState;
   update: (changes: Partial<LibraryState>) => void;
   genres: string[];
+  years: number[];
+  ratings: string[];
+}
+
+/** A dropdown with an "Any" choice for one optional filter value. */
+function ChoiceMenu({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string | null;
+  options: { value: string; label: string }[];
+  onChange: (value: string | null) => void;
+}) {
+  if (!options.length) return null;
+  const current = options.find((option) => option.value === value);
+  return (
+    <DropdownMenu.Root>
+      <MenuButton active={Boolean(current)}>{current?.label ?? label}</MenuButton>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content align="start" sideOffset={6} className={MENU_CONTENT}>
+          <DropdownMenu.RadioGroup
+            value={value ?? ""}
+            onValueChange={(next) => onChange(next || null)}
+          >
+            <DropdownMenu.RadioItem value="" className={MENU_ITEM}>
+              <Indicator />
+              Any {label.toLowerCase()}
+            </DropdownMenu.RadioItem>
+            {options.map((option) => (
+              <DropdownMenu.RadioItem key={option.value} value={option.value} className={MENU_ITEM}>
+                <Indicator />
+                {option.label}
+              </DropdownMenu.RadioItem>
+            ))}
+          </DropdownMenu.RadioGroup>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
 }
 
 const MENU_CONTENT =
@@ -43,7 +92,14 @@ function Indicator() {
   );
 }
 
-export function LibraryToolbar({ kind, state, update, genres }: LibraryToolbarProps) {
+export function LibraryToolbar({
+  kind,
+  state,
+  update,
+  genres,
+  years,
+  ratings,
+}: LibraryToolbarProps) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <DropdownMenu.Root>
@@ -106,6 +162,35 @@ export function LibraryToolbar({ kind, state, update, genres }: LibraryToolbarPr
         </DropdownMenu.Root>
       )}
 
+      {kind.advancedFilters && (
+        <>
+          <ChoiceMenu
+            label="Year"
+            value={state.year ? String(state.year) : null}
+            options={years.map((year) => ({ value: String(year), label: String(year) }))}
+            onChange={(value) => update({ year: value ? Number(value) : null })}
+          />
+          <ChoiceMenu
+            label="Rating"
+            value={state.rating}
+            options={ratings.map((rating) => ({ value: rating, label: rating }))}
+            onChange={(rating) => update({ rating })}
+          />
+          <ChoiceMenu
+            label="Resolution"
+            value={state.resolution}
+            options={(Object.keys(RESOLUTIONS) as Resolution[]).map((key) => ({
+              value: key,
+              label: RESOLUTIONS[key],
+            }))}
+            // Jellyfin can't combine resolution with "has subtitles"; the newest choice wins.
+            onChange={(resolution) =>
+              update({ resolution: resolution as Resolution | null, subtitles: false })
+            }
+          />
+        </>
+      )}
+
       {kind.filters.map((filter) => {
         const active = state.filters.includes(filter);
         return (
@@ -139,6 +224,22 @@ export function LibraryToolbar({ kind, state, update, genres }: LibraryToolbarPr
           </button>
         );
       })}
+      {kind.advancedFilters && (
+        <button
+          type="button"
+          aria-pressed={state.subtitles}
+          onClick={() => update({ subtitles: !state.subtitles, resolution: null })}
+          title="Can't be combined with a resolution filter"
+          className={cn(
+            "h-9 rounded-full px-3.5 text-label-md transition-colors duration-[120ms]",
+            state.subtitles
+              ? "bg-primary text-on-primary hover:bg-primary-hover"
+              : "bg-surface-raised text-on-surface-muted hover:bg-surface-overlay hover:text-on-surface",
+          )}
+        >
+          Has subtitles
+        </button>
+      )}
     </div>
   );
 }

@@ -1,6 +1,14 @@
 import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
-import { FILTERS, SORTS, type FilterKey, type LibraryKind, type SortKey } from "./library-config";
+import {
+  FILTERS,
+  RESOLUTIONS,
+  SORTS,
+  type FilterKey,
+  type LibraryKind,
+  type Resolution,
+  type SortKey,
+} from "./library-config";
 
 export interface LibraryState {
   sort: SortKey;
@@ -8,6 +16,10 @@ export interface LibraryState {
   reversed: boolean;
   filters: FilterKey[];
   genre: string | null;
+  year: number | null;
+  rating: string | null;
+  resolution: Resolution | null;
+  subtitles: boolean;
   letter: string | null;
   /** Folder being browsed inside a folder library. */
   parent: string | null;
@@ -48,6 +60,11 @@ export function useLibraryState(libraryId: string, kind: LibraryKind) {
         (f): f is FilterKey => kind.filters.includes(f as FilterKey) && f in FILTERS,
       ),
       genre: params.get("genre"),
+      year: Number(params.get("year")) || null,
+      rating: params.get("rating"),
+      resolution:
+        (params.get("res") ?? "") in RESOLUTIONS ? (params.get("res") as Resolution) : null,
+      subtitles: params.get("subs") === "1",
       letter: params.get("letter"),
       parent: params.get("parent"),
     };
@@ -68,6 +85,10 @@ export function useLibraryState(libraryId: string, kind: LibraryKind) {
       if (next.reversed) search.set("dir", "rev");
       if (next.filters.length) search.set("filter", next.filters.join(","));
       if (next.genre) search.set("genre", next.genre);
+      if (next.year) search.set("year", String(next.year));
+      if (next.rating) search.set("rating", next.rating);
+      if (next.resolution) search.set("res", next.resolution);
+      if (next.subtitles) search.set("subs", "1");
       if (next.letter) search.set("letter", next.letter);
       if (next.parent) search.set("parent", next.parent);
       setParams(search, { replace: !("parent" in changes) });

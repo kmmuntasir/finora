@@ -62,6 +62,16 @@ Re-verify when the target version changes.
   (type `Folder`) and `root` (`AggregateFolder`), not the user view, so
   breadcrumbs drop those.
 
+## Item query filters
+
+- `isHd=true` means HD **excluding** 4K; `isHd=false` means SD; `is4K=true`
+  means 4K (`BaseItemRepository` resolution filter, 10.11.11).
+- **Bug (10.11.11):** combining `hasSubtitles` with `isHd`/`is4K` drops the
+  resolution filter. On the reference server `is4K=true` gives 2 movies but
+  `is4K=true&hasSubtitles=true` gives 3,237 (the same as `hasSubtitles`
+  alone). Genre + resolution combines correctly. Finora makes the two
+  filters mutually exclusive. Measured 2026-10-28.
+
 ## User settings
 
 - `POST /UserImage?userId=…` expects the image **base64-encoded** in the body

@@ -11,7 +11,13 @@ import { ItemGrid } from "./ItemGrid";
 import { libraryKind, type LibraryKind } from "./library-config";
 import { useLibraryState } from "./library-state";
 import { LibraryToolbar } from "./LibraryToolbar";
-import { useAncestors, useGenres, useItemSummary, useLibraryItems } from "./queries";
+import {
+  useAncestors,
+  useGenres,
+  useItemSummary,
+  useLibraryFilterValues,
+  useLibraryItems,
+} from "./queries";
 
 export function LibraryPage() {
   const { libraryId } = useParams();
@@ -44,13 +50,21 @@ function Library({ view, kind }: { view: BaseItemDto; kind: LibraryKind }) {
   const { state, update } = useLibraryState(view.Id!, kind);
   const items = useLibraryItems(view, kind, state);
   const genres = useGenres(view, kind);
+  const filterValues = useLibraryFilterValues(view, kind);
 
   const list = useMemo(
     () => items.data?.pages.flatMap((page) => page.Items ?? []) ?? [],
     [items.data],
   );
   const total = items.data?.pages[0]?.TotalRecordCount ?? 0;
-  const filtered = state.filters.length > 0 || state.genre !== null || state.letter !== null;
+  const filtered =
+    state.filters.length > 0 ||
+    state.genre !== null ||
+    state.letter !== null ||
+    state.year !== null ||
+    state.rating !== null ||
+    state.resolution !== null ||
+    state.subtitles;
   const showRail = state.sort === "name" && kind.recursive;
 
   return (
@@ -81,6 +95,8 @@ function Library({ view, kind }: { view: BaseItemDto; kind: LibraryKind }) {
             genres={(genres.data ?? [])
               .map((genre) => genre.Name)
               .filter((name): name is string => Boolean(name))}
+            years={filterValues.data?.years ?? []}
+            ratings={filterValues.data?.ratings ?? []}
           />
         </div>
         {showRail && (
@@ -110,7 +126,17 @@ function Library({ view, kind }: { view: BaseItemDto; kind: LibraryKind }) {
                 <Button
                   className="mt-4"
                   variant="secondary"
-                  onClick={() => update({ filters: [], genre: null, letter: null })}
+                  onClick={() =>
+                    update({
+                      filters: [],
+                      genre: null,
+                      letter: null,
+                      year: null,
+                      rating: null,
+                      resolution: null,
+                      subtitles: false,
+                    })
+                  }
                 >
                   Clear filters
                 </Button>

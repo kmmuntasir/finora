@@ -10,6 +10,11 @@ links to the notes that changed.
 
 ## 2026-10-28
 
+- **Tier 1 complete.** Added the last Must filters (year, age rating,
+  resolution, has subtitles). Found a Jellyfin 10.11.11 bug where
+  `hasSubtitles` drops resolution filters; the two are mutually exclusive in
+  Finora ([api-notes](jellyfin/api-notes.md#item-query-filters)). Next: Tier 2,
+  starting with the subtitle finder (Phase 7).
 - **Phase 6b (Finora API) built.** Go 1.27 (installed to `~/.local/go1.27.3`),
   stdlib HTTP, SQLite (`modernc.org/sqlite`), embedded migrations; first-run
   setup code; settings with environment overrides; CORS allowlist; Jellyfin

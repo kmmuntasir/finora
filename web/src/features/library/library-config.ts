@@ -46,8 +46,13 @@ export interface LibraryKind {
   defaultSort: SortKey;
   filters: FilterKey[];
   genres: boolean;
+  /** Year, age rating, resolution and subtitle filters (video libraries). */
+  advancedFilters: boolean;
   noun: { one: string; many: string };
 }
+
+export type Resolution = "sd" | "hd" | "4k";
+export const RESOLUTIONS: Record<Resolution, string> = { sd: "SD", hd: "HD", "4k": "4K" };
 
 const VIDEO_FILTERS: FilterKey[] = ["unplayed", "played", "resumable", "favorite"];
 
@@ -60,6 +65,7 @@ export const LIBRARY_KINDS: Record<string, LibraryKind> = {
     defaultSort: "name",
     filters: VIDEO_FILTERS,
     genres: true,
+    advancedFilters: true,
     noun: { one: "movie", many: "movies" },
   },
   tvshows: {
@@ -70,6 +76,7 @@ export const LIBRARY_KINDS: Record<string, LibraryKind> = {
     defaultSort: "name",
     filters: ["unplayed", "played", "favorite"],
     genres: true,
+    advancedFilters: true,
     noun: { one: "show", many: "shows" },
   },
   music: {
@@ -80,6 +87,7 @@ export const LIBRARY_KINDS: Record<string, LibraryKind> = {
     defaultSort: "name",
     filters: ["favorite"],
     genres: true,
+    advancedFilters: false,
     noun: { one: "album", many: "albums" },
   },
   boxsets: {
@@ -90,6 +98,7 @@ export const LIBRARY_KINDS: Record<string, LibraryKind> = {
     defaultSort: "name",
     filters: ["favorite"],
     genres: false,
+    advancedFilters: false,
     noun: { one: "collection", many: "collections" },
   },
   playlists: {
@@ -100,6 +109,7 @@ export const LIBRARY_KINDS: Record<string, LibraryKind> = {
     defaultSort: "name",
     filters: [],
     genres: false,
+    advancedFilters: false,
     noun: { one: "playlist", many: "playlists" },
   },
   homevideos: {
@@ -110,6 +120,7 @@ export const LIBRARY_KINDS: Record<string, LibraryKind> = {
     defaultSort: "name",
     filters: VIDEO_FILTERS,
     genres: false,
+    advancedFilters: false,
     noun: { one: "item", many: "items" },
   },
 };
