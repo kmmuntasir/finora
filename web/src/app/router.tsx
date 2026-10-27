@@ -1,4 +1,9 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, Navigate } from "react-router";
+import { AdminLayout } from "@/features/admin/AdminLayout";
+import { LibrariesAdminPage } from "@/features/admin/LibrariesAdminPage";
+import { SessionsPage } from "@/features/admin/SessionsPage";
+import { UserEditPage } from "@/features/admin/UserEditPage";
+import { UsersPage } from "@/features/admin/UsersPage";
 import { RedirectIfSignedIn, RequireAuth } from "@/features/auth/guards";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { AppShell } from "./AppShell";
@@ -39,6 +44,17 @@ export const router = createBrowserRouter([
               { path: "server", element: <ServerPage /> },
               { path: "me", element: <MePage /> },
               { path: "settings", element: <SettingsPage /> },
+              {
+                path: "admin",
+                element: <AdminLayout />,
+                children: [
+                  { index: true, element: <Navigate to="users" replace /> },
+                  { path: "users", element: <UsersPage /> },
+                  { path: "users/:userId", element: <UserEditPage /> },
+                  { path: "sessions", element: <SessionsPage /> },
+                  { path: "libraries", element: <LibrariesAdminPage /> },
+                ],
+              },
             ],
           },
         ],

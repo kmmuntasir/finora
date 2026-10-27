@@ -1,7 +1,8 @@
-import { House, LayoutGrid, Search, Server, Settings, UserRound } from "lucide-react";
+import { House, LayoutGrid, Search, Server, Settings, ShieldCheck, UserRound } from "lucide-react";
 import { useEffect, type ComponentType, type SVGProps } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router";
 import { Logo } from "@/components/Logo";
+import { useSession } from "@/features/auth/context";
 import { UserMenu } from "@/features/auth/UserMenu";
 import { useUserViews } from "@/features/home/queries";
 import { viewIcon } from "@/features/library/view-icons";
@@ -94,6 +95,8 @@ function useSearchShortcut() {
 
 export function AppShell() {
   const { data: views } = useUserViews();
+  const { user } = useSession();
+  const isAdmin = Boolean(user.Policy?.IsAdministrator);
   const musicLoaded = useQueue((state) => currentEntry(state) !== null);
   useSearchShortcut();
 
@@ -114,6 +117,7 @@ export function AppShell() {
             />
           ))}
           <div className="mt-auto pt-6">
+            {isAdmin && <SidebarLink to="/admin" icon={ShieldCheck} label="Admin" />}
             <SidebarLink to="/settings" icon={Settings} label="Settings" />
             <SidebarLink to="/server" icon={Server} label="Server" />
           </div>

@@ -10,6 +10,13 @@ links to the notes that changed.
 
 ## 2026-10-28
 
+- **Phase 6a (admin console) built.** Users list with search and online
+  status, user editor (create, rename, enable, admin, hidden, library access,
+  permissions, password set, delete with confirmation), active sessions with
+  stop and message (5 s refresh), library scans with progress, link to the
+  Jellyfin dashboard. HTTP lock implemented as `window.isSecureContext`
+  (localhost counts as secure). Verified read-only against the server; no
+  user was modified.
 - **Phase 5 (settings) built.** Profile picture (base64 upload), password
   change, Quick Connect authorisation, theme (dark/light/system, light
   surfaces retuned in `DESIGN.md`), home layout, audio/subtitle languages and

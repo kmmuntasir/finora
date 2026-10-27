@@ -31,3 +31,14 @@ describe("format", () => {
     expect(cardSubtitle({ Type: "Movie", ProductionYear: 1996 })).toBe("1996");
   });
 });
+
+import { relativeTime } from "./format";
+
+describe("relativeTime", () => {
+  const now = Date.parse("2026-10-28T12:00:00Z");
+  it("describes past times", () => {
+    expect(relativeTime("2026-10-28T11:59:40Z", now)).toBe("Just now");
+    expect(relativeTime("2026-10-28T09:00:00Z", now)).toMatch(/3 hours ago/);
+    expect(relativeTime(null, now)).toBe("Never");
+  });
+});
