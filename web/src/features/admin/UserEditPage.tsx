@@ -12,6 +12,9 @@ import { TextField } from "@/components/TextField";
 import { useSession } from "@/features/auth/context";
 import { relativeTime } from "@/lib/format";
 import { useAdminMutations, useMediaFolders, useUser } from "./queries";
+import { QuickConnectForUser, UserDevices } from "./UserDevices";
+import { RESTRICTION_DEFAULTS, type RestrictionDraft } from "./restrictions";
+import { Limits, ParentalControls } from "./UserRestrictions";
 
 type PolicyDraft = Pick<
   UserPolicy,
@@ -28,7 +31,9 @@ type PolicyDraft = Pick<
   | "EnableContentDeletion"
   | "EnableRemoteAccess"
   | "EnableSubtitleManagement"
->;
+  | "EnableCollectionManagement"
+> &
+  RestrictionDraft;
 
 const NEW_USER_DEFAULTS: PolicyDraft = {
   IsAdministrator: false,
@@ -44,30 +49,34 @@ const NEW_USER_DEFAULTS: PolicyDraft = {
   EnableContentDeletion: false,
   EnableRemoteAccess: true,
   EnableSubtitleManagement: false,
+  EnableCollectionManagement: false,
+  ...RESTRICTION_DEFAULTS,
 };
 
-const PERMISSIONS: { key: keyof PolicyDraft; label: string; hint?: string }[] = [
-  { key: "EnableMediaPlayback", label: "Can play media" },
-  { key: "EnableRemoteAccess", label: "Can connect from outside the home network" },
-  {
-    key: "EnableVideoPlaybackTranscoding",
-    label: "Allow video transcoding",
-    hint: "Uses the server's CPU when a device can't play a file",
-  },
-  { key: "EnableAudioPlaybackTranscoding", label: "Allow audio transcoding" },
-  {
-    key: "EnablePlaybackRemuxing",
-    label: "Allow remuxing",
-    hint: "Repackaging without re-encoding; cheap",
-  },
-  { key: "EnableContentDownloading", label: "Can download files" },
-  { key: "EnableSubtitleManagement", label: "Can manage subtitles" },
-  {
-    key: "EnableContentDeletion",
-    label: "Can delete media",
-    hint: "Deletes files from the server's disks",
-  },
-];
+const PERMISSIONS: { key: keyof PolicyDraft & `Enable${string}`; label: string; hint?: string }[] =
+  [
+    { key: "EnableMediaPlayback", label: "Can play media" },
+    { key: "EnableRemoteAccess", label: "Can connect from outside the home network" },
+    {
+      key: "EnableVideoPlaybackTranscoding",
+      label: "Allow video transcoding",
+      hint: "Uses the server's CPU when a device can't play a file",
+    },
+    { key: "EnableAudioPlaybackTranscoding", label: "Allow audio transcoding" },
+    {
+      key: "EnablePlaybackRemuxing",
+      label: "Allow remuxing",
+      hint: "Repackaging without re-encoding; cheap",
+    },
+    { key: "EnableContentDownloading", label: "Can download files" },
+    { key: "EnableSubtitleManagement", label: "Can manage subtitles" },
+    { key: "EnableCollectionManagement", label: "Can create and edit collections" },
+    {
+      key: "EnableContentDeletion",
+      label: "Can delete media",
+      hint: "Deletes files from the server's disks",
+    },
+  ];
 
 function draftFrom(policy: UserPolicy | null | undefined): PolicyDraft {
   const draft = { ...NEW_USER_DEFAULTS };
@@ -75,6 +84,14 @@ function draftFrom(policy: UserPolicy | null | undefined): PolicyDraft {
   for (const key of Object.keys(draft) as (keyof PolicyDraft)[]) {
     (draft as Record<string, unknown>)[key] = policy[key] ?? draft[key];
   }
+  // Saved schedules carry server IDs; compare and send only what the form edits.
+  draft.AccessSchedules = (draft.AccessSchedules ?? []).map(
+    ({ DayOfWeek, StartHour, EndHour }) => ({
+      DayOfWeek,
+      StartHour,
+      EndHour,
+    }),
+  );
   return draft;
 }
 
@@ -301,6 +318,29 @@ function UserForm({ user }: { user: UserDto | null }) {
           ))}
         </div>
       </Section>
+
+      <Section title="Parental controls">
+        <ParentalControls draft={policy} set={set} />
+      </Section>
+
+      <Section title="Limits">
+        <Limits draft={policy} set={set} />
+      </Section>
+
+      {user && (
+        <Section title="Devices">
+          <UserDevices userId={user.Id!} name={user.Name ?? ""} />
+        </Section>
+      )}
+
+      {user && (
+        <Section title="Sign in a TV or another device">
+          <p className="mb-4 text-body-sm text-on-surface-muted">
+            Choose Quick Connect on the device, then enter the code it shows.
+          </p>
+          <QuickConnectForUser userId={user.Id!} name={user.Name ?? ""} />
+        </Section>
+      )}
 
       {user && (
         <PasswordReset

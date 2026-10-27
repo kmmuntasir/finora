@@ -45,6 +45,7 @@ their reasons, research, and a running log.
 ### Jellyfin
 
 - [jellyfin/api-notes.md](jellyfin/api-notes.md) — verified API behaviour with source references
+- [jellyfin/sandbox.md](jellyfin/sandbox.md) — throwaway local Jellyfin in Docker for testing writes
 - [jellyfin/reference-server.md](jellyfin/reference-server.md) — what the reference server looks like (anonymised)
 
 ### Subtitles

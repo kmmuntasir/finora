@@ -36,6 +36,13 @@ Re-verify when the target version changes.
   (`Emby.Server.Implementations/Session/SessionManager.cs:1705`).
 - Revocation is per device ID — use a unique device ID per session you may
   want to revoke.
+- `GET /Devices?userId=…` does **not** list the user's own devices. It
+  returns every device the user may *access*
+  (`DeviceManager.GetDevicesForUser` filters with `CanAccessDevice`), which
+  is all devices when `EnableAllDevices` is on (the default). To find the
+  devices someone signed in on, also match `LastUserId`
+  (`Jellyfin.Server.Implementations/Devices/DeviceManager.cs:181`). Finora
+  does this in both the admin device list and the API's Google sign-in check.
 
 ## Subtitles
 
@@ -85,6 +92,35 @@ Re-verify when the target version changes.
   `SubtitleLanguagePreference`, `SubtitleMode`, `PlayDefaultAudioTrack`,
   `EnableNextEpisodeAutoPlay`, `RememberAudioSelections`,
   `RememberSubtitleSelections`.
+
+## Playlists, collections and item editing
+
+- Playlist entries are addressed by `PlaylistItemId`, which in 10.11 is the
+  linked item's ID in `N` format. `MoveItem` and `RemoveItemFromPlaylist`
+  both match on it (`Emby.Server.Implementations/Playlists/PlaylistManager.cs:261,299`).
+- Only the owner, or a user the playlist is shared with `CanEdit`, may
+  change a playlist. `GET /Playlists/{id}/Users/{userId}` with your own user
+  ID tells you (`CanEdit`), including for the owner
+  (`Jellyfin.Api/Controllers/PlaylistsController.cs:225`).
+- `/Collections` needs the `CollectionManagement` policy, which comes from
+  `UserPolicy.EnableCollectionManagement`; admins have it too.
+- `POST /Items/{id}` replaces fields such as `Genres`, `Name` and
+  `ProviderIds` with whatever is sent, so send the full item with edits
+  merged in (`Jellyfin.Api/Controllers/ItemUpdateController.cs:238`).
+- `POST /Items/RemoteSearch/Apply/{id}` and `POST /Items/{id}/Refresh`
+  return at once and refresh in the background. Downloading a remote
+  backdrop adds a backdrop instead of replacing the first one.
+- `GET /Items/{id}/Download` answers with `Content-Disposition: attachment`,
+  so a plain link downloads without leaving the page.
+
+## Parental controls
+
+- `GET /Localization/ParentalRatings` returns ratings with
+  `RatingScore {score, subScore}`; several names share a score ("PG",
+  "TV-PG"). A user's limit is `MaxParentalRating` plus
+  `MaxParentalSubRating`.
+- `AccessSchedules` use `DayOfWeek` values `Sunday`…`Saturday`, `Everyday`,
+  `Weekday` and `Weekend`, with fractional hours (`8.5` = 08:30).
 
 ## Other verified behaviour
 

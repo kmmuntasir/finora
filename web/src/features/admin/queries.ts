@@ -1,7 +1,10 @@
 import type { UserDto, UserPolicy } from "@jellyfin/sdk/lib/generated-client/models";
+import { getDevicesApi } from "@jellyfin/sdk/lib/utils/api/devices-api";
 import { getItemRefreshApi } from "@jellyfin/sdk/lib/utils/api/item-refresh-api";
 import { getLibraryApi } from "@jellyfin/sdk/lib/utils/api/library-api";
 import { getLibraryStructureApi } from "@jellyfin/sdk/lib/utils/api/library-structure-api";
+import { getLocalizationApi } from "@jellyfin/sdk/lib/utils/api/localization-api";
+import { getQuickConnectApi } from "@jellyfin/sdk/lib/utils/api/quick-connect-api";
 import { getScheduledTasksApi } from "@jellyfin/sdk/lib/utils/api/scheduled-tasks-api";
 import { getSessionApi } from "@jellyfin/sdk/lib/utils/api/session-api";
 import { getUserApi } from "@jellyfin/sdk/lib/utils/api/user-api";
@@ -160,6 +163,72 @@ export function useAdminMutations() {
           replaceAllImages: false,
         });
       },
+    }),
+  };
+}
+
+/** Parental rating options, grouped by score: "PG, TV-PG" share one level. */
+export function useParentalRatingLevels() {
+  const { api } = useSession();
+  return useQuery({
+    queryKey: ["admin", "parental-ratings"],
+    queryFn: async ({ signal }) => {
+      const { data } = await getLocalizationApi(api).getParentalRatings({ signal });
+      const levels = new Map<string, { score: number; subScore: number | null; names: string[] }>();
+      for (const rating of data) {
+        const score = rating.RatingScore?.score ?? rating.Value;
+        if (score === undefined || score === null) continue;
+        const subScore = rating.RatingScore?.subScore ?? null;
+        const key = `${score}:${subScore ?? ""}`;
+        const level = levels.get(key) ?? { score, subScore, names: [] };
+        level.names.push(rating.Name ?? "");
+        levels.set(key, level);
+      }
+      return [...levels.values()].sort(
+        (a, b) => a.score - b.score || (a.subScore ?? 0) - (b.subScore ?? 0),
+      );
+    },
+    staleTime: 60 * 60 * 1000,
+  });
+}
+
+/**
+ * Devices last used by this user. Jellyfin's userId filter returns every
+ * device the user may *access* (all of them by default), so filter on
+ * LastUserId as well.
+ */
+export function useUserDevices(userId: string) {
+  const { api } = useSession();
+  const normalise = (id: string | null | undefined) => (id ?? "").replace(/-/g, "").toLowerCase();
+  return useQuery({
+    queryKey: ["admin", "devices", userId],
+    queryFn: async ({ signal }) =>
+      ((await getDevicesApi(api).getDevices({ userId }, { signal })).data.Items ?? []).filter(
+        (device) => normalise(device.LastUserId) === normalise(userId),
+      ),
+  });
+}
+
+export function useDeviceMutations(userId: string) {
+  const { api } = useSession();
+  const queryClient = useQueryClient();
+  const refresh = () => {
+    void queryClient.invalidateQueries({ queryKey: ["admin", "devices", userId] });
+    void queryClient.invalidateQueries({ queryKey: ["admin", "sessions"] });
+  };
+  return {
+    /** Deleting a device revokes its access token, signing it out. */
+    signOut: useMutation({
+      mutationFn: async (deviceIds: string[]) => {
+        for (const id of deviceIds) await getDevicesApi(api).deleteDevice({ id });
+      },
+      onSettled: refresh,
+    }),
+    authorizeQuickConnect: useMutation({
+      mutationFn: async (code: string) => {
+        await getQuickConnectApi(api).authorizeQuickConnect({ code, userId });
+      },
+      onSuccess: refresh,
     }),
   };
 }

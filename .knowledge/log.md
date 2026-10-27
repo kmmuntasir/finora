@@ -10,6 +10,22 @@ links to the notes that changed.
 
 ## 2026-10-28
 
+- **Tier 2, overnight run (unattended).** Writes are tested against a
+  throwaway local Jellyfin 10.11.11 in Docker with generated test media, so
+  the family server stays read-only
+  ([sandbox](jellyfin/sandbox.md)). Built so far:
+  - PWA: manifest, icons and an app-shell service worker, registered only in
+    secure contexts.
+  - Item "More" menu: add to playlist or collection (with create), download,
+    delete. Playlist page with drag-to-reorder, remove and rename; collection
+    editing. The player continues through the playlist it was started from.
+  - Admin tools on detail pages: refresh metadata, edit metadata, identify,
+    edit images.
+  - Admin user page: parental controls (rating, unrated items, allowed and
+    blocked tags, viewing times), limits (streams, bitrate), devices with
+    sign out, and approving a Quick Connect code for that user.
+  - Found that `/Devices?userId` lists every accessible device
+    ([api-notes](jellyfin/api-notes.md#revoking-a-session)).
 - **OpenSubtitles key care.** Read the OpenSubtitles API docs and integrator
   terms ([providers](subtitles/providers.md#opensubtitles-terms-and-limits)).
   Added download tracking and a 60-day purge warning, but no automatic
