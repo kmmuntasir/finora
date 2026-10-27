@@ -34,7 +34,7 @@ export function TrackList({ album, tracks }: { album: BaseItemDto; tracks: BaseI
               {header && (
                 <p className="px-4 pt-4 pb-1 text-label-sm text-on-surface-subtle">{header}</p>
               )}
-              <div className="group grid grid-cols-[2rem_1fr_auto_auto] items-center gap-3 px-4 py-2.5 hover:bg-white/5">
+              <div className="group grid grid-cols-[2rem_1fr_auto_auto] items-center gap-3 px-4 py-2.5 hover:bg-white/5 light:hover:bg-black/5">
                 <span className="grid place-items-center text-body-sm text-on-surface-muted tabular-nums">
                   <span className="group-hover:hidden">
                     {current ? "♪" : (track.IndexNumber ?? "")}

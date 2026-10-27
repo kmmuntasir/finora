@@ -110,7 +110,7 @@ export function NowPlayingView() {
             type="button"
             onClick={() => setExpanded(false)}
             aria-label="Close"
-            className="grid size-11 place-items-center rounded-full hover:bg-white/10"
+            className="grid size-11 place-items-center rounded-full hover:bg-white/10 light:hover:bg-black/5"
           >
             <ChevronDown aria-hidden className="size-6" />
           </button>
@@ -133,7 +133,7 @@ export function NowPlayingView() {
           <button
             type="button"
             onClick={() => useQueue.getState().clear()}
-            className="ml-auto h-9 shrink-0 rounded-full px-4 text-label-md text-on-surface-muted hover:bg-white/10 hover:text-on-surface"
+            className="ml-auto h-9 shrink-0 rounded-full px-4 text-label-md text-on-surface-muted hover:bg-white/10 light:hover:bg-black/5 hover:text-on-surface"
           >
             Clear queue
           </button>
@@ -186,7 +186,7 @@ export function NowPlayingView() {
                     "h-9 rounded-full px-4 text-label-md transition-colors duration-[120ms]",
                     tab === name
                       ? "bg-on-surface text-background"
-                      : "bg-white/10 text-on-surface-muted hover:text-on-surface",
+                      : "bg-white/10 light:bg-black/5 text-on-surface-muted hover:text-on-surface",
                   )}
                 >
                   {name === "queue" ? "Up next" : "Lyrics"}

@@ -11,7 +11,7 @@ import { useUserDataToggle } from "./queries";
 import { playHref, type PlaySelection } from "./selection";
 
 const ROUND =
-  "grid size-12 place-items-center rounded-full bg-white/10 text-on-surface backdrop-blur-sm transition-colors duration-[120ms] hover:bg-white/20 disabled:opacity-50";
+  "grid size-12 place-items-center rounded-full bg-white/10 light:bg-black/5 text-on-surface backdrop-blur-sm transition-colors duration-[120ms] hover:bg-white/20 light:hover:bg-black/10 disabled:opacity-50";
 
 interface ItemActionsProps {
   item: BaseItemDto;
@@ -93,7 +93,7 @@ export function ItemActions({ item, playTarget, playLabel, selection }: ItemActi
         <button
           type="button"
           onClick={() => void navigate(playHref(target, selection, true))}
-          className="h-12 rounded-full bg-white/10 px-5 text-label-md backdrop-blur-sm hover:bg-white/20"
+          className="h-12 rounded-full bg-white/10 light:bg-black/5 px-5 text-label-md backdrop-blur-sm hover:bg-white/20 light:hover:bg-black/10"
         >
           Play from beginning
         </button>

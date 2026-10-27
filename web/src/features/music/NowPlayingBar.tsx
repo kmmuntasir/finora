@@ -10,7 +10,7 @@ function ThinProgress() {
   const current = useAudioClock((state) => state.current);
   const duration = useAudioClock((state) => state.duration);
   return (
-    <div className="h-0.5 w-full bg-white/10">
+    <div className="h-0.5 w-full bg-white/10 light:bg-black/5">
       <div
         className="h-full bg-linear-to-r from-brand-cyan to-brand-blue"
         style={{ width: `${duration ? Math.min(100, (current / duration) * 100) : 0}%` }}

@@ -17,6 +17,8 @@ export interface AuthContextValue {
   signOut: () => Promise<void>;
   /** Retries restoring a stored session after the server was unreachable. */
   retryRestore: () => void;
+  /** Reloads the signed-in user (after changing settings or the profile picture). */
+  refreshUser: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

@@ -9,6 +9,7 @@ import { LibraryPage } from "@/features/library/LibraryPage";
 import { ItemPage } from "@/features/item/ItemPage";
 import { PlayerPage } from "@/features/player/PlayerPage";
 import { SearchPage } from "@/features/search/SearchPage";
+import { SettingsPage } from "@/features/settings/SettingsPage";
 import { MePage } from "./MePage";
 import { ServerPage } from "./ServerPage";
 import { SignedInLayout } from "./SignedInLayout";
@@ -37,6 +38,7 @@ export const router = createBrowserRouter([
               { path: "browse", element: <BrowsePage /> },
               { path: "server", element: <ServerPage /> },
               { path: "me", element: <MePage /> },
+              { path: "settings", element: <SettingsPage /> },
             ],
           },
         ],

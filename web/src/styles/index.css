@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "./tokens.css";
 
+/* `light:` utilities apply only in the light theme. */
+@custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
+
 @font-face {
   font-family: SolaimanLipi;
   src: url("../assets/fonts/solaimanlipi-thin.woff2") format("woff2");

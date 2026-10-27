@@ -1,4 +1,4 @@
-import { House, LayoutGrid, Search, Server, UserRound } from "lucide-react";
+import { House, LayoutGrid, Search, Server, Settings, UserRound } from "lucide-react";
 import { useEffect, type ComponentType, type SVGProps } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router";
 import { Logo } from "@/components/Logo";
@@ -114,6 +114,7 @@ export function AppShell() {
             />
           ))}
           <div className="mt-auto pt-6">
+            <SidebarLink to="/settings" icon={Settings} label="Settings" />
             <SidebarLink to="/server" icon={Server} label="Server" />
           </div>
         </nav>

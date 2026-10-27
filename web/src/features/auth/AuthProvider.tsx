@@ -87,9 +87,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRestoreAttempt((attempt) => attempt + 1);
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    if (state.status !== "signed-in") return;
+    const { data: user } = await getUserApi(state.api).getCurrentUser();
+    setState({ status: "signed-in", user, api: state.api });
+  }, [state]);
+
   const value = useMemo<AuthContextValue>(
-    () => ({ state, completeSignIn, signOut, retryRestore }),
-    [state, completeSignIn, signOut, retryRestore],
+    () => ({ state, completeSignIn, signOut, retryRestore, refreshUser }),
+    [state, completeSignIn, signOut, retryRestore, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

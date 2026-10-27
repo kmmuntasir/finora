@@ -62,6 +62,20 @@ Re-verify when the target version changes.
   (type `Folder`) and `root` (`AggregateFolder`), not the user view, so
   breadcrumbs drop those.
 
+## User settings
+
+- `POST /UserImage?userId=…` expects the image **base64-encoded** in the body
+  with the image's `Content-Type` (`ImageController.PostUserImage` reads it
+  through `GetFromBase64Stream`).
+- `GET /Localization/Cultures` contains several cultures per three-letter
+  code (Chinese variants share `zho`); de-duplicate before using codes as
+  keys.
+- Viewer preferences live in the user configuration
+  (`POST /Users/Configuration?userId=…`): `AudioLanguagePreference`,
+  `SubtitleLanguagePreference`, `SubtitleMode`, `PlayDefaultAudioTrack`,
+  `EnableNextEpisodeAutoPlay`, `RememberAudioSelections`,
+  `RememberSubtitleSelections`.
+
 ## Other verified behaviour
 
 - CORS: responses carry `Access-Control-Allow-Origin: *`, and preflights for

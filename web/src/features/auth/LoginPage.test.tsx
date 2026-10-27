@@ -23,6 +23,7 @@ function renderLogin(authenticateUserByName: Api["authenticateUserByName"]) {
     completeSignIn,
     signOut: vi.fn(),
     retryRestore: vi.fn(),
+    refreshUser: vi.fn(),
   };
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 

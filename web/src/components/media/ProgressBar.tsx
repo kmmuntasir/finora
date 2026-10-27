@@ -9,7 +9,7 @@ export function ProgressBar({ value, className }: { value: number; className?: s
       aria-valuemax={100}
       aria-valuenow={Math.round(value * 100)}
       aria-label="Watched"
-      className={cn("h-1 overflow-hidden rounded-full bg-white/20", className)}
+      className={cn("h-1 overflow-hidden rounded-full bg-white/20 light:bg-black/10", className)}
     >
       <div
         className="h-full rounded-full bg-linear-to-r from-brand-cyan to-brand-blue"

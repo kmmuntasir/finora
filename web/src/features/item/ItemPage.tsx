@@ -163,7 +163,7 @@ function ItemDetails({ item }: { item: BaseItemDto }) {
               <img
                 src={imageUrl(config.jellyfinUrl, logo, 700)}
                 alt={item.Name ?? ""}
-                className="max-h-32 w-auto max-w-[min(100%,460px)] object-contain object-left drop-shadow-[0_2px_12px_rgb(0_0_0/0.6)]"
+                className="max-h-32 w-auto max-w-[min(100%,460px)] object-contain object-left drop-shadow-[0_2px_12px_rgb(0_0_0/0.6)] light:brightness-0 light:drop-shadow-none"
               />
             ) : (
               <h1 className="text-headline-lg md:text-display">
@@ -198,7 +198,7 @@ function ItemDetails({ item }: { item: BaseItemDto }) {
                   <Link
                     key={genre.Id}
                     to={`/browse?genre=${encodeURIComponent(genre.Name ?? "")}`}
-                    className="rounded-full bg-white/10 px-3 py-1 text-label-sm transition-colors duration-[120ms] hover:bg-white/20"
+                    className="rounded-full bg-white/10 light:bg-black/5 px-3 py-1 text-label-sm transition-colors duration-[120ms] hover:bg-white/20 light:hover:bg-black/10"
                   >
                     {genre.Name}
                   </Link>
@@ -207,7 +207,7 @@ function ItemDetails({ item }: { item: BaseItemDto }) {
                   <Link
                     key={studio.Id}
                     to={`/browse?studio=${encodeURIComponent(studio.Name ?? "")}`}
-                    className="rounded-full px-3 py-1 text-label-sm text-on-surface-muted ring-1 ring-white/15 transition-colors duration-[120ms] hover:bg-white/10 hover:text-on-surface"
+                    className="rounded-full px-3 py-1 text-label-sm text-on-surface-muted ring-1 ring-white/15 light:ring-black/15 transition-colors duration-[120ms] hover:bg-white/10 light:hover:bg-black/5 hover:text-on-surface"
                   >
                     {studio.Name}
                   </Link>

@@ -143,7 +143,9 @@ function Player({ item }: { item: BaseItemDto }) {
   const [volume, setVolume] = useState(preferences.volume);
   const [muted, setMuted] = useState(preferences.muted);
   const [speed, setSpeed] = useState(1);
-  const [autoplayNext, setAutoplayNext] = useState(preferences.autoplayNext);
+  const [autoplayNext, setAutoplayNext] = useState(
+    preferences.autoplayNext && (user.Configuration?.EnableNextEpisodeAutoPlay ?? true),
+  );
   const [controlsVisible, setControlsVisible] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
   const [showInfo, setShowInfo] = useState(false);

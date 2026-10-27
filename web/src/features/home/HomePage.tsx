@@ -127,7 +127,7 @@ function Hero({ items }: { items: BaseItemDto[] }) {
           <img
             src={imageUrl(config.jellyfinUrl, logo, 600)}
             alt={item.Name ?? ""}
-            className="max-h-28 w-auto max-w-[min(80%,420px)] object-contain object-left drop-shadow-[0_2px_12px_rgb(0_0_0/0.6)]"
+            className="max-h-28 w-auto max-w-[min(80%,420px)] object-contain object-left drop-shadow-[0_2px_12px_rgb(0_0_0/0.6)] light:brightness-0 light:drop-shadow-none"
           />
         ) : (
           <h1 className="max-w-2xl text-display">{item.Name}</h1>
@@ -138,7 +138,7 @@ function Hero({ items }: { items: BaseItemDto[] }) {
           <PlayButton />
           <Link
             to={itemHref(item)}
-            className="inline-flex h-12 items-center gap-2 rounded-full bg-white/15 px-5 text-label-md backdrop-blur-sm hover:bg-white/25"
+            className="inline-flex h-12 items-center gap-2 rounded-full bg-white/15 light:bg-black/10 px-5 text-label-md backdrop-blur-sm hover:bg-white/25 light:hover:bg-black/15"
           >
             <Info aria-hidden className="size-5" />
             More info

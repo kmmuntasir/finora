@@ -10,6 +10,11 @@ links to the notes that changed.
 
 ## 2026-10-28
 
+- **Phase 5 (settings) built.** Profile picture (base64 upload), password
+  change, Quick Connect authorisation, theme (dark/light/system, light
+  surfaces retuned in `DESIGN.md`), home layout, audio/subtitle languages and
+  mode, default audio track, autoplay next, remember selections (all saved
+  to the Jellyfin user configuration), streaming quality (device).
 - **Phase 4 (music) built.** App-wide audio engine (universal audio endpoint),
   queue store with play next / add / reorder (dnd kit) / remove / shuffle /
   repeat, mini player bar, full-screen now playing with queue and synced

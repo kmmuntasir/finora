@@ -41,7 +41,7 @@ function Row({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
         "group flex items-center gap-2 rounded-md px-1 py-1.5",
-        current ? "bg-white/10" : "hover:bg-white/5",
+        current ? "bg-white/10 light:bg-black/5" : "hover:bg-white/5 light:hover:bg-black/5",
         isDragging && "relative z-10 bg-surface-overlay shadow-lg",
       )}
     >

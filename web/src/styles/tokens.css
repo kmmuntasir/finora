@@ -34,13 +34,13 @@
   --fin-on-primary: #FFFFFF;
   --fin-background: #F5F7FB;
   --fin-surface: #FFFFFF;
-  --fin-surface-raised: #FFFFFF;
-  --fin-surface-overlay: #FFFFFF;
+  --fin-surface-raised: #EEF2F7;
+  --fin-surface-overlay: #E4E9F1;
   --fin-border: #DAE0EA;
   --fin-border-strong: #B9C3D3;
   --fin-on-surface: #0B1426;
   --fin-on-surface-muted: #475266;
-  --fin-on-surface-subtle: #5F6B80;
+  --fin-on-surface-subtle: #566174;
   --fin-focus: #1A5CE0;
   --fin-success: #127A49;
   --fin-warning: #9A6200;
