@@ -12,16 +12,29 @@ interface CardProps {
   className?: string;
   /** Override the second line. */
   subtitle?: string | null;
+  /** Override the link target (folders open in the library view). */
+  href?: string;
   priority?: boolean;
 }
 
 const CARD_LINK =
   "group block rounded-md focus-visible:outline-offset-4 [&_img]:transition-transform [&_img]:duration-300 [&_img]:ease-out hover:[&_img]:scale-[1.03]";
 
-function CardText({ title, subtitle }: { title: string; subtitle?: string | null }) {
+function CardText({
+  title,
+  subtitle,
+  lines = 1,
+}: {
+  title: string;
+  subtitle?: string | null;
+  lines?: 1 | 2;
+}) {
   return (
     <div className="mt-2 min-w-0">
-      <p className="truncate text-label-md text-on-surface" title={title}>
+      <p
+        className={cn("text-label-md text-on-surface", lines === 2 ? "line-clamp-2" : "truncate")}
+        title={title}
+      >
         {title}
       </p>
       {subtitle && (
@@ -34,13 +47,13 @@ function CardText({ title, subtitle }: { title: string; subtitle?: string | null
 }
 
 /** 2:3 poster (films, series) or 1:1 (albums). */
-export function PosterCard({ item, className, subtitle, priority }: CardProps) {
+export function PosterCard({ item, className, subtitle, priority, href }: CardProps) {
   const title = cardTitle(item);
   const shape: ArtworkShape =
     item.Type === "MusicAlbum" || item.Type === "Audio" ? "square" : "poster";
   const watched = progress(item);
   return (
-    <Link to={itemHref(item)} className={cn(CARD_LINK, className)}>
+    <Link to={href ?? itemHref(item)} className={cn(CARD_LINK, className)}>
       <div className="relative">
         <Artwork
           image={posterImage(item)}
@@ -65,13 +78,14 @@ export function LandscapeCard({
   className,
   subtitle,
   priority,
+  href,
   width = 320,
 }: CardProps & { width?: number }) {
   const title = cardTitle(item);
   const watched = progress(item);
   const artwork = wideArtwork(item);
   return (
-    <Link to={itemHref(item)} className={cn(CARD_LINK, className)}>
+    <Link to={href ?? itemHref(item)} className={cn(CARD_LINK, className)}>
       <div className="relative">
         <Artwork
           image={artwork.image}
@@ -86,7 +100,11 @@ export function LandscapeCard({
           <ProgressBar value={watched} className="absolute inset-x-3 bottom-3" />
         )}
       </div>
-      <CardText title={title} subtitle={subtitle === undefined ? cardSubtitle(item) : subtitle} />
+      <CardText
+        lines={2}
+        title={title}
+        subtitle={subtitle === undefined ? cardSubtitle(item) : subtitle}
+      />
     </Link>
   );
 }

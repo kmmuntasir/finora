@@ -1,65 +1,115 @@
-import { House, Server } from "lucide-react";
+import { House, LayoutGrid, Search, Server, UserRound } from "lucide-react";
+import type { ComponentType, SVGProps } from "react";
 import { NavLink, Outlet } from "react-router";
 import { Logo } from "@/components/Logo";
 import { UserMenu } from "@/features/auth/UserMenu";
+import { useUserViews } from "@/features/home/queries";
+import { viewIcon } from "@/features/library/view-icons";
 import { cn } from "@/lib/cn";
+import { libraryHref } from "@/lib/routes";
 
-/**
- * Minimal Phase 0 shell. The real navigation is designed in the prototype
- * round (docs/ui-plan.md, section 8).
- */
+type Icon = ComponentType<SVGProps<SVGSVGElement>>;
+
+function SidebarLink({
+  to,
+  icon: IconComponent,
+  label,
+  end,
+}: {
+  to: string;
+  icon: Icon;
+  label: string;
+  end?: boolean;
+}) {
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      className={({ isActive }) =>
+        cn(
+          "flex items-center gap-3 rounded-md px-3 py-2 text-label-md transition-colors duration-[120ms]",
+          isActive
+            ? "bg-surface-overlay text-on-surface"
+            : "text-on-surface-muted hover:bg-surface-raised hover:text-on-surface",
+        )
+      }
+    >
+      <IconComponent aria-hidden className="size-5 shrink-0" />
+      <span className="truncate">{label}</span>
+    </NavLink>
+  );
+}
+
+function TabLink({
+  to,
+  icon: IconComponent,
+  label,
+  end,
+}: {
+  to: string;
+  icon: Icon;
+  label: string;
+  end?: boolean;
+}) {
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      className={({ isActive }) =>
+        cn(
+          "flex flex-1 flex-col items-center gap-1 pt-2 pb-1 text-label-sm transition-colors duration-[120ms]",
+          isActive ? "text-on-surface" : "text-on-surface-subtle",
+        )
+      }
+    >
+      <IconComponent aria-hidden className="size-6" />
+      {label}
+    </NavLink>
+  );
+}
+
 export function AppShell() {
+  const { data: views } = useUserViews();
+
   return (
     <div className="min-h-dvh bg-background md:grid md:grid-cols-[var(--spacing-sidebar)_1fr]">
-      <header className="flex items-center justify-between gap-4 border-b border-border px-page-x-mobile py-2 md:hidden">
-        <Logo />
-        <div className="min-w-0 max-w-[60%]">
-          <UserMenu />
-        </div>
-      </header>
-
       <aside className="sticky top-0 hidden h-dvh flex-col border-r border-border bg-surface px-4 py-6 md:flex">
         <Logo className="px-2" />
-        <nav aria-label="Main" className="mt-8 flex flex-col gap-1">
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-label-md transition-colors duration-[120ms]",
-                isActive
-                  ? "bg-surface-overlay text-on-surface"
-                  : "text-on-surface-muted hover:bg-surface-raised hover:text-on-surface",
-              )
-            }
-          >
-            <House aria-hidden className="size-5" />
-            Home
-          </NavLink>
-          <NavLink
-            to="/server"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-label-md transition-colors duration-[120ms]",
-                isActive
-                  ? "bg-surface-overlay text-on-surface"
-                  : "text-on-surface-muted hover:bg-surface-raised hover:text-on-surface",
-              )
-            }
-          >
-            <Server aria-hidden className="size-5" />
-            Server
-          </NavLink>
+        <nav aria-label="Main" className="mt-8 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+          <SidebarLink to="/" end icon={House} label="Home" />
+          <SidebarLink to="/search" icon={Search} label="Search" />
+          <p className="mt-6 mb-1 px-3 text-label-sm text-on-surface-subtle">Libraries</p>
+          {views?.map((view) => (
+            <SidebarLink
+              key={view.Id}
+              to={libraryHref(view)}
+              icon={viewIcon(view.CollectionType)}
+              label={view.Name ?? ""}
+            />
+          ))}
+          <div className="mt-auto pt-6">
+            <SidebarLink to="/server" icon={Server} label="Server" />
+          </div>
         </nav>
-        <div className="mt-auto">
+        <div className="mt-3 border-t border-border pt-3">
           <UserMenu />
-          <p className="mt-3 px-2 text-caption text-on-surface-subtle">Finora {__APP_VERSION__}</p>
+          <p className="mt-2 px-2 text-caption text-on-surface-subtle">Finora {__APP_VERSION__}</p>
         </div>
       </aside>
 
-      <main className="min-w-0">
+      <main className="min-w-0 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
         <Outlet />
       </main>
+
+      <nav
+        aria-label="Main"
+        className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+      >
+        <TabLink to="/" end icon={House} label="Home" />
+        <TabLink to="/search" icon={Search} label="Search" />
+        <TabLink to="/libraries" icon={LayoutGrid} label="Libraries" />
+        <TabLink to="/me" icon={UserRound} label="Me" />
+      </nav>
     </div>
   );
 }

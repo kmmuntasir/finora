@@ -10,6 +10,11 @@ links to the notes that changed.
 
 ## 2026-10-28
 
+- Home layouts kept as a per-user choice saved in Jellyfin display
+  preferences. Phase 2 started: sidebar + phone tab bar, library pages with
+  server-side sort/filters/genres, A–Z rail, virtualised infinite grid, folder
+  navigation. Found and worked around slow folder user data
+  ([api-notes](jellyfin/api-notes.md#slow-user-data-on-some-folders)).
 - **Prototype round, Home:** three variants (A Spotlight hero, B Dashboard,
   C Focus) on real data at `/?v=a|b|c`, awaiting the owner's choice. Shared
   cards, rows, artwork fallbacks and home queries are built for reuse.

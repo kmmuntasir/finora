@@ -48,6 +48,20 @@ Re-verify when the target version changes.
 - Library option `SaveSubtitlesWithMedia` decides whether uploads land beside
   the video or in the metadata folder.
 
+## Slow user data on some folders
+
+- On the reference server, `GET /Items?userId=…&parentId=<Kids Content view>`
+  took 33–50 s, while the same call without `userId`, or with
+  `enableUserData=false`, took ~30 ms. Other folder libraries were fast.
+  Measured 2026-10-28.
+- Cause: computing per-user played state for folder items. Finora lists
+  folder libraries with `enableUserData=false` and then fetches user data
+  only for the playable items in the page (`ids=…`, ~0.2 s).
+- Single-item lookups for folders (`useItemSummary`) also skip user data.
+- `GET /Items/{id}/Ancestors` returns the library's physical root folder
+  (type `Folder`) and `root` (`AggregateFolder`), not the user view, so
+  breadcrumbs drop those.
+
 ## Other verified behaviour
 
 - CORS: responses carry `Access-Control-Allow-Origin: *`, and preflights for
