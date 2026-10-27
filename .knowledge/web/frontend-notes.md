@@ -55,6 +55,22 @@ Facts and gotchas learned while building Finora Web.
 - In development, React StrictMode runs the restore effect twice, so an
   invalid token shows two 401s in the console; this is expected.
 
+## Artwork and home data
+
+- Image endpoints (`/Items/{id}/Images/{type}?tag=&maxWidth=`) need no
+  authentication; the tag makes URLs cacheable.
+- Fallback order for 16:9 frames mirrors Jellyfin: Thumb / Backdrop (own,
+  then parent), otherwise the **Primary** image — the poster, or for videos
+  without one the frame Jellyfin extracted at indexing — shown letterboxed on
+  a blurred copy instead of a placeholder (`wideArtwork` in
+  `web/src/api/images.ts`). Owner feedback, 2026-10-28.
+- On the reference server every item has a Primary image; many Bangla films
+  have no backdrop or logo, and episodes have no own backdrop.
+- `/Items/Latest` on a music library returns individual tracks; Finora queries
+  `MusicAlbum` items sorted by `DateCreated` instead.
+- Next Up includes episodes already in Continue Watching; Finora removes
+  those duplicates.
+
 ## Verified against the reference server
 
 - A dev server on `http://127.0.0.1:5173` reads public server info from

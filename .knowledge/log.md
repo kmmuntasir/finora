@@ -10,6 +10,9 @@ links to the notes that changed.
 
 ## 2026-10-28
 
+- **Prototype round, Home:** three variants (A Spotlight hero, B Dashboard,
+  C Focus) on real data at `/?v=a|b|c`, awaiting the owner's choice. Shared
+  cards, rows, artwork fallbacks and home queries are built for reuse.
 - **Phase 1 (sign-in) built.** Password login, Quick Connect, remember-me
   (localStorage vs sessionStorage), session restore via `/Users/Me`, 401 →
   "session ended", sign-out, route guards. Verified in a browser: guard

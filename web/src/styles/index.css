@@ -25,6 +25,12 @@
   font-display: swap;
 }
 
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
 @layer base {
   html {
     background-color: var(--fin-background);

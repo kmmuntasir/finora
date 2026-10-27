@@ -2,7 +2,8 @@ import { createBrowserRouter } from "react-router";
 import { RedirectIfSignedIn, RequireAuth } from "@/features/auth/guards";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { AppShell } from "./AppShell";
-import { HomePage } from "./HomePage";
+import { HomePrototype } from "@/features/home/HomePrototype";
+import { ServerPage } from "./ServerPage";
 import { NotFoundPage } from "./NotFoundPage";
 
 export const router = createBrowserRouter([
@@ -15,7 +16,10 @@ export const router = createBrowserRouter([
     children: [
       {
         element: <AppShell />,
-        children: [{ index: true, element: <HomePage /> }],
+        children: [
+          { index: true, element: <HomePrototype /> },
+          { path: "server", element: <ServerPage /> },
+        ],
       },
     ],
   },

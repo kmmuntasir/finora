@@ -1,4 +1,4 @@
-import { House } from "lucide-react";
+import { House, Server } from "lucide-react";
 import { NavLink, Outlet } from "react-router";
 import { Logo } from "@/components/Logo";
 import { UserMenu } from "@/features/auth/UserMenu";
@@ -36,6 +36,20 @@ export function AppShell() {
             <House aria-hidden className="size-5" />
             Home
           </NavLink>
+          <NavLink
+            to="/server"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-label-md transition-colors duration-[120ms]",
+                isActive
+                  ? "bg-surface-overlay text-on-surface"
+                  : "text-on-surface-muted hover:bg-surface-raised hover:text-on-surface",
+              )
+            }
+          >
+            <Server aria-hidden className="size-5" />
+            Server
+          </NavLink>
         </nav>
         <div className="mt-auto">
           <UserMenu />
@@ -43,7 +57,7 @@ export function AppShell() {
         </div>
       </aside>
 
-      <main className="min-w-0 px-page-x-mobile py-6 md:px-page-x md:py-8">
+      <main className="min-w-0">
         <Outlet />
       </main>
     </div>

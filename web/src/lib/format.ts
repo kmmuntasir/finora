@@ -1,0 +1,68 @@
+import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+
+const TICKS_PER_MINUTE = 600_000_000;
+
+export function formatMinutes(totalMinutes: number): string {
+  const minutes = Math.max(0, Math.round(totalMinutes));
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest ? `${hours} h ${rest} min` : `${hours} h`;
+}
+
+export function runtime(item: BaseItemDto): string | null {
+  return item.RunTimeTicks ? formatMinutes(item.RunTimeTicks / TICKS_PER_MINUTE) : null;
+}
+
+/** "32 min left" for partially watched items. */
+export function timeLeft(item: BaseItemDto): string | null {
+  const total = item.RunTimeTicks;
+  const position = item.UserData?.PlaybackPositionTicks;
+  if (!total || !position) return null;
+  return `${formatMinutes((total - position) / TICKS_PER_MINUTE)} left`;
+}
+
+/** Watched fraction between 0 and 1, or null when not started. */
+export function progress(item: BaseItemDto): number | null {
+  const percentage = item.UserData?.PlayedPercentage;
+  if (!percentage || percentage <= 0) return null;
+  return Math.min(1, percentage / 100);
+}
+
+/** "S2:E5" for episodes. */
+export function episodeCode(item: BaseItemDto): string | null {
+  if (item.Type !== "Episode") return null;
+  const season = item.ParentIndexNumber;
+  const episode = item.IndexNumber;
+  if (season == null || episode == null) return null;
+  return `S${season}:E${episode}`;
+}
+
+/** Card title: series name for episodes, item name otherwise. */
+export function cardTitle(item: BaseItemDto): string {
+  return (item.Type === "Episode" ? item.SeriesName : item.Name) ?? item.Name ?? "Untitled";
+}
+
+/** Secondary line for cards. */
+export function cardSubtitle(item: BaseItemDto): string | null {
+  if (item.Type === "Episode") {
+    const code = episodeCode(item);
+    return [code, item.Name].filter(Boolean).join(" · ") || null;
+  }
+  if (item.Type === "MusicAlbum") return item.AlbumArtist ?? null;
+  if (item.Type === "Series") {
+    const start = item.ProductionYear;
+    if (!start) return null;
+    return item.Status === "Continuing" ? `${start}–` : String(start);
+  }
+  return item.ProductionYear ? String(item.ProductionYear) : null;
+}
+
+/** Second line for Continue Watching: episode code and time left. */
+export function continueSubtitle(item: BaseItemDto): string | null {
+  return (
+    [item.Type === "Episode" ? cardSubtitle(item) : null, timeLeft(item)]
+      .filter(Boolean)
+      .join(" · ") || null
+  );
+}
