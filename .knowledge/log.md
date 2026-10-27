@@ -10,6 +10,10 @@ links to the notes that changed.
 
 ## 2026-10-28
 
+- **Tier 2 complete** (overnight, unattended). Interface translation is
+  deferred to Tier 3 ([decision 0008](decisions/0008-display-language.md)).
+  The local dev config points at the reference server again, and the
+  sandbox container is stopped (`docker start finora-sandbox-jf` restarts it).
 - **Tier 2, overnight run (unattended).** Writes are tested against a
   throwaway local Jellyfin 10.11.11 in Docker with generated test media, so
   the family server stays read-only

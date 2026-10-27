@@ -23,5 +23,9 @@ metadata edits, user policies), so the reference server stays read-only.
 - Online metadata works: "Comedy Night (2015)" was matched to a real comedy
   festival, and "Identify" can turn a test movie into a real title.
 
+Start and stop it with `docker start finora-sandbox-jf` and
+`docker stop finora-sandbox-jf`. Extra test files: a video with chapters and
+an MKV with a styled ASS track and an attached font.
+
 Recreate from scratch: `docker rm -f finora-sandbox-jf`, delete
 `../finora-sandbox/config`, then repeat the steps above.

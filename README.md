@@ -14,23 +14,36 @@ never stores your media.
 
 ## Features
 
-- **Browse everything:** home with Continue Watching, Next Up and Recently
-  Added (three layouts to choose from), every library type including folder
-  libraries, rich detail pages, cast pages, genre and studio pages, and fast
-  search across all libraries.
+- **Browse everything:** home with Continue Watching, Next Up, Continue
+  Listening and Recently Added (three layouts, rows you can reorder or
+  hide), every library type including folder libraries, poster, thumbnail
+  and list views, filters (genre, year, rating, resolution, studio, tag,
+  features), multi-select with bulk actions, movie suggestions, upcoming
+  episodes, rich detail pages with trailers, and search with suggestions.
+- **Playlists and collections:** add from any item or a selection, reorder
+  by dragging, rename, and remove.
 - **Video player:** plays files untouched whenever the browser can (important
   on servers without hardware transcoding), falls back to HLS when needed,
-  audio and subtitle switching, seek-bar thumbnails, chapters, skip intro,
-  next-episode autoplay, keyboard shortcuts and media keys.
+  audio and subtitle switching, styled ASS/SSA subtitles, subtitle size,
+  colour and timing, seek-bar thumbnails, a chapter menu, skip intro
+  (button or automatic), next-episode autoplay, keyboard shortcuts and
+  media keys.
 - **Music:** persistent player with a queue (reorder, play next, shuffle,
   repeat), full-screen now playing, synced lyrics and Instant Mix.
 - **Subtitle finder:** search Addic7ed, SubDL and OpenSubtitles from any
   movie or episode; the subtitle is stored beside the video in Jellyfin and
   is usable immediately.
-- **Admin console:** users, library access, permissions, active sessions,
-  library scans and site-wide announcements.
-- **Settings:** languages, subtitle mode, streaming quality, theme
-  (dark/light), profile picture, password and Quick Connect.
+- **Admin console:** users, library access, permissions, parental controls,
+  viewing times, stream and bitrate limits, devices, Quick Connect for a
+  user, active sessions, library scans, site-wide announcements, and
+  metadata, image and identify tools on every detail page.
+- **Settings:** languages, subtitle mode and appearance, streaming quality,
+  theme (dark/light), date format, home rows and libraries, profile
+  picture, password and Quick Connect.
+- **Sign-in:** password, Quick Connect, a user picker with avatars, PIN
+  password reset, and Google sign-in for admins.
+- **Installable:** add Finora to a phone or desktop as an app when it is
+  served over HTTPS.
 
 ## How it fits together
 
