@@ -1,8 +1,13 @@
 import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
 import {
+  FEATURES,
   FILTERS,
   RESOLUTIONS,
+  VIEW_MODES,
+  type Feature,
+  type SeriesStatus,
+  type ViewMode,
   SORTS,
   type FilterKey,
   type LibraryKind,
@@ -20,6 +25,12 @@ export interface LibraryState {
   rating: string | null;
   resolution: Resolution | null;
   subtitles: boolean;
+  tag: string | null;
+  /** Studio ID. */
+  studio: string | null;
+  features: Feature[];
+  status: SeriesStatus | null;
+  view: ViewMode;
   letter: string | null;
   /** Folder being browsed inside a folder library. */
   parent: string | null;
@@ -65,6 +76,18 @@ export function useLibraryState(libraryId: string, kind: LibraryKind) {
       resolution:
         (params.get("res") ?? "") in RESOLUTIONS ? (params.get("res") as Resolution) : null,
       subtitles: params.get("subs") === "1",
+      tag: params.get("tag"),
+      studio: params.get("studio"),
+      features: (params.get("features")?.split(",") ?? []).filter(
+        (feature): feature is Feature => feature in FEATURES,
+      ),
+      status:
+        params.get("status") === "Continuing" || params.get("status") === "Ended"
+          ? (params.get("status") as SeriesStatus)
+          : null,
+      view: ((params.get("view") ?? saved.view ?? "grid") in VIEW_MODES
+        ? (params.get("view") ?? saved.view ?? "grid")
+        : "grid") as ViewMode,
       letter: params.get("letter"),
       parent: params.get("parent"),
     };
@@ -73,12 +96,17 @@ export function useLibraryState(libraryId: string, kind: LibraryKind) {
   const update = useCallback(
     (changes: Partial<LibraryState>) => {
       const next = { ...state, ...changes };
-      // Changing anything except the letter resets the letter jump.
-      if (!("letter" in changes)) next.letter = null;
+      // Changing anything except the letter (or the view) resets the letter jump.
+      if (!("letter" in changes) && !("view" in changes)) next.letter = null;
       if (next.sort !== "name") next.letter = null;
       window.localStorage.setItem(
         storageKey(libraryId),
-        JSON.stringify({ sort: next.sort, reversed: next.reversed, filters: next.filters }),
+        JSON.stringify({
+          sort: next.sort,
+          reversed: next.reversed,
+          filters: next.filters,
+          view: next.view,
+        }),
       );
       const search = new URLSearchParams();
       search.set("sort", next.sort);
@@ -89,6 +117,11 @@ export function useLibraryState(libraryId: string, kind: LibraryKind) {
       if (next.rating) search.set("rating", next.rating);
       if (next.resolution) search.set("res", next.resolution);
       if (next.subtitles) search.set("subs", "1");
+      if (next.tag) search.set("tag", next.tag);
+      if (next.studio) search.set("studio", next.studio);
+      if (next.features.length) search.set("features", next.features.join(","));
+      if (next.status) search.set("status", next.status);
+      if (next.view !== "grid") search.set("view", next.view);
       if (next.letter) search.set("letter", next.letter);
       if (next.parent) search.set("parent", next.parent);
       setParams(search, { replace: !("parent" in changes) });

@@ -46,10 +46,29 @@ export interface LibraryKind {
   defaultSort: SortKey;
   filters: FilterKey[];
   genres: boolean;
-  /** Year, age rating, resolution and subtitle filters (video libraries). */
+  /** Year, age rating, resolution, subtitle, tag, studio and feature filters (video libraries). */
   advancedFilters: boolean;
+  /** Continuing / ended filter (TV). */
+  seriesStatus?: boolean;
   noun: { one: string; many: string };
 }
+
+export type ViewMode = "grid" | "thumbs" | "list";
+export const VIEW_MODES: Record<ViewMode, string> = {
+  grid: "Posters",
+  thumbs: "Thumbnails",
+  list: "List",
+};
+
+/** Item-query flags; Jellyfin 10.11 has no HDR filter. */
+export type Feature = "3d" | "trailer" | "extras";
+export const FEATURES: Record<Feature, string> = {
+  "3d": "3D",
+  trailer: "Has a trailer",
+  extras: "Has extras",
+};
+
+export type SeriesStatus = "Continuing" | "Ended";
 
 export type Resolution = "sd" | "hd" | "4k";
 export const RESOLUTIONS: Record<Resolution, string> = { sd: "SD", hd: "HD", "4k": "4K" };
@@ -77,6 +96,7 @@ export const LIBRARY_KINDS: Record<string, LibraryKind> = {
     filters: ["unplayed", "played", "favorite"],
     genres: true,
     advancedFilters: true,
+    seriesStatus: true,
     noun: { one: "show", many: "shows" },
   },
   music: {

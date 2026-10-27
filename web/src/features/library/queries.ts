@@ -9,6 +9,7 @@ import { getFilterApi } from "@jellyfin/sdk/lib/utils/api/filter-api";
 import { getGenresApi } from "@jellyfin/sdk/lib/utils/api/genres-api";
 import { getItemsApi } from "@jellyfin/sdk/lib/utils/api/items-api";
 import { getLibraryApi } from "@jellyfin/sdk/lib/utils/api/library-api";
+import { getStudiosApi } from "@jellyfin/sdk/lib/utils/api/studios-api";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useSession } from "@/features/auth/context";
 import { SORTS, type FilterKey, type LibraryKind } from "./library-config";
@@ -33,8 +34,10 @@ export function useLibraryItems(view: BaseItemDto, kind: LibraryKind, state: Lib
   const sort = SORTS[state.sort];
   const letter = state.letter;
 
+  // The view mode changes presentation only; keep it out of the cache key.
+  const { view: _mode, ...query } = state;
   return useInfiniteQuery({
-    queryKey: ["library-items", user.Id, view.Id, state],
+    queryKey: ["library-items", user.Id, view.Id, query],
     initialPageParam: 0,
     queryFn: async ({ pageParam, signal }) => {
       const { data } = await getItemsApi(api).getItems(
@@ -57,9 +60,20 @@ export function useLibraryItems(view: BaseItemDto, kind: LibraryKind, state: Lib
           // Jellyfin 10.11 ignores resolution filters when hasSubtitles is set,
           // so the toolbar never sends both (see .knowledge/jellyfin/api-notes.md).
           hasSubtitles: state.subtitles && !state.resolution ? true : undefined,
+          tags: state.tag ? [state.tag] : undefined,
+          studioIds: state.studio ? [state.studio] : undefined,
+          is3D: state.features.includes("3d") ? true : undefined,
+          hasTrailer: state.features.includes("trailer") ? true : undefined,
+          hasSpecialFeature: state.features.includes("extras") ? true : undefined,
+          seriesStatus: state.status ? [state.status] : undefined,
           nameStartsWith: letter && letter !== "#" ? letter : undefined,
           nameLessThan: letter === "#" ? "A" : undefined,
-          fields: [ItemFields.PrimaryImageAspectRatio, ItemFields.ChildCount],
+          fields: [
+            ItemFields.PrimaryImageAspectRatio,
+            ItemFields.ChildCount,
+            ItemFields.Genres,
+            ItemFields.Overview,
+          ],
           // Jellyfin can take tens of seconds computing user data for folders
           // (see .knowledge/jellyfin/api-notes.md); folder listings fetch it
           // separately for playable items only.
@@ -112,6 +126,7 @@ export function useLibraryFilterValues(view: BaseItemDto, kind: LibraryKind) {
       return {
         years: [...(data.Years ?? [])].sort((a, b) => b - a),
         ratings: [...(data.OfficialRatings ?? [])].sort(),
+        tags: [...(data.Tags ?? [])].sort((a, b) => a.localeCompare(b)),
       };
     },
     enabled: kind.advancedFilters,
@@ -165,5 +180,31 @@ export function useItemSummary(itemId: string | null | undefined) {
         )
       ).data.Items?.[0] ?? null,
     enabled: Boolean(itemId),
+  });
+}
+
+/**
+ * Studios in this library. Jellyfin 10.11 returns no studios at all when
+ * `userId` is sent (StudiosController.cs:95 builds a user-scoped query that
+ * matches nothing), so this asks without it. Only names come back; the items
+ * themselves are still filtered for the user.
+ */
+export function useStudios(view: BaseItemDto, kind: LibraryKind) {
+  const { api, user } = useSession();
+  return useQuery({
+    queryKey: ["studios", user.Id, view.Id],
+    queryFn: async ({ signal }) =>
+      (
+        await getStudiosApi(api).getStudios(
+          {
+            parentId: view.Id,
+            includeItemTypes: kind.itemTypes ?? undefined,
+            enableImages: false,
+          },
+          { signal },
+        )
+      ).data.Items ?? [],
+    enabled: kind.advancedFilters,
+    staleTime: 10 * 60 * 1000,
   });
 }

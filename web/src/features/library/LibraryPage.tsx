@@ -1,7 +1,7 @@
 import { formatNumber } from "@/lib/format";
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { ChevronRight } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { PlayButton } from "@/components/media/PlayButton";
 import { Button } from "@/components/Button";
@@ -12,12 +12,14 @@ import { ItemGrid } from "./ItemGrid";
 import { libraryKind, type LibraryKind } from "./library-config";
 import { useLibraryState } from "./library-state";
 import { LibraryToolbar } from "./LibraryToolbar";
+import { SelectionBar } from "./SelectionBar";
 import {
   useAncestors,
   useGenres,
   useItemSummary,
   useLibraryFilterValues,
   useLibraryItems,
+  useStudios,
 } from "./queries";
 
 export function LibraryPage() {
@@ -52,6 +54,24 @@ function Library({ view, kind }: { view: BaseItemDto; kind: LibraryKind }) {
   const items = useLibraryItems(view, kind, state);
   const genres = useGenres(view, kind);
   const filterValues = useLibraryFilterValues(view, kind);
+  const studios = useStudios(view, kind);
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<Map<string, BaseItemDto>>(() => new Map());
+  const stopSelecting = () => {
+    setSelecting(false);
+    setSelected(new Map());
+  };
+  useEffect(() => {
+    if (!selecting) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSelecting(false);
+        setSelected(new Map());
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selecting]);
 
   const list = useMemo(
     () => items.data?.pages.flatMap((page) => page.Items ?? []) ?? [],
@@ -65,7 +85,11 @@ function Library({ view, kind }: { view: BaseItemDto; kind: LibraryKind }) {
     state.year !== null ||
     state.rating !== null ||
     state.resolution !== null ||
-    state.subtitles;
+    state.subtitles ||
+    state.tag !== null ||
+    state.studio !== null ||
+    state.status !== null ||
+    state.features.length > 0;
   const showRail = state.sort === "name" && kind.recursive;
 
   return (
@@ -98,6 +122,12 @@ function Library({ view, kind }: { view: BaseItemDto; kind: LibraryKind }) {
               .filter((name): name is string => Boolean(name))}
             years={filterValues.data?.years ?? []}
             ratings={filterValues.data?.ratings ?? []}
+            tags={filterValues.data?.tags ?? []}
+            studios={(studios.data ?? [])
+              .filter((studio) => studio.Id && studio.Name)
+              .map((studio) => ({ id: studio.Id!, name: studio.Name! }))}
+            selecting={selecting}
+            onToggleSelecting={() => (selecting ? stopSelecting() : setSelecting(true))}
           />
         </div>
         {showRail && (
@@ -136,6 +166,10 @@ function Library({ view, kind }: { view: BaseItemDto; kind: LibraryKind }) {
                       rating: null,
                       resolution: null,
                       subtitles: false,
+                      tag: null,
+                      studio: null,
+                      status: null,
+                      features: [],
                     })
                   }
                 >
@@ -147,6 +181,21 @@ function Library({ view, kind }: { view: BaseItemDto; kind: LibraryKind }) {
             <ItemGrid
               items={list}
               shape={kind.shape}
+              mode={state.view}
+              selection={
+                selecting
+                  ? {
+                      ids: new Set(selected.keys()),
+                      toggle: (item) =>
+                        setSelected((current) => {
+                          const next = new Map(current);
+                          if (next.has(item.Id!)) next.delete(item.Id!);
+                          else next.set(item.Id!, item);
+                          return next;
+                        }),
+                    }
+                  : undefined
+              }
               hasMore={Boolean(items.hasNextPage) && !items.isFetchingNextPage}
               onLoadMore={() => void items.fetchNextPage()}
               folderHref={kind.recursive ? undefined : (item) => folderHref(view, item)}
@@ -156,6 +205,13 @@ function Library({ view, kind }: { view: BaseItemDto; kind: LibraryKind }) {
             <Spinner className="mt-8 flex justify-center" label="Loading more" />
           )}
         </div>
+        {selecting && (
+          <SelectionBar
+            items={[...selected.values()]}
+            onClear={() => setSelected(new Map())}
+            onDone={stopSelecting}
+          />
+        )}
         {showRail && (
           <div className="hidden lg:block">
             <AlphabetRail active={state.letter} onSelect={(letter) => update({ letter })} />

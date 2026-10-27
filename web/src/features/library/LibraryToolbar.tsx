@@ -1,15 +1,28 @@
-import { ArrowDownUp, Check, ChevronDown } from "lucide-react";
+import {
+  ArrowDownUp,
+  Check,
+  CheckSquare,
+  ChevronDown,
+  LayoutGrid,
+  List,
+  RectangleHorizontal,
+} from "lucide-react";
 import { DropdownMenu } from "radix-ui";
 import { MENU_CONTENT, MENU_ITEM } from "@/components/menu";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import {
+  FEATURES,
   FILTERS,
   RESOLUTIONS,
   SORTS,
+  VIEW_MODES,
+  type Feature,
   type LibraryKind,
   type Resolution,
+  type SeriesStatus,
   type SortKey,
+  type ViewMode,
 } from "./library-config";
 import type { LibraryState } from "./library-state";
 
@@ -20,7 +33,17 @@ interface LibraryToolbarProps {
   genres: string[];
   years: number[];
   ratings: string[];
+  tags: string[];
+  studios: { id: string; name: string }[];
+  selecting: boolean;
+  onToggleSelecting: () => void;
 }
+
+const VIEW_ICONS: Record<ViewMode, typeof List> = {
+  grid: LayoutGrid,
+  thumbs: RectangleHorizontal,
+  list: List,
+};
 
 /** A dropdown with an "Any" choice for one optional filter value. */
 function ChoiceMenu({
@@ -95,9 +118,42 @@ export function LibraryToolbar({
   genres,
   years,
   ratings,
+  tags,
+  studios,
+  selecting,
+  onToggleSelecting,
 }: LibraryToolbarProps) {
   return (
     <div className="flex flex-wrap items-center gap-2">
+      <div
+        role="radiogroup"
+        aria-label="View"
+        className="flex rounded-full bg-surface-raised p-0.5"
+      >
+        {(Object.keys(VIEW_MODES) as ViewMode[]).map((mode) => {
+          const Icon = VIEW_ICONS[mode];
+          return (
+            <button
+              key={mode}
+              type="button"
+              role="radio"
+              aria-checked={state.view === mode}
+              aria-label={VIEW_MODES[mode]}
+              title={VIEW_MODES[mode]}
+              onClick={() => update({ view: mode })}
+              className={cn(
+                "grid h-8 w-9 place-items-center rounded-full transition-colors duration-[120ms]",
+                state.view === mode
+                  ? "bg-surface-overlay text-on-surface"
+                  : "text-on-surface-muted hover:text-on-surface",
+              )}
+            >
+              <Icon aria-hidden className="size-4" />
+            </button>
+          );
+        })}
+      </div>
+
       <DropdownMenu.Root>
         <MenuButton>
           <ArrowDownUp aria-hidden className="size-4" />
@@ -184,6 +240,60 @@ export function LibraryToolbar({
               update({ resolution: resolution as Resolution | null, subtitles: false })
             }
           />
+          <ChoiceMenu
+            label="Studio"
+            value={state.studio}
+            options={studios.map((studio) => ({ value: studio.id, label: studio.name }))}
+            onChange={(studio) => update({ studio })}
+          />
+          <ChoiceMenu
+            label="Tag"
+            value={state.tag}
+            options={tags.map((tag) => ({ value: tag, label: tag }))}
+            onChange={(tag) => update({ tag })}
+          />
+          {kind.seriesStatus && (
+            <ChoiceMenu
+              label="Status"
+              value={state.status}
+              options={[
+                { value: "Continuing", label: "Continuing" },
+                { value: "Ended", label: "Ended" },
+              ]}
+              onChange={(status) => update({ status: status as SeriesStatus | null })}
+            />
+          )}
+          <DropdownMenu.Root>
+            <MenuButton active={state.features.length > 0}>
+              {state.features.length === 1
+                ? FEATURES[state.features[0]!]
+                : state.features.length > 1
+                  ? `${state.features.length} features`
+                  : "Features"}
+            </MenuButton>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content align="start" sideOffset={6} className={MENU_CONTENT}>
+                {(Object.keys(FEATURES) as Feature[]).map((feature) => (
+                  <DropdownMenu.CheckboxItem
+                    key={feature}
+                    checked={state.features.includes(feature)}
+                    onSelect={(event) => event.preventDefault()}
+                    onCheckedChange={(on) =>
+                      update({
+                        features: on
+                          ? [...state.features, feature]
+                          : state.features.filter((other) => other !== feature),
+                      })
+                    }
+                    className={MENU_ITEM}
+                  >
+                    <Indicator />
+                    {FEATURES[feature]}
+                  </DropdownMenu.CheckboxItem>
+                ))}
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
         </>
       )}
 
@@ -236,6 +346,20 @@ export function LibraryToolbar({
           Has subtitles
         </button>
       )}
+      <button
+        type="button"
+        aria-pressed={selecting}
+        onClick={onToggleSelecting}
+        className={cn(
+          "ml-auto inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-label-md transition-colors duration-[120ms]",
+          selecting
+            ? "bg-primary text-on-primary hover:bg-primary-hover"
+            : "bg-surface-raised text-on-surface-muted hover:bg-surface-overlay hover:text-on-surface",
+        )}
+      >
+        <CheckSquare aria-hidden className="size-4" />
+        {selecting ? "Done" : "Select"}
+      </button>
     </div>
   );
 }

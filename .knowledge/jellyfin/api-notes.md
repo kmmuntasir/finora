@@ -71,6 +71,14 @@ Re-verify when the target version changes.
 
 ## Item query filters
 
+- `GET /Studios?userId=…` returns nothing in 10.11.11: passing `userId`
+  builds a user-scoped query that matches no studio
+  (`Jellyfin.Api/Controllers/StudiosController.cs:95`). Without `userId` it
+  works, also with a user token. Studio entities only exist after a library
+  scan has run since the metadata was fetched.
+- `/Items` has `tags`, `studioIds`, `is3D`, `hasTrailer`,
+  `hasSpecialFeature` and `seriesStatus` filters, but no HDR filter.
+
 - `isHd=true` means HD **excluding** 4K; `isHd=false` means SD; `is4K=true`
   means 4K (`BaseItemRepository` resolution filter, 10.11.11).
 - **Bug (10.11.11):** combining `hasSubtitles` with `isHd`/`is4K` drops the
