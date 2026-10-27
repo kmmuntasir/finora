@@ -6,7 +6,7 @@ import { Artwork } from "@/components/media/Artwork";
 import { ProgressBar } from "@/components/media/ProgressBar";
 import { Spinner } from "@/components/Spinner";
 import { cn } from "@/lib/cn";
-import { progress, runtime } from "@/lib/format";
+import { formatDate, progress, runtime } from "@/lib/format";
 import { itemHref } from "@/lib/routes";
 import { useEpisodes } from "./queries";
 
@@ -89,9 +89,7 @@ export function SeasonEpisodes({ series, seasons, seasonId, onSeasonChange }: Se
                     <p className="mt-0.5 text-caption text-on-surface-muted">
                       {[
                         runtime(episode),
-                        episode.PremiereDate
-                          ? new Date(episode.PremiereDate).toLocaleDateString()
-                          : null,
+                        episode.PremiereDate ? formatDate(episode.PremiereDate) : null,
                       ]
                         .filter(Boolean)
                         .join(" · ")}

@@ -1,3 +1,4 @@
+import { formatNumber } from "@/lib/format";
 import {
   BaseItemKind,
   ItemFields,
@@ -65,7 +66,7 @@ export function BrowsePage() {
       <p className="text-label-md text-on-surface-muted">{facet ? FACET_LABEL[facet] : "Browse"}</p>
       <h1 className="text-headline-lg">{value ?? "Nothing selected"}</h1>
       {query.data && (
-        <p className="mt-1 text-body-sm text-on-surface-muted">{total.toLocaleString()} titles</p>
+        <p className="mt-1 text-body-sm text-on-surface-muted">{formatNumber(total)} titles</p>
       )}
       <div className="mt-6">
         {query.isPending && facet ? (

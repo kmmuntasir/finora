@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { cardSubtitle, cardTitle, formatMinutes, progress, timeLeft } from "./format";
+import {
+  cardSubtitle,
+  cardTitle,
+  formatDate,
+  formatMinutes,
+  progress,
+  setDisplayLocale,
+  timeLeft,
+} from "./format";
 
 describe("format", () => {
   it("formats minutes", () => {
@@ -40,5 +48,16 @@ describe("relativeTime", () => {
     expect(relativeTime("2026-10-28T11:59:40Z", now)).toBe("Just now");
     expect(relativeTime("2026-10-28T09:00:00Z", now)).toMatch(/3 hours ago/);
     expect(relativeTime(null, now)).toBe("Never");
+  });
+});
+
+describe("formatDate", () => {
+  it("uses the chosen locale", () => {
+    setDisplayLocale("en-GB");
+    expect(formatDate("2026-10-28T12:00:00Z")).toBe("28 Oct 2026");
+    setDisplayLocale("en-US");
+    expect(formatDate("2026-10-28T12:00:00Z")).toBe("Oct 28, 2026");
+    setDisplayLocale("auto");
+    expect(formatDate(null)).toBe("");
   });
 });

@@ -1,3 +1,4 @@
+import { formatNumber } from "@/lib/format";
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { ChevronRight } from "lucide-react";
 import { useMemo } from "react";
@@ -82,7 +83,7 @@ function Library({ view, kind }: { view: BaseItemDto; kind: LibraryKind }) {
         <p className="mt-1 text-body-sm text-on-surface-muted" aria-live="polite">
           {items.isPending
             ? " "
-            : `${total.toLocaleString()} ${total === 1 ? kind.noun.one : kind.noun.many}`}
+            : `${formatNumber(total)} ${total === 1 ? kind.noun.one : kind.noun.many}`}
         </p>
         {!kind.recursive && list.some((item) => item.MediaType === "Video") && (
           <PlayAll items={list} />

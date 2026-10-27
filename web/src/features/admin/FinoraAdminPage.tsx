@@ -9,6 +9,7 @@ import { TextField } from "@/components/TextField";
 import { useRuntimeConfig } from "@/config/context";
 import type { Announcement } from "@/features/announcements/AnnouncementBanner";
 import { useSession } from "@/features/auth/context";
+import { formatDate } from "@/lib/format";
 import { useUsers } from "./queries";
 
 interface ApiSettings {
@@ -538,15 +539,13 @@ function SubtitleSettingsFields({
   );
 }
 
-const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
-
 /** OpenSubtitles deletes keys that download nothing for 60 days; Finora tracks the last download. */
 function OpenSubtitlesStatus({ activity }: { activity: OpenSubtitlesActivity }) {
   const last = activity.lastDownload
-    ? `Last download through Finora: ${dateFormat.format(new Date(activity.lastDownload))}.`
+    ? `Last download through Finora: ${formatDate(activity.lastDownload)}.`
     : "No download through Finora yet.";
   const purge = activity.purgeAfter
-    ? ` OpenSubtitles deletes keys with no downloads for 60 days — download a subtitle before ${dateFormat.format(new Date(activity.purgeAfter))} to keep this one.`
+    ? ` OpenSubtitles deletes keys with no downloads for 60 days — download a subtitle before ${formatDate(activity.purgeAfter)} to keep this one.`
     : " OpenSubtitles deletes keys with no downloads for 60 days.";
   const quota = activity.remaining !== null ? ` ${activity.remaining} downloads left today.` : "";
   return (
@@ -731,10 +730,10 @@ function Announcements() {
                 <p className="mt-1 text-caption text-on-surface-muted">
                   {announcement.tone} ·{" "}
                   {announcement.startsAt
-                    ? `from ${new Date(announcement.startsAt).toLocaleString()}`
+                    ? `from ${formatDate(announcement.startsAt, "datetime")}`
                     : "now"}
                   {announcement.endsAt
-                    ? ` until ${new Date(announcement.endsAt).toLocaleString()}`
+                    ? ` until ${formatDate(announcement.endsAt, "datetime")}`
                     : " until removed"}
                 </p>
               </div>

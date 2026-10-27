@@ -8,3 +8,12 @@ describe("parsePreferences", () => {
     expect(parsePreferences(null).homeLayout).toBe("spotlight");
   });
 });
+
+describe("parsePreferences (other keys)", () => {
+  it("keeps valid choices and drops invalid ones", () => {
+    const parsed = parsePreferences({ subtitleSize: "large", skipSegments: "sideways" });
+    expect(parsed.subtitleSize).toBe("large");
+    expect(parsed.skipSegments).toBe("button");
+    expect(parsed.dateLocale).toBe("auto");
+  });
+});

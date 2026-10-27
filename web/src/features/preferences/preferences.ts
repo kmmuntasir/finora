@@ -5,17 +5,33 @@ import { useSession } from "@/features/auth/context";
 
 /**
  * Finora's per-user preferences, stored in Jellyfin's display preferences
- * (`CustomPrefs`) so they follow the user to every device.
+ * (`CustomPrefs`) so they follow the user to every device. Every value is a
+ * string from a fixed set; anything else falls back to the default.
  */
-export interface FinoraPreferences {
-  homeLayout: HomeLayout;
-}
+const CHOICES = {
+  homeLayout: ["spotlight", "dashboard", "focus"],
+  subtitleSize: ["medium", "small", "large", "xlarge"],
+  subtitleColor: ["white", "yellow"],
+  subtitleBackground: ["box", "shadow", "none"],
+  subtitlePosition: ["bottom", "raised"],
+  skipSegments: ["button", "auto", "off"],
+  /** "auto" follows the browser; otherwise a BCP 47 locale for dates and numbers. */
+  dateLocale: ["auto", "en-US", "en-GB", "bn-BD", "en-IN", "de-DE", "fr-FR", "es-ES", "ja-JP"],
+} as const;
 
-export type HomeLayout = "spotlight" | "dashboard" | "focus";
+type Choices = typeof CHOICES;
+export type FinoraPreferences = { [K in keyof Choices]: Choices[K][number] } & {
+  /** Home sections in display order; a leading "-" hides a section. */
+  homeSections: string;
+};
+export type HomeLayout = FinoraPreferences["homeLayout"];
 
-const HOME_LAYOUTS: readonly HomeLayout[] = ["spotlight", "dashboard", "focus"];
-
-export const DEFAULT_PREFERENCES: FinoraPreferences = { homeLayout: "spotlight" };
+export const DEFAULT_PREFERENCES: FinoraPreferences = {
+  ...(Object.fromEntries(Object.entries(CHOICES).map(([key, values]) => [key, values[0]])) as {
+    [K in keyof Choices]: Choices[K][number];
+  }),
+  homeSections: "",
+};
 
 const PREFERENCES_ID = "finora";
 const CLIENT = "finora";
@@ -24,12 +40,13 @@ const CLIENT = "finora";
 export function parsePreferences(
   custom: Record<string, string | null> | null | undefined,
 ): FinoraPreferences {
-  const homeLayout = custom?.homeLayout;
-  return {
-    homeLayout: HOME_LAYOUTS.includes(homeLayout as HomeLayout)
-      ? (homeLayout as HomeLayout)
-      : DEFAULT_PREFERENCES.homeLayout,
-  };
+  const result: Record<string, string> = { ...DEFAULT_PREFERENCES };
+  for (const [key, values] of Object.entries(CHOICES)) {
+    const value = custom?.[key];
+    if (value && (values as readonly string[]).includes(value)) result[key] = value;
+  }
+  if (typeof custom?.homeSections === "string") result.homeSections = custom.homeSections;
+  return result as FinoraPreferences;
 }
 
 function useDisplayPreferences() {
@@ -52,6 +69,13 @@ export function usePreferences(): { preferences: FinoraPreferences; isLoading: b
   return { preferences: parsePreferences(data?.CustomPrefs), isLoading: isPending };
 }
 
+/**
+ * Saves run one at a time: Jellyfin 10.11 inserts new CustomPrefs keys
+ * without a lock, and two overlapping saves fail with a UNIQUE constraint
+ * error (HTTP 500).
+ */
+let saveQueue: Promise<unknown> = Promise.resolve();
+
 /** Saves preferences with an optimistic update. */
 export function useSetPreference() {
   const { api, user } = useSession();
@@ -59,19 +83,24 @@ export function useSetPreference() {
   const key = ["display-preferences", user.Id, PREFERENCES_ID];
 
   return useMutation({
-    mutationFn: async (changes: Partial<FinoraPreferences>) => {
+    mutationFn: (changes: Partial<FinoraPreferences>) => {
       const current = queryClient.getQueryData<DisplayPreferencesDto>(key) ?? {};
-      const next: DisplayPreferencesDto = {
+      queryClient.setQueryData<DisplayPreferencesDto>(key, {
         ...current,
         CustomPrefs: { ...current.CustomPrefs, ...changes },
-      };
-      queryClient.setQueryData(key, next);
-      await getDisplayPreferencesApi(api).updateDisplayPreferences({
-        displayPreferencesId: PREFERENCES_ID,
-        userId: user.Id,
-        client: CLIENT,
-        displayPreferencesDto: next,
       });
+      const save = saveQueue.then(async () => {
+        // Send the latest state, which includes any changes queued after this one.
+        const latest = queryClient.getQueryData<DisplayPreferencesDto>(key) ?? {};
+        await getDisplayPreferencesApi(api).updateDisplayPreferences({
+          displayPreferencesId: PREFERENCES_ID,
+          userId: user.Id,
+          client: CLIENT,
+          displayPreferencesDto: latest,
+        });
+      });
+      saveQueue = save.catch(() => undefined);
+      return save;
     },
     onError: () => void queryClient.invalidateQueries({ queryKey: key }),
   });

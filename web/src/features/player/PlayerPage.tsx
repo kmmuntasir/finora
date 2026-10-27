@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
+import { toast } from "sonner";
 import { backdropImage, imageUrl, landscapeImage, posterImage } from "@/api/images";
 import { Button } from "@/components/Button";
 import { Spinner } from "@/components/Spinner";
@@ -23,6 +24,7 @@ import { useRuntimeConfig } from "@/config/context";
 import { useSession } from "@/features/auth/context";
 import { useItemDetails } from "@/features/item/queries";
 import { useQueue } from "@/features/music/queue-store";
+import { usePreferences } from "@/features/preferences/preferences";
 import { useItemSubtitles, useSubtitlesEnabled } from "@/features/subtitles/api";
 import { cn } from "@/lib/cn";
 import { episodeCode } from "@/lib/format";
@@ -38,6 +40,7 @@ import { formatClock, readPlayerPreferences, savePlayerPreferences } from "./pla
 import { useNextEpisode, useSegments, type SkippableSegment } from "./queries";
 import { createReporter, type PlaybackSnapshot, type Reporter } from "./reporting";
 import { SeekBar } from "./SeekBar";
+import { adjustCues, offsetLabel } from "./subtitle-timing";
 import { trickplayFrame, trickplayInfo } from "./trickplay";
 
 const TICKS_PER_SECOND = 10_000_000;
@@ -150,6 +153,9 @@ function Player({ item }: { item: BaseItemDto }) {
   const [volume, setVolume] = useState(preferences.volume);
   const [muted, setMuted] = useState(preferences.muted);
   const [speed, setSpeed] = useState(1);
+  const { preferences: finoraPrefs } = usePreferences();
+  const [subtitleOffset, setSubtitleOffset] = useState(0);
+  const subtitleRaised = finoraPrefs.subtitlePosition === "raised";
   const [autoplayNext, setAutoplayNext] = useState(
     preferences.autoplayNext && (user.Configuration?.EnableNextEpisodeAutoPlay ?? true),
   );
@@ -297,6 +303,34 @@ function Player({ item }: { item: BaseItemDto }) {
     }
   }, [subtitleIndex, source, tracks]);
 
+  // Subtitle timing and position. Cues load asynchronously, so this also
+  // runs from each <track>'s load event (applyCueAdjustments below).
+  const applyCueAdjustments = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    for (let i = 0; i < video.textTracks.length; i++) {
+      adjustCues(
+        video.textTracks[i]!.cues as ArrayLike<VTTCue> | null,
+        subtitleOffset,
+        subtitleRaised,
+      );
+    }
+  }, [subtitleOffset, subtitleRaised]);
+  useEffect(() => {
+    applyCueAdjustments();
+    const video = videoRef.current;
+    if (!video) return;
+    // React doesn't forward <track> load events, so listen natively.
+    video.addEventListener("load", applyCueAdjustments, true);
+    return () => video.removeEventListener("load", applyCueAdjustments, true);
+  }, [applyCueAdjustments, subtitleIndex]);
+
+  const changeSubtitleOffset = useCallback((value: number) => {
+    const rounded = Math.round(value * 100) / 100;
+    setSubtitleOffset(rounded);
+    toast(`Subtitle timing: ${offsetLabel(rounded)}`, { id: "subtitle-offset", duration: 1500 });
+  }, []);
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -429,6 +463,9 @@ function Player({ item }: { item: BaseItemDto }) {
         m: toggleMute,
         f: toggleFullscreen,
         i: () => setShowInfo((value) => !value),
+        // VLC's keys for subtitle delay.
+        g: () => changeSubtitleOffset(subtitleOffset - 0.25),
+        h: () => changeSubtitleOffset(subtitleOffset + 0.25),
         c: () => {
           const first = tracks[0];
           if (first) selectSubtitle(subtitleIndex === -1 ? first.index : -1);
@@ -508,9 +545,11 @@ function Player({ item }: { item: BaseItemDto }) {
     [trickplay, source, config.jellyfinUrl, item.Id, api.accessToken],
   );
 
-  const activeSegment = segments.find(
-    (segment) => current >= segment.start && current < segment.end - 1,
-  );
+  const activeSegment =
+    finoraPrefs.skipSegments === "off"
+      ? undefined
+      : segments.find((segment) => current >= segment.start && current < segment.end - 1);
+  const autoSkip = finoraPrefs.skipSegments === "auto";
   const remaining = duration - current;
   const showUpNext =
     Boolean(nextEpisode) &&
@@ -542,6 +581,9 @@ function Player({ item }: { item: BaseItemDto }) {
   return (
     <div
       ref={containerRef}
+      data-sub-size={finoraPrefs.subtitleSize}
+      data-sub-color={finoraPrefs.subtitleColor}
+      data-sub-background={finoraPrefs.subtitleBackground}
       className={cn("fixed inset-0 z-50 bg-black select-none", !controlsVisible && "cursor-none")}
       onPointerMove={revealControls}
       onPointerDown={revealControls}
@@ -723,6 +765,9 @@ function Player({ item }: { item: BaseItemDto }) {
               }}
               showAutoplay={item.Type === "Episode" || item.Type === "Video"}
               onShowInfo={() => setShowInfo(true)}
+              subtitleOffset={subtitleOffset}
+              onSubtitleOffset={changeSubtitleOffset}
+              showSubtitleOffset={subtitleIndex !== -1}
             />
             {document.pictureInPictureEnabled && (
               <button
@@ -753,7 +798,11 @@ function Player({ item }: { item: BaseItemDto }) {
         </div>
       </div>
 
-      {activeSegment && !showUpNext && (
+      {activeSegment && !showUpNext && autoSkip && (
+        <AutoSkip segment={activeSegment} onSkip={() => seekTo(activeSegment.end)} />
+      )}
+
+      {activeSegment && !showUpNext && !autoSkip && (
         <SkipSegmentButton
           segment={activeSegment}
           onSkip={() => seekTo(activeSegment.end)}
@@ -783,6 +832,26 @@ const SEGMENT_LABEL: Record<SkippableSegment["type"], string> = {
   Outro: "Skip credits",
   Preview: "Skip preview",
   Commercial: "Skip ad",
+};
+
+/** Skips each segment once on entry; seeking back into it afterwards plays it. */
+function AutoSkip({ segment, onSkip }: { segment: SkippableSegment; onSkip: () => void }) {
+  const skipped = useRef(new Set<number>());
+  useEffect(() => {
+    if (skipped.current.has(segment.start)) return;
+    skipped.current.add(segment.start);
+    onSkip();
+    toast(SEGMENT_DONE[segment.type], { id: "segment-skip", duration: 2500 });
+  }, [segment, onSkip]);
+  return null;
+}
+
+const SEGMENT_DONE: Record<SkippableSegment["type"], string> = {
+  Intro: "Skipped intro",
+  Recap: "Skipped recap",
+  Outro: "Skipped credits",
+  Preview: "Skipped preview",
+  Commercial: "Skipped ad",
 };
 
 function SkipSegmentButton({

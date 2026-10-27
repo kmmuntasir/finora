@@ -1,5 +1,6 @@
 import { AudioLines, Captions, Check, Settings } from "lucide-react";
 import { DropdownMenu } from "radix-ui";
+import { offsetLabel, SUBTITLE_OFFSETS } from "./subtitle-timing";
 import type { ReactNode } from "react";
 import type { AudioTrack, SubtitleTrack } from "./playback";
 import { BITRATE_OPTIONS } from "./player-preferences";
@@ -112,6 +113,9 @@ export function SettingsMenu({
   onAutoplayNext,
   showAutoplay,
   onShowInfo,
+  subtitleOffset,
+  onSubtitleOffset,
+  showSubtitleOffset,
 }: {
   bitrate: number;
   onBitrate: (value: number) => void;
@@ -121,6 +125,9 @@ export function SettingsMenu({
   onAutoplayNext: (value: boolean) => void;
   showAutoplay: boolean;
   onShowInfo: () => void;
+  subtitleOffset: number;
+  onSubtitleOffset: (value: number) => void;
+  showSubtitleOffset: boolean;
 }) {
   return (
     <Menu label="Settings" icon={<Settings aria-hidden className="size-6" />}>
@@ -151,6 +158,37 @@ export function SettingsMenu({
           </DropdownMenu.SubContent>
         </DropdownMenu.Portal>
       </DropdownMenu.Sub>
+      {showSubtitleOffset && (
+        <DropdownMenu.Sub>
+          <DropdownMenu.SubTrigger className={ITEM}>
+            <span className="flex-1">Subtitle timing</span>
+            <span className="text-on-surface-muted">
+              {subtitleOffset === 0
+                ? "In sync"
+                : `${subtitleOffset > 0 ? "+" : ""}${subtitleOffset} s`}
+            </span>
+          </DropdownMenu.SubTrigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.SubContent sideOffset={6} className={CONTENT}>
+              <DropdownMenu.Label className={LABEL}>Keys: G earlier, H later</DropdownMenu.Label>
+              <DropdownMenu.RadioGroup
+                value={String(subtitleOffset)}
+                onValueChange={(value) => onSubtitleOffset(Number(value))}
+              >
+                {(SUBTITLE_OFFSETS.includes(subtitleOffset)
+                  ? SUBTITLE_OFFSETS
+                  : [...SUBTITLE_OFFSETS, subtitleOffset].sort((a, b) => a - b)
+                ).map((value) => (
+                  <DropdownMenu.RadioItem key={value} value={String(value)} className={ITEM}>
+                    <Indicator />
+                    {offsetLabel(value)}
+                  </DropdownMenu.RadioItem>
+                ))}
+              </DropdownMenu.RadioGroup>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Sub>
+      )}
       <DropdownMenu.Sub>
         <DropdownMenu.SubTrigger className={ITEM}>
           <span className="flex-1">Speed</span>

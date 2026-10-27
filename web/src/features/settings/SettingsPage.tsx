@@ -20,6 +20,7 @@ import {
 import {
   usePreferences,
   useSetPreference,
+  type FinoraPreferences,
   type HomeLayout,
 } from "@/features/preferences/preferences";
 import { applyTheme, readTheme, saveTheme, type ThemeChoice } from "@/features/preferences/theme";
@@ -210,6 +211,7 @@ function AppearanceSection() {
   const setPreference = useSetPreference();
   const themeId = useId();
   const layoutId = useId();
+  const localeId = useId();
   return (
     <Section
       title="Appearance"
@@ -247,6 +249,13 @@ function AppearanceSection() {
             </option>
           ))}
         </select>
+      </Row>
+      <Row
+        label="Date and number format"
+        hint="Finora's text is in English for now."
+        htmlFor={localeId}
+      >
+        <PreferenceSelect id={localeId} name="dateLocale" options={DATE_LOCALES} />
       </Row>
     </Section>
   );
@@ -327,6 +336,7 @@ function PlaybackSection() {
     autoplay: useId(),
     rememberAudio: useId(),
     rememberSubs: useId(),
+    skip: useId(),
   };
 
   return (
@@ -381,6 +391,13 @@ function PlaybackSection() {
           }}
         />
       </Row>
+      <Row
+        label="Intros, recaps and credits"
+        hint="When the server knows where they are"
+        htmlFor={ids.skip}
+      >
+        <PreferenceSelect id={ids.skip} name="skipSegments" options={SKIP_SEGMENTS} />
+      </Row>
       <Row label="Remember audio choices" hint="Per series" htmlFor={ids.rememberAudio}>
         <Toggle
           id={ids.rememberAudio}
@@ -402,7 +419,14 @@ function PlaybackSection() {
 
 function SubtitleSection() {
   const { config, save, saving, failed } = useConfigField();
-  const ids = { language: useId(), mode: useId() };
+  const ids = {
+    language: useId(),
+    mode: useId(),
+    size: useId(),
+    color: useId(),
+    background: useId(),
+    position: useId(),
+  };
   const mode =
     SUBTITLE_MODES.find((option) => option.value === config.SubtitleMode) ?? SUBTITLE_MODES[0]!;
   return (
@@ -429,7 +453,88 @@ function SubtitleSection() {
         </select>
       </Row>
       <SaveStatus saving={saving} failed={failed} />
+      <h3 className="mt-6 text-label-md">Appearance</h3>
+      <p className="text-body-sm text-on-surface-muted">Follows you to every device.</p>
+      <SubtitlePreview />
+      <Row label="Size" htmlFor={ids.size}>
+        <PreferenceSelect id={ids.size} name="subtitleSize" options={SUBTITLE_SIZES} />
+      </Row>
+      <Row label="Colour" htmlFor={ids.color}>
+        <PreferenceSelect id={ids.color} name="subtitleColor" options={SUBTITLE_COLORS} />
+      </Row>
+      <Row label="Background" htmlFor={ids.background}>
+        <PreferenceSelect
+          id={ids.background}
+          name="subtitleBackground"
+          options={SUBTITLE_BACKGROUNDS}
+        />
+      </Row>
+      <Row label="Position" htmlFor={ids.position}>
+        <PreferenceSelect id={ids.position} name="subtitlePosition" options={SUBTITLE_POSITIONS} />
+      </Row>
     </Section>
+  );
+}
+
+type ChoiceKey = Exclude<keyof FinoraPreferences, "homeSections">;
+
+/** A select bound to one of Finora's server-synced preferences. */
+function PreferenceSelect<K extends ChoiceKey>({
+  id,
+  name,
+  options,
+}: {
+  id: string;
+  name: K;
+  options: readonly { value: FinoraPreferences[K]; label: string }[];
+}) {
+  const { preferences } = usePreferences();
+  const setPreference = useSetPreference();
+  return (
+    <select
+      id={id}
+      className={SELECT}
+      value={preferences[name]}
+      onChange={(event) =>
+        setPreference.mutate({ [name]: event.target.value } as Partial<FinoraPreferences>)
+      }
+    >
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+/** A sample line styled like the player's subtitles. */
+function SubtitlePreview() {
+  const { preferences } = usePreferences();
+  const size = {
+    small: "text-body-md",
+    medium: "text-body-lg",
+    large: "text-title",
+    xlarge: "text-headline-md",
+  }[preferences.subtitleSize];
+  return (
+    <div
+      aria-hidden
+      className="relative mt-3 mb-2 grid h-28 place-items-end justify-center overflow-hidden rounded-md bg-linear-to-br from-[#2b3a55] via-[#4b6584] to-[#a5b1c2] pb-3"
+    >
+      <span
+        className={cn(
+          size,
+          preferences.subtitlePosition === "raised" && "mb-6",
+          preferences.subtitleColor === "yellow" ? "text-[#ffe14d]" : "text-white",
+          preferences.subtitleBackground === "box" && "bg-black/60 px-1.5",
+          preferences.subtitleBackground === "shadow" &&
+            "[text-shadow:0_0_3px_#000,0_0_3px_#000,0_2px_4px_#000]",
+        )}
+      >
+        The quick brown fox — দ্রুত বাদামি শেয়াল
+      </span>
+    </div>
   );
 }
 
@@ -552,3 +657,44 @@ function PasswordSection() {
     </Section>
   );
 }
+
+const SUBTITLE_SIZES = [
+  { value: "small", label: "Small" },
+  { value: "medium", label: "Medium" },
+  { value: "large", label: "Large" },
+  { value: "xlarge", label: "Extra large" },
+] as const;
+
+const SUBTITLE_COLORS = [
+  { value: "white", label: "White" },
+  { value: "yellow", label: "Yellow" },
+] as const;
+
+const SUBTITLE_BACKGROUNDS = [
+  { value: "box", label: "Dark box" },
+  { value: "shadow", label: "Outline only" },
+  { value: "none", label: "None" },
+] as const;
+
+const SUBTITLE_POSITIONS = [
+  { value: "bottom", label: "Bottom" },
+  { value: "raised", label: "Raised" },
+] as const;
+
+const SKIP_SEGMENTS = [
+  { value: "button", label: "Show a skip button" },
+  { value: "auto", label: "Skip automatically" },
+  { value: "off", label: "Do nothing" },
+] as const;
+
+const DATE_LOCALES = [
+  { value: "auto", label: "Same as this browser" },
+  { value: "en-US", label: "English (US) — Oct 28, 2026" },
+  { value: "en-GB", label: "English (UK) — 28 Oct 2026" },
+  { value: "en-IN", label: "English (India) — 28 Oct 2026" },
+  { value: "bn-BD", label: "বাংলা — ২৮ অক্টো, ২০২৬" },
+  { value: "de-DE", label: "Deutsch — 28.10.2026" },
+  { value: "fr-FR", label: "Français — 28 oct. 2026" },
+  { value: "es-ES", label: "Español — 28 oct 2026" },
+  { value: "ja-JP", label: "日本語 — 2026/10/28" },
+] as const;

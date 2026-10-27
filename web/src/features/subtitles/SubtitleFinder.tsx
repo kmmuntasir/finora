@@ -8,7 +8,7 @@ import { Button } from "@/components/Button";
 import { Spinner } from "@/components/Spinner";
 import { useSession } from "@/features/auth/context";
 import { cn } from "@/lib/cn";
-import { relativeTime } from "@/lib/format";
+import { formatNumber, relativeTime } from "@/lib/format";
 import {
   useItemSubtitles,
   useSubtitleLanguages,
@@ -234,7 +234,7 @@ function FinderBody({ item }: { item: BaseItemDto }) {
                       {result.aiTranslated && <Badge tone="muted">Machine translated</Badge>}
                       {result.downloads > 0 && (
                         <span className="text-caption text-on-surface-subtle">
-                          {result.downloads.toLocaleString()} downloads
+                          {formatNumber(result.downloads)} downloads
                         </span>
                       )}
                     </div>

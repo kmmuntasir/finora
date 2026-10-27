@@ -74,3 +74,28 @@ video::cue {
   background-color: rgb(0 0 0 / 0.6);
   text-shadow: 0 1px 2px rgb(0 0 0 / 0.8);
 }
+
+/* Subtitle appearance from Settings → Subtitles (data attributes on the player). */
+[data-sub-size="small"] video::cue {
+  font-size: clamp(0.875rem, 2vw, 1.75rem);
+}
+[data-sub-size="large"] video::cue {
+  font-size: clamp(1.25rem, 3.4vw, 3rem);
+}
+[data-sub-size="xlarge"] video::cue {
+  font-size: clamp(1.5rem, 4.2vw, 3.75rem);
+}
+[data-sub-color="yellow"] video::cue {
+  color: #ffe14d;
+}
+[data-sub-background="shadow"] video::cue {
+  background-color: transparent;
+  text-shadow:
+    0 0 3px #000,
+    0 0 3px #000,
+    0 2px 4px #000;
+}
+[data-sub-background="none"] video::cue {
+  background-color: transparent;
+  text-shadow: none;
+}

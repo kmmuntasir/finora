@@ -86,3 +86,28 @@ export function relativeTime(iso: string | null | undefined, now = Date.now()): 
   }
   return "Just now";
 }
+
+/** Locale for dates and numbers from Settings; undefined follows the browser. */
+let displayLocale: string | undefined;
+
+export function setDisplayLocale(locale: string | undefined): void {
+  displayLocale = locale && locale !== "auto" ? locale : undefined;
+}
+
+/** "28 Oct 2026" style dates in the chosen locale. */
+export function formatDate(
+  value: string | Date | null | undefined,
+  style: "date" | "datetime" = "date",
+): string {
+  if (!value) return "";
+  const date = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat(displayLocale, {
+    dateStyle: "medium",
+    ...(style === "datetime" ? { timeStyle: "short" } : {}),
+  }).format(date);
+}
+
+export function formatNumber(value: number): string {
+  return new Intl.NumberFormat(displayLocale).format(value);
+}
