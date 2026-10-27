@@ -1,6 +1,6 @@
 import { House, LayoutGrid, Search, Server, UserRound } from "lucide-react";
-import type { ComponentType, SVGProps } from "react";
-import { NavLink, Outlet } from "react-router";
+import { useEffect, type ComponentType, type SVGProps } from "react";
+import { NavLink, Outlet, useNavigate } from "react-router";
 import { Logo } from "@/components/Logo";
 import { UserMenu } from "@/features/auth/UserMenu";
 import { useUserViews } from "@/features/home/queries";
@@ -68,8 +68,30 @@ function TabLink({
   );
 }
 
+/** "/" or Ctrl/⌘+K opens search, unless the user is typing somewhere. */
+function useSearchShortcut() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const typing = target?.closest("input, textarea, select, [contenteditable='true']");
+      const commandK = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k";
+      if (
+        commandK ||
+        (event.key === "/" && !typing && !event.ctrlKey && !event.metaKey && !event.altKey)
+      ) {
+        event.preventDefault();
+        void navigate("/search");
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [navigate]);
+}
+
 export function AppShell() {
   const { data: views } = useUserViews();
+  useSearchShortcut();
 
   return (
     <div className="min-h-dvh bg-background md:grid md:grid-cols-[var(--spacing-sidebar)_1fr]">

@@ -195,9 +195,22 @@ function ItemDetails({ item }: { item: BaseItemDto }) {
             {item.GenreItems?.length ? (
               <p className="flex flex-wrap gap-2">
                 {item.GenreItems.map((genre) => (
-                  <span key={genre.Id} className="rounded-full bg-white/10 px-3 py-1 text-label-sm">
+                  <Link
+                    key={genre.Id}
+                    to={`/browse?genre=${encodeURIComponent(genre.Name ?? "")}`}
+                    className="rounded-full bg-white/10 px-3 py-1 text-label-sm transition-colors duration-[120ms] hover:bg-white/20"
+                  >
                     {genre.Name}
-                  </span>
+                  </Link>
+                ))}
+                {item.Studios?.slice(0, 3).map((studio) => (
+                  <Link
+                    key={studio.Id}
+                    to={`/browse?studio=${encodeURIComponent(studio.Name ?? "")}`}
+                    className="rounded-full px-3 py-1 text-label-sm text-on-surface-muted ring-1 ring-white/15 transition-colors duration-[120ms] hover:bg-white/10 hover:text-on-surface"
+                  >
+                    {studio.Name}
+                  </Link>
                 ))}
               </p>
             ) : null}

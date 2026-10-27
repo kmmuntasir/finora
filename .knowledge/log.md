@@ -10,6 +10,10 @@ links to the notes that changed.
 
 ## 2026-10-28
 
+- Phase 2 browsing complete for Tier 1: item detail pages (movie, series,
+  episode, album, artist, person, collection, playlist), search across all
+  libraries (Bengali verified), genre/studio browse pages, `/` and Ctrl+K
+  search shortcut. Play buttons go to a placeholder until Phase 3.
 - Home layouts kept as a per-user choice saved in Jellyfin display
   preferences. Phase 2 started: sidebar + phone tab bar, library pages with
   server-side sort/filters/genres, A–Z rail, virtualised infinite grid, folder
