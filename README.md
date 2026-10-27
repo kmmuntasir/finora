@@ -78,5 +78,7 @@ rules that decide which combination works.
 ## License
 
 [MIT](LICENSE). The SolaimanLipi font is under the SIL Open Font License
-(`web/src/assets/fonts/OFL.txt`). Vendored agent skills keep their own
-licences (`.claude/skills/VENDORED.md`).
+(`web/src/assets/fonts/OFL.txt`). Styled subtitles use
+[JASSUB](https://github.com/ThaUnknown/jassub) (LGPL-2.1-or-later and
+others), loaded as a separate module only when needed. Vendored agent skills
+keep their own licences (`.claude/skills/VENDORED.md`).

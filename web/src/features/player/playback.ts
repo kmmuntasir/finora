@@ -21,6 +21,8 @@ export interface SubtitleTrack {
   language: string | undefined;
   /** WebVTT URL for text subtitles; null for subtitles that must be burned in. */
   url: string | null;
+  /** Original ASS/SSA file, rendered with JASSUB when possible (styling, positioning, fonts). */
+  assUrl?: string | null;
   isForced: boolean;
 }
 
@@ -39,6 +41,8 @@ export interface PlaybackSource {
   transcodeReasons: string[];
   audioTracks: AudioTrack[];
   subtitleTracks: SubtitleTrack[];
+  /** Fonts embedded in the file (MKV attachments), for styled subtitles. */
+  fontUrls: string[];
   /** Subtitle index burned into the video stream, if any. */
   burnedSubtitleIndex: number | null;
 }
@@ -57,7 +61,13 @@ export interface PlaybackRequest {
 
 let cachedSupport: MediaSupport | undefined;
 export function mediaSupport(): MediaSupport {
-  cachedSupport ??= detectSupport(browserProbe());
+  cachedSupport ??= {
+    ...detectSupport(browserProbe()),
+    styledSubtitles:
+      typeof WebAssembly === "object" &&
+      typeof OffscreenCanvas !== "undefined" &&
+      "requestVideoFrameCallback" in HTMLVideoElement.prototype,
+  };
   return cachedSupport;
 }
 
@@ -148,14 +158,31 @@ export function resolveSource(
         label: streamLabel(stream),
         language: stream.Language ?? undefined,
         isForced: Boolean(stream.IsForced),
+        assUrl:
+          stream.IsTextSubtitleStream && ["ass", "ssa"].includes((stream.Codec ?? "").toLowerCase())
+            ? `${baseUrl}/Videos/${request.itemId}/${mediaSource.Id}/Subtitles/${stream.Index}/0/Stream.ass?ApiKey=${encodeURIComponent(accessToken)}`
+            : null,
+        // ASS/SSA delivered "External" point at the .ass file; the WebVTT copy is the fallback.
         url:
-          stream.DeliveryMethod === "External" && stream.DeliveryUrl
+          stream.DeliveryMethod === "External" &&
+          stream.DeliveryUrl &&
+          !["ass", "ssa"].includes((stream.Codec ?? "").toLowerCase())
             ? absoluteUrl(baseUrl, stream.DeliveryUrl)
             : !stream.IsTextSubtitleStream
               ? null
               : `${baseUrl}/Videos/${request.itemId}/${mediaSource.Id}/Subtitles/${stream.Index}/0/Stream.vtt?ApiKey=${encodeURIComponent(accessToken)}`,
       })),
     burnedSubtitleIndex: burned?.Index ?? null,
+    fontUrls: (mediaSource.MediaAttachments ?? [])
+      .filter(
+        (attachment) =>
+          /font|truetype|opentype/i.test(attachment.MimeType ?? "") ||
+          /\.(ttf|otf|ttc|woff2?)$/i.test(attachment.FileName ?? ""),
+      )
+      .map(
+        (attachment) =>
+          `${baseUrl}/Videos/${request.itemId}/${mediaSource.Id}/Attachments/${attachment.Index}?ApiKey=${encodeURIComponent(accessToken)}`,
+      ),
   };
 }
 

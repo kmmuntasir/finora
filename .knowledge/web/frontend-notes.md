@@ -116,3 +116,25 @@ Facts and gotchas learned while building Finora Web.
 - Player (Chromium): MP4 H.264/AAC direct plays; capped quality switches to
   HLS fMP4 via hls.js; trickplay thumbnails and chapter names show; exiting
   ends the server session and its encoder.
+
+## Styled subtitles (ASS/SSA)
+
+- The device profile lists `ass` and `ssa` as `External` only when the
+  browser can run JASSUB (WebAssembly, `OffscreenCanvas`,
+  `requestVideoFrameCallback`). Without that entry Jellyfin 10.11 answers a
+  request for an ASS track by transcoding and burning it into the picture,
+  with ffmpeg's libass and whatever fonts the server has.
+- JASSUB 2.5 (LGPL; loaded with a dynamic `import()` only when an ASS
+  track is shown) draws `Stream.ass` on a canvas over the video. Fonts
+  attached to the file (`MediaAttachments`, served at
+  `/Videos/{id}/{mediaSourceId}/Attachments/{index}`) and SolaimanLipi are
+  fetched first and passed as bytes. SolaimanLipi's internal family name is
+  "SolaimanLipi Normal", which is what `defaultFont` must match.
+- Vite needs `optimizeDeps.exclude: ["jassub"]`, so the package finds its
+  worker and `.wasm` next to itself, and `include: ["jassub > throughput"]`
+  for its CommonJS dependency. Builds need `worker.format: "es"`.
+- If JASSUB fails to start, the WebVTT copy of the track is shown instead.
+- Debugging lesson: a "double" subtitle was Jellyfin's burned-in copy under
+  JASSUB's, not a JASSUB bug. Check `video.currentSrc` (`master.m3u8`
+  versus `Static=true`) first.
+

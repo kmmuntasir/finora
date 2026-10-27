@@ -39,6 +39,7 @@ import { formatClock, readPlayerPreferences, savePlayerPreferences } from "./pla
 import { useNextEpisode, useSegments, type SkippableSegment } from "./queries";
 import { createReporter, type PlaybackSnapshot, type Reporter } from "./reporting";
 import { SeekBar } from "./SeekBar";
+import { useAssRenderer } from "./ass-renderer";
 import { adjustCues, offsetLabel } from "./subtitle-timing";
 import { trickplayFrame, trickplayInfo } from "./trickplay";
 
@@ -291,6 +292,13 @@ function Player({ item }: { item: BaseItemDto }) {
     return () => window.removeEventListener("pagehide", onUnload);
   }, [snapshot]);
 
+  // Styled ASS/SSA subtitles through JASSUB, when the selected track has them.
+  const assActive = useAssRenderer(videoRef, {
+    assUrl: tracks.find((track) => track.index === subtitleIndex)?.assUrl ?? null,
+    fontUrls: source?.fontUrls ?? [],
+    offset: subtitleOffset,
+  });
+
   // Show the selected text subtitle; hide the rest.
   useEffect(() => {
     const video = videoRef.current;
@@ -298,9 +306,11 @@ function Player({ item }: { item: BaseItemDto }) {
     const textTracks = tracks.filter((track) => track.url);
     for (let i = 0; i < video.textTracks.length; i++) {
       const textTrack = video.textTracks[i]!;
-      textTrack.mode = textTracks[i]?.index === subtitleIndex ? "showing" : "disabled";
+      // While JASSUB draws the styled version, the WebVTT copy stays hidden.
+      textTrack.mode =
+        textTracks[i]?.index === subtitleIndex && !assActive ? "showing" : "disabled";
     }
-  }, [subtitleIndex, source, tracks]);
+  }, [subtitleIndex, source, tracks, assActive]);
 
   // Subtitle timing and position. Cues load asynchronously, so this also
   // runs from each <track>'s load event (applyCueAdjustments below).

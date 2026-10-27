@@ -24,6 +24,12 @@ links to the notes that changed.
   - Admin user page: parental controls (rating, unrated items, allowed and
     blocked tags, viewing times), limits (streams, bitrate), devices with
     sign out, and approving a Quick Connect code for that user.
+  - Later the same night: settings (subtitle appearance and timing,
+    skip-segment behaviour, date format), home row order and Continue
+    listening, user picker and PIN reset, library views and filters with
+    multi-select, Suggestions/Upcoming/Networks/Episodes, search
+    suggestions, trailers, a chapter menu, and styled ASS/SSA subtitles
+    with JASSUB ([frontend notes](web/frontend-notes.md#styled-subtitles-assssa)).
   - Found that `/Devices?userId` lists every accessible device
     ([api-notes](jellyfin/api-notes.md#revoking-a-session)).
 - **OpenSubtitles key care.** Read the OpenSubtitles API docs and integrator

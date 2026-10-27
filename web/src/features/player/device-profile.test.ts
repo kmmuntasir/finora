@@ -42,3 +42,14 @@ describe("device profile", () => {
     expect(profile.SubtitleProfiles?.[0]).toEqual({ Format: "vtt", Method: "External" });
   });
 });
+
+describe("subtitle profiles", () => {
+  it("asks for ASS/SSA files only when JASSUB can draw them", () => {
+    const formats = (styledSubtitles: boolean) =>
+      buildDeviceProfile({ ...detectSupport(chromeLike), styledSubtitles }, 1)
+        .SubtitleProfiles?.filter((profile) => profile.Method === "External")
+        .map((profile) => profile.Format);
+    expect(formats(true)).toEqual(["ass", "ssa", "vtt"]);
+    expect(formats(false)).toEqual(["vtt"]);
+  });
+});

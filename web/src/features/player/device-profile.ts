@@ -35,6 +35,8 @@ export interface MediaSupport {
     alac: boolean;
   };
   containers: { mkv: boolean; webm: boolean };
+  /** ASS/SSA can be drawn by JASSUB (WebAssembly, OffscreenCanvas, video frame callbacks). */
+  styledSubtitles?: boolean;
 }
 
 type Probe = (mime: string) => boolean;
@@ -244,7 +246,15 @@ export function buildDeviceProfile(support: MediaSupport, maxBitrate: number): D
       },
     ],
     SubtitleProfiles: [
-      // Text subtitles (SRT, VTT, ASS…) are delivered as WebVTT side files and rendered by Finora.
+      // ASS/SSA keep their styling when this browser can run JASSUB; otherwise Jellyfin
+      // would burn them into the picture, so they fall back to WebVTT like other text.
+      ...(support.styledSubtitles
+        ? [
+            { Format: "ass", Method: SubtitleDeliveryMethod.External },
+            { Format: "ssa", Method: SubtitleDeliveryMethod.External },
+          ]
+        : []),
+      // Text subtitles (SRT, VTT…) are delivered as WebVTT side files and rendered by Finora.
       { Format: "vtt", Method: SubtitleDeliveryMethod.External },
       // Image subtitles (PGS, VobSub) can only be burned in.
       { Format: "pgssub", Method: SubtitleDeliveryMethod.Encode },
