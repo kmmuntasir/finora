@@ -124,9 +124,11 @@ export function useLibraryState(libraryId: string, kind: LibraryKind) {
       if (next.view !== "grid") search.set("view", next.view);
       if (next.letter) search.set("letter", next.letter);
       if (next.parent) search.set("parent", next.parent);
+      const tab = params.get("tab");
+      if (tab) search.set("tab", tab);
       setParams(search, { replace: !("parent" in changes) });
     },
-    [state, libraryId, setParams],
+    [state, libraryId, setParams, params],
   );
 
   return { state, update, sortConfig: SORTS[state.sort] };

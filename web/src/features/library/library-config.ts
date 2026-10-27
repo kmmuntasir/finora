@@ -145,8 +145,37 @@ export const LIBRARY_KINDS: Record<string, LibraryKind> = {
   },
 };
 
+/** The "Episodes" view of a TV library. */
+export const EPISODES_KIND: LibraryKind = {
+  itemTypes: [BaseItemKind.Episode],
+  recursive: true,
+  shape: "landscape",
+  sorts: ["added", "released", "name", "random"],
+  defaultSort: "added",
+  filters: VIDEO_FILTERS,
+  genres: false,
+  advancedFilters: false,
+  noun: { one: "episode", many: "episodes" },
+};
+
 export function libraryKind(collectionType: string | null | undefined): LibraryKind {
   return LIBRARY_KINDS[collectionType ?? ""] ?? LIBRARY_KINDS.homevideos!;
 }
 
 export const LETTERS = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
+
+export type LibraryTab = "library" | "suggestions" | "upcoming" | "networks" | "episodes";
+
+/** Extra views per library type, after the main library grid. */
+export const LIBRARY_TABS: Record<string, { tab: LibraryTab; label: string }[]> = {
+  movies: [
+    { tab: "library", label: "Movies" },
+    { tab: "suggestions", label: "Suggestions" },
+  ],
+  tvshows: [
+    { tab: "library", label: "Shows" },
+    { tab: "upcoming", label: "Upcoming" },
+    { tab: "networks", label: "Networks" },
+    { tab: "episodes", label: "Episodes" },
+  ],
+};

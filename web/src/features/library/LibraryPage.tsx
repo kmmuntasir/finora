@@ -1,17 +1,24 @@
 import { formatNumber } from "@/lib/format";
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { ChevronRight } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { PlayButton } from "@/components/media/PlayButton";
 import { Button } from "@/components/Button";
 import { Spinner } from "@/components/Spinner";
 import { useUserViews } from "@/features/home/queries";
 import { AlphabetRail } from "./AlphabetRail";
 import { ItemGrid } from "./ItemGrid";
-import { libraryKind, type LibraryKind } from "./library-config";
+import {
+  EPISODES_KIND,
+  LIBRARY_TABS,
+  libraryKind,
+  type LibraryKind,
+  type LibraryTab,
+} from "./library-config";
 import { useLibraryState } from "./library-state";
 import { LibraryToolbar } from "./LibraryToolbar";
+import { LibraryTabs, NetworksView, SuggestionsView, UpcomingView } from "./LibraryViews";
 import { SelectionBar } from "./SelectionBar";
 import {
   useAncestors,
@@ -38,7 +45,51 @@ export function LibraryPage() {
       </div>
     );
   }
-  return <Library key={view.Id} view={view} kind={libraryKind(view.CollectionType)} />;
+  return <LibraryWithTabs key={view.Id} view={view} />;
+}
+
+function LibraryWithTabs({ view }: { view: BaseItemDto }) {
+  const [params, setParams] = useSearchParams();
+  const tabs = LIBRARY_TABS[view.CollectionType ?? ""] ?? [];
+  const requested = params.get("tab") as LibraryTab | null;
+  const tab = tabs.some((entry) => entry.tab === requested) ? requested! : "library";
+  const setTab = (next: LibraryTab, extra: Record<string, string> = {}) =>
+    setParams(next === "library" ? extra : { tab: next, ...extra });
+  const tabBar = (
+    <LibraryTabs
+      collectionType={view.CollectionType}
+      current={tab}
+      onChange={(next) => setTab(next)}
+    />
+  );
+
+  if (tab === "episodes")
+    return (
+      <Library
+        key="episodes"
+        view={view}
+        kind={EPISODES_KIND}
+        stateKey={`${view.Id}:episodes`}
+        tabs={tabBar}
+      />
+    );
+  if (tab === "library")
+    return (
+      <Library key="library" view={view} kind={libraryKind(view.CollectionType)} tabs={tabBar} />
+    );
+  return (
+    <div className="px-page-x-mobile pt-8 pb-24 md:px-page-x md:pt-10">
+      <header className="mb-6">
+        <h1 className="text-headline-lg">{view.Name}</h1>
+        {tabBar}
+      </header>
+      {tab === "suggestions" && <SuggestionsView view={view} />}
+      {tab === "upcoming" && <UpcomingView view={view} />}
+      {tab === "networks" && (
+        <NetworksView view={view} onPick={(studio) => setTab("library", { studio })} />
+      )}
+    </div>
+  );
 }
 
 function PageSpinner() {
@@ -49,8 +100,19 @@ function PageSpinner() {
   );
 }
 
-function Library({ view, kind }: { view: BaseItemDto; kind: LibraryKind }) {
-  const { state, update } = useLibraryState(view.Id!, kind);
+function Library({
+  view,
+  kind,
+  stateKey,
+  tabs,
+}: {
+  view: BaseItemDto;
+  kind: LibraryKind;
+  /** Where sort and filters are remembered; defaults to the library ID. */
+  stateKey?: string;
+  tabs: ReactNode;
+}) {
+  const { state, update } = useLibraryState(stateKey ?? view.Id!, kind);
   const items = useLibraryItems(view, kind, state);
   const genres = useGenres(view, kind);
   const filterValues = useLibraryFilterValues(view, kind);
@@ -104,6 +166,7 @@ function Library({ view, kind }: { view: BaseItemDto; kind: LibraryKind }) {
         ) : (
           <h1 className="text-headline-lg">{view.Name}</h1>
         )}
+        {!state.parent && tabs}
         <p className="mt-1 text-body-sm text-on-surface-muted" aria-live="polite">
           {items.isPending
             ? " "

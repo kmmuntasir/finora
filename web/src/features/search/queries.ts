@@ -1,6 +1,7 @@
 import {
   BaseItemKind,
   ItemFields,
+  ItemSortBy,
   type BaseItemDto,
 } from "@jellyfin/sdk/lib/generated-client/models";
 import { getItemsApi } from "@jellyfin/sdk/lib/utils/api/items-api";
@@ -58,4 +59,57 @@ export function useSearch(term: string) {
       return groups.filter((group) => group.items.length > 0);
     },
   });
+}
+
+/** Shown before typing: favourites first, then a random pick, as in the official client. */
+export function useSearchSuggestions(enabled: boolean) {
+  const { api, user } = useSession();
+  return useQuery({
+    queryKey: ["search-suggestions", user.Id],
+    queryFn: async ({ signal }) =>
+      (
+        await getItemsApi(api).getItems(
+          {
+            userId: user.Id,
+            includeItemTypes: [BaseItemKind.Movie, BaseItemKind.Series],
+            recursive: true,
+            sortBy: [ItemSortBy.IsFavoriteOrLiked, ItemSortBy.Random],
+            limit: 20,
+            fields: [ItemFields.PrimaryImageAspectRatio],
+            enableUserData: true,
+          },
+          { signal },
+        )
+      ).data.Items ?? [],
+    enabled,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+const RECENT_KEY = "finora.recentSearches";
+
+export function readRecentSearches(): string[] {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(RECENT_KEY) ?? "[]") as unknown;
+    return Array.isArray(saved)
+      ? saved.filter((entry): entry is string => typeof entry === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Remembers a search on this device (most recent first, eight at most). */
+export function rememberSearch(term: string): string[] {
+  const value = term.trim();
+  const next = [
+    value,
+    ...readRecentSearches().filter((entry) => entry.toLowerCase() !== value.toLowerCase()),
+  ].slice(0, 8);
+  window.localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+  return next;
+}
+
+export function clearRecentSearches(): void {
+  window.localStorage.removeItem(RECENT_KEY);
 }
