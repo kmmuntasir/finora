@@ -8,7 +8,8 @@ import { PlayButton } from "@/components/media/PlayButton";
 import { ProgressBar } from "@/components/media/ProgressBar";
 import { useRuntimeConfig } from "@/config/context";
 import { useSession } from "@/features/auth/context";
-import { useVariant } from "@/features/lab/VariantSwitcher";
+import { usePreferences } from "@/features/preferences/preferences";
+import { HomeLayoutMenu } from "./HomeLayoutMenu";
 import { cn } from "@/lib/cn";
 import {
   cardSubtitle,
@@ -24,21 +25,20 @@ import { LatestRows, NextUpRow } from "./LibraryRows";
 import { useLatest, useResumeItems, useUserViews } from "./queries";
 import { RowSkeleton } from "./RowSkeleton";
 
-const VARIANTS = [
-  { id: "a", name: "Spotlight" },
-  { id: "b", name: "Dashboard" },
-  { id: "c", name: "Focus" },
-];
-
-export function HomePrototype() {
-  const { current, switcher } = useVariant(VARIANTS);
+/** Home page in the layout the user picked (saved per user in Jellyfin). */
+export function HomePage() {
+  const { preferences, isLoading } = usePreferences();
+  if (isLoading) return null;
+  const layout = preferences.homeLayout;
   return (
-    <>
-      {current.id === "a" && <SpotlightHome />}
-      {current.id === "b" && <DashboardHome />}
-      {current.id === "c" && <FocusHome />}
-      {switcher}
-    </>
+    <div className="relative">
+      <div className="absolute top-4 right-page-x-mobile z-10 md:right-page-x">
+        <HomeLayoutMenu current={layout} />
+      </div>
+      {layout === "spotlight" && <SpotlightHome />}
+      {layout === "dashboard" && <DashboardHome />}
+      {layout === "focus" && <FocusHome />}
+    </div>
   );
 }
 
