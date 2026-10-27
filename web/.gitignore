@@ -25,3 +25,5 @@ dist-ssr
 
 # Local runtime configuration (copy public/config.example.json)
 public/config.json
+test-results/
+playwright-report/
