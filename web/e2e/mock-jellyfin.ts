@@ -39,7 +39,7 @@ function json(route: Route, body: unknown, status = 200) {
 }
 
 /** Installs the fake Jellyfin and runtime config on a page. */
-export async function mockJellyfin(page: Page) {
+export async function mockJellyfin(page: Page, options: { publicUsers?: boolean } = {}) {
   await page.route("**/config.json", (route) =>
     json(route, { jellyfinUrl: JELLYFIN, apiUrl: null }),
   );
@@ -57,10 +57,30 @@ export async function mockJellyfin(page: Page) {
     if (path === "/QuickConnect/Enabled") return json(route, true);
     if (path === "/Branding/Configuration")
       return json(route, { LoginDisclaimer: "Family server — be kind." });
+    if (path === "/Users/Public")
+      return json(
+        route,
+        options.publicUsers
+          ? [
+              { Id: USER_ID, Name: "Alex", HasPassword: true },
+              { Id: "user2", Name: "Kid", HasPassword: false },
+            ]
+          : [],
+      );
+    if (path === "/Users/ForgotPassword")
+      return json(route, { Action: "PinCode", PinFile: "/config/passwordreset123.json" });
+    if (path === "/Users/ForgotPassword/Pin") {
+      const body = request.postDataJSON() as { Pin: string };
+      return body.Pin === "1A-2B-3C-4D"
+        ? json(route, { Success: true, UsersReset: ["alex"] })
+        : route.fulfill({ status: 404, body: "" });
+    }
     if (path === "/Users/AuthenticateByName") {
       const body = request.postDataJSON() as { Username: string; Pw: string };
-      if (body.Username === "alex" && body.Pw === "secret")
+      if (body.Username.toLowerCase() === "alex" && body.Pw === "secret")
         return json(route, { AccessToken: TOKEN, User: user });
+      if (body.Username === "Kid" && body.Pw === "")
+        return json(route, { AccessToken: TOKEN, User: { ...user, Name: "Kid" } });
       return route.fulfill({ status: 401, body: "" });
     }
     if (!authorized) return route.fulfill({ status: 401, body: "" });
