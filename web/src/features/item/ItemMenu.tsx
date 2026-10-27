@@ -1,14 +1,31 @@
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
-import { Download, FolderPlus, ListPlus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import {
+  Download,
+  FileSearch,
+  FolderPlus,
+  ImageIcon,
+  ListPlus,
+  MoreHorizontal,
+  Pencil,
+  RefreshCw,
+  SquarePen,
+  Trash2,
+} from "lucide-react";
 import { DropdownMenu } from "radix-ui";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { MENU_CONTENT, MENU_ITEM, MENU_SEPARATOR } from "@/components/menu";
 import { useRuntimeConfig } from "@/config/context";
 import { useSession } from "@/features/auth/context";
+import { useAdminAccess } from "@/features/admin/access";
 import { AddToDialog } from "@/features/collections/AddToDialog";
+import { IDENTIFIABLE } from "@/features/item-admin/api";
+import { IdentifyDialog } from "@/features/item-admin/IdentifyDialog";
+import { ImageEditor } from "@/features/item-admin/ImageEditor";
+import { MetadataEditor } from "@/features/item-admin/MetadataEditor";
+import { RefreshDialog } from "@/features/item-admin/RefreshDialog";
 import {
   useCanManageCollections,
   useDeleteItem,
@@ -23,20 +40,20 @@ import { canAddToCollection, canAddToPlaylist } from "@/features/collections/eli
 interface ItemMenuProps {
   item: BaseItemDto;
   className: string;
-  /** Extra entries (for example admin actions), shown after a separator. */
-  children?: ReactNode;
 }
 
-/** The "More" button on detail pages: playlists, collections, download and delete. */
-export function ItemMenu({ item, className, children }: ItemMenuProps) {
+type DialogName =
+  "playlist" | "collection" | "delete" | "rename" | "refresh" | "metadata" | "images" | "identify";
+
+/** The "More" button on detail pages: playlists, collections, download, admin tools and delete. */
+export function ItemMenu({ item, className }: ItemMenuProps) {
   const { api, user } = useSession();
   const { config } = useRuntimeConfig();
   const navigate = useNavigate();
   const canManageCollections = useCanManageCollections();
   const remove = useDeleteItem();
-  const [dialog, setDialog] = useState<"playlist" | "collection" | "delete" | "rename" | null>(
-    null,
-  );
+  const [dialog, setDialog] = useState<DialogName | null>(null);
+  const admin = useAdminAccess().allowed;
   const renamable = usePlaylistEditable(item).data ?? false;
 
   const playlist = canAddToPlaylist(item);
@@ -44,7 +61,7 @@ export function ItemMenu({ item, className, children }: ItemMenuProps) {
   const download = Boolean(user.Policy?.EnableContentDownloading && item.CanDownload);
   const deletable = Boolean(item.CanDelete);
   const isContainer = item.Type === "Playlist" || item.Type === "BoxSet";
-  if (!playlist && !collection && !download && !deletable && !renamable && !children) return null;
+  if (!playlist && !collection && !download && !deletable && !renamable && !admin) return null;
 
   const downloadUrl = `${config.jellyfinUrl}/Items/${item.Id}/Download?ApiKey=${encodeURIComponent(api.accessToken)}`;
 
@@ -83,10 +100,27 @@ export function ItemMenu({ item, className, children }: ItemMenuProps) {
                 </a>
               </DropdownMenu.Item>
             )}
-            {children && (
+            {admin && (
               <>
                 <DropdownMenu.Separator className={MENU_SEPARATOR} />
-                {children}
+                <DropdownMenu.Item className={MENU_ITEM} onSelect={() => setDialog("refresh")}>
+                  <RefreshCw aria-hidden className="size-4" />
+                  Refresh metadata…
+                </DropdownMenu.Item>
+                <DropdownMenu.Item className={MENU_ITEM} onSelect={() => setDialog("metadata")}>
+                  <SquarePen aria-hidden className="size-4" />
+                  Edit metadata…
+                </DropdownMenu.Item>
+                <DropdownMenu.Item className={MENU_ITEM} onSelect={() => setDialog("images")}>
+                  <ImageIcon aria-hidden className="size-4" />
+                  Edit images…
+                </DropdownMenu.Item>
+                {IDENTIFIABLE[item.Type ?? ""] && (
+                  <DropdownMenu.Item className={MENU_ITEM} onSelect={() => setDialog("identify")}>
+                    <FileSearch aria-hidden className="size-4" />
+                    Identify…
+                  </DropdownMenu.Item>
+                )}
               </>
             )}
             {deletable && (
@@ -115,6 +149,10 @@ export function ItemMenu({ item, className, children }: ItemMenuProps) {
           onOpenChange={(open) => !open && setDialog(null)}
         />
       )}
+      {dialog === "refresh" && <RefreshDialog item={item} onClose={() => setDialog(null)} />}
+      {dialog === "metadata" && <MetadataEditor item={item} onClose={() => setDialog(null)} />}
+      {dialog === "images" && <ImageEditor item={item} onClose={() => setDialog(null)} />}
+      {dialog === "identify" && <IdentifyDialog item={item} onClose={() => setDialog(null)} />}
       {dialog === "rename" && <RenameDialog playlist={item} onClose={() => setDialog(null)} />}
       <ConfirmDialog
         open={dialog === "delete"}

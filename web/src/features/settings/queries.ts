@@ -3,6 +3,7 @@ import { getLocalizationApi } from "@jellyfin/sdk/lib/utils/api/localization-api
 import { getUserApi } from "@jellyfin/sdk/lib/utils/api/user-api";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuth, useSession } from "@/features/auth/context";
+import { toBase64 } from "@/lib/files";
 
 export function useCultures() {
   const { api } = useSession();
@@ -37,15 +38,6 @@ export function useChangePassword() {
         updateUserPassword: { CurrentPw: current, NewPw: next },
       });
     },
-  });
-}
-
-function toBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
-    reader.onerror = () => reject(reader.error ?? new Error("Could not read the file"));
-    reader.readAsDataURL(file);
   });
 }
 
