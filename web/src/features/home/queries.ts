@@ -91,3 +91,41 @@ export function useLatest(view: BaseItemDto, limit = 16) {
     enabled: Boolean(view.Id),
   });
 }
+
+/**
+ * Albums of recently played tracks, most recent first. Jellyfin has no
+ * "resume" for music, so this is what "Continue listening" shows.
+ */
+export function useRecentAlbums(limit = 16) {
+  const { api, user } = useSession();
+  return useQuery({
+    queryKey: ["recent-albums", user.Id, limit],
+    queryFn: async ({ signal }) => {
+      const items = getItemsApi(api);
+      const { data } = await items.getItems(
+        {
+          userId: user.Id,
+          includeItemTypes: [BaseItemKind.Audio],
+          recursive: true,
+          filters: ["IsPlayed"],
+          sortBy: [ItemSortBy.DatePlayed],
+          sortOrder: [SortOrder.Descending],
+          limit: 100,
+          enableUserData: true,
+        },
+        { signal },
+      );
+      const albumIds = [
+        ...new Set((data.Items ?? []).map((track) => track.AlbumId).filter(Boolean) as string[]),
+      ].slice(0, limit);
+      if (!albumIds.length) return [];
+      const albums =
+        (await items.getItems({ userId: user.Id, ids: albumIds, fields: CARD_FIELDS }, { signal }))
+          .data.Items ?? [];
+      // /Items with ids returns them in library order; restore recency order.
+      return albumIds
+        .map((id) => albums.find((album) => album.Id === id))
+        .filter((album): album is BaseItemDto => Boolean(album));
+    },
+  });
+}

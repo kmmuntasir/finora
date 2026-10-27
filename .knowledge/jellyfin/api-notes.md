@@ -113,6 +113,23 @@ Re-verify when the target version changes.
 - `GET /Items/{id}/Download` answers with `Content-Disposition: attachment`,
   so a plain link downloads without leaving the page.
 
+## Display preferences (CustomPrefs)
+
+- Finora stores its per-user settings in `CustomPrefs` of
+  `DisplayPreferences/finora?client=finora`.
+- Keys starting with `homesection` or `landing-` are Jellyfin's own: the
+  server parses `homesectionN` as a number and returns HTTP 500 for any
+  other suffix (`Jellyfin.Api/Controllers/DisplayPreferencesController.cs:180`).
+  Keys such as `chromecastVersion`, `skipBackLength`, `skipForwardLength`,
+  `enableNextVideoInfoOverlay`, `dashboardTheme` and `tvhome` are moved
+  into dedicated columns (lines 149–176).
+- Two overlapping saves that both add a new key fail with
+  `UNIQUE constraint failed: CustomItemDisplayPreferences…` (HTTP 500).
+  Finora queues saves so only one runs at a time.
+- Library order and home exclusions are user configuration, shared with
+  other clients: `OrderedViews`, `MyMediaExcludes`, `LatestItemsExcludes`.
+  `/UserViews` already returns libraries in `OrderedViews` order.
+
 ## Parental controls
 
 - `GET /Localization/ParentalRatings` returns ratings with

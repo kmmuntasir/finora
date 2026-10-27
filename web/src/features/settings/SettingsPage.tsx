@@ -3,9 +3,9 @@ import type {
   UserConfiguration,
 } from "@jellyfin/sdk/lib/generated-client/models";
 import { getQuickConnectApi } from "@jellyfin/sdk/lib/utils/api/quick-connect-api";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
-import { Camera, Trash2 } from "lucide-react";
+import { Camera, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { Switch } from "radix-ui";
 import { useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/components/Button";
@@ -24,6 +24,13 @@ import {
   type HomeLayout,
 } from "@/features/preferences/preferences";
 import { applyTheme, readTheme, saveTheme, type ThemeChoice } from "@/features/preferences/theme";
+import { useUserViews } from "@/features/home/queries";
+import {
+  HOME_SECTIONS,
+  parseHomeSections,
+  serializeHomeSections,
+  type HomeSection,
+} from "@/features/home/sections";
 import { cn } from "@/lib/cn";
 import {
   useChangePassword,
@@ -79,11 +86,14 @@ const SELECT =
 
 function Toggle({
   id,
+  label,
   checked,
   onChange,
   disabled,
 }: {
   id: string;
+  /** Accessible name when no visible <label> points at the switch. */
+  label?: string;
   checked: boolean;
   onChange: (value: boolean) => void;
   disabled?: boolean;
@@ -91,6 +101,7 @@ function Toggle({
   return (
     <Switch.Root
       id={id}
+      aria-label={label}
       checked={checked}
       onCheckedChange={onChange}
       disabled={disabled}
@@ -121,6 +132,7 @@ export function SettingsPage() {
       <h1 className="text-headline-lg">Settings</h1>
       <ProfileSection />
       <AppearanceSection />
+      <HomeSection />
       <PlaybackSection />
       <SubtitleSection />
       <QuickConnectSection />
@@ -261,6 +273,173 @@ function AppearanceSection() {
   );
 }
 
+function MoveButtons({
+  label,
+  index,
+  count,
+  onMove,
+}: {
+  label: string;
+  index: number;
+  count: number;
+  onMove: (from: number, to: number) => void;
+}) {
+  return (
+    <span className="flex">
+      <button
+        type="button"
+        aria-label={`Move ${label} up`}
+        disabled={index === 0}
+        onClick={() => onMove(index, index - 1)}
+        className="grid size-9 place-items-center rounded-full text-on-surface-muted hover:bg-surface-raised hover:text-on-surface disabled:opacity-30"
+      >
+        <ChevronUp aria-hidden className="size-4" />
+      </button>
+      <button
+        type="button"
+        aria-label={`Move ${label} down`}
+        disabled={index === count - 1}
+        onClick={() => onMove(index, index + 1)}
+        className="grid size-9 place-items-center rounded-full text-on-surface-muted hover:bg-surface-raised hover:text-on-surface disabled:opacity-30"
+      >
+        <ChevronDown aria-hidden className="size-4" />
+      </button>
+    </span>
+  );
+}
+
+function moved<T>(list: T[], from: number, to: number): T[] {
+  const next = [...list];
+  const [entry] = next.splice(from, 1);
+  next.splice(to, 0, entry!);
+  return next;
+}
+
+/** Home rows (Finora preference) and library order and visibility (Jellyfin user settings). */
+function HomeSection() {
+  const { preferences } = usePreferences();
+  const setPreference = useSetPreference();
+  const { config, save, saving, failed } = useConfigField();
+  const { data: views } = useUserViews();
+  const queryClient = useQueryClient();
+  const sections = parseHomeSections(preferences.homeRows);
+  const saveSections = (next: HomeSection[]) =>
+    setPreference.mutate({ homeRows: serializeHomeSections(next) });
+  const latestExcludes = new Set(config.LatestItemsExcludes ?? []);
+  const homeExcludes = new Set(config.MyMediaExcludes ?? []);
+  const saveViews = (changes: Partial<UserConfiguration>) =>
+    save(changes, () => void queryClient.invalidateQueries({ queryKey: ["views"] }));
+  const toggle = (list: Set<string>, id: string, on: boolean) =>
+    on ? [...list].filter((entry) => entry !== id) : [...list, id];
+
+  return (
+    <Section
+      title="Home"
+      description="Rows follow you everywhere; library settings are shared with other Jellyfin apps."
+    >
+      <div className="py-4 first:pt-0">
+        <h3 className="text-label-md">Rows</h3>
+        <ul className="mt-2">
+          {sections.map((section, index) => {
+            const label = HOME_SECTIONS.find((entry) => entry.id === section.id)!.label;
+            return (
+              <li key={section.id} className="flex items-center justify-between gap-3 py-1.5">
+                <span className={cn("text-body-md", !section.visible && "text-on-surface-subtle")}>
+                  {label}
+                </span>
+                <span className="flex items-center gap-2">
+                  <MoveButtons
+                    label={label}
+                    index={index}
+                    count={sections.length}
+                    onMove={(from, to) => saveSections(moved(sections, from, to))}
+                  />
+                  <Toggle
+                    id={`home-section-${section.id}`}
+                    label={`Show ${label}`}
+                    checked={section.visible}
+                    onChange={(visible) =>
+                      saveSections(
+                        sections.map((entry) =>
+                          entry.id === section.id ? { ...entry, visible } : entry,
+                        ),
+                      )
+                    }
+                  />
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+      {views && views.length > 0 && (
+        <div className="py-4 last:pb-0">
+          <h3 className="text-label-md">Libraries</h3>
+          <p className="text-body-sm text-on-surface-muted">
+            Order, and whether each appears on the home page and in “Recently added”.
+          </p>
+          <ul className="mt-2">
+            {views.map((view, index) => {
+              const id = view.Id!;
+              return (
+                <li
+                  key={id}
+                  className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2"
+                >
+                  <span className="text-body-md">{view.Name}</span>
+                  <span className="flex flex-wrap items-center gap-3">
+                    <label className="flex items-center gap-2 text-body-sm text-on-surface-muted">
+                      <input
+                        type="checkbox"
+                        checked={!homeExcludes.has(id)}
+                        onChange={(event) =>
+                          saveViews({
+                            MyMediaExcludes: toggle(homeExcludes, id, event.target.checked),
+                          })
+                        }
+                        className="size-4 accent-primary"
+                      />
+                      Home
+                    </label>
+                    <label className="flex items-center gap-2 text-body-sm text-on-surface-muted">
+                      <input
+                        type="checkbox"
+                        checked={!latestExcludes.has(id)}
+                        onChange={(event) =>
+                          saveViews({
+                            LatestItemsExcludes: toggle(latestExcludes, id, event.target.checked),
+                          })
+                        }
+                        className="size-4 accent-primary"
+                      />
+                      Recently added
+                    </label>
+                    <MoveButtons
+                      label={view.Name ?? "library"}
+                      index={index}
+                      count={views.length}
+                      onMove={(from, to) =>
+                        saveViews({
+                          OrderedViews: moved(
+                            views.map((entry) => entry.Id!),
+                            from,
+                            to,
+                          ),
+                        })
+                      }
+                    />
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          <SaveStatus saving={saving} failed={failed} />
+        </div>
+      )}
+    </Section>
+  );
+}
+
 function LanguageSelect({
   id,
   value,
@@ -309,7 +488,8 @@ function useConfigField() {
   const config: UserConfiguration = user.Configuration ?? {};
   return {
     config,
-    save: (changes: Partial<UserConfiguration>) => update.mutate(changes),
+    save: (changes: Partial<UserConfiguration>, onSuccess?: () => void) =>
+      update.mutate(changes, { onSuccess }),
     saving: update.isPending,
     failed: update.isError,
   };
@@ -476,7 +656,7 @@ function SubtitleSection() {
   );
 }
 
-type ChoiceKey = Exclude<keyof FinoraPreferences, "homeSections">;
+type ChoiceKey = Exclude<keyof FinoraPreferences, "homeRows">;
 
 /** A select bound to one of Finora's server-synced preferences. */
 function PreferenceSelect<K extends ChoiceKey>({

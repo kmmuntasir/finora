@@ -1,6 +1,6 @@
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { Clapperboard, Film, Folder, Info, Music, Tv } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { backdropImage, imageUrl, logoImage, wideArtwork } from "@/api/images";
 import { Artwork } from "@/components/media/Artwork";
@@ -21,9 +21,10 @@ import {
 } from "@/lib/format";
 import { itemHref } from "@/lib/routes";
 import { ContinueWatchingRow } from "./ContinueWatchingRow";
-import { LatestRows, NextUpRow } from "./LibraryRows";
+import { ContinueListeningRow, LatestRows, NextUpRow } from "./LibraryRows";
 import { useLatest, useResumeItems, useUserViews } from "./queries";
 import { RowSkeleton } from "./RowSkeleton";
+import { parseHomeSections, type HomeSectionId } from "./sections";
 
 /** Home page in the layout the user picked (saved per user in Jellyfin). */
 export function HomePage() {
@@ -58,6 +59,37 @@ function Rows({ children }: { children: React.ReactNode }) {
   return <div className="space-y-10 pb-24">{children}</div>;
 }
 
+/**
+ * The user's home rows in their chosen order (Settings → Home). Each layout
+ * supplies its own Continue Watching block; the other rows are shared.
+ */
+function OrderedSections({
+  resume,
+  first,
+}: {
+  resume: React.ReactNode;
+  /** Wraps whichever row comes first (Spotlight overlaps it with the hero). */
+  first?: (row: React.ReactNode) => React.ReactNode;
+}) {
+  const { preferences } = usePreferences();
+  const rows: Record<HomeSectionId, React.ReactNode> = {
+    resume,
+    nextup: <NextUpRow />,
+    listening: <ContinueListeningRow />,
+    latest: <LatestRows />,
+  };
+  const visible = parseHomeSections(preferences.homeRows).filter((section) => section.visible);
+  return (
+    <>
+      {visible.map((section, index) => (
+        <Fragment key={section.id}>
+          {index === 0 && first ? first(rows[section.id]) : rows[section.id]}
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
 /* ───────────────────────── A · Spotlight ───────────────────────── */
 
 function useFeatured(): BaseItemDto[] {
@@ -80,15 +112,16 @@ function SpotlightHome() {
     <>
       <Hero items={featured} />
       <Rows>
-        <div className={featured.length ? "relative -mt-20" : "pt-8"}>
-          {resume.isPending ? (
-            <RowSkeleton shape="landscape" />
-          ) : (
-            <ContinueWatchingRow items={resume.data ?? []} />
-          )}
-        </div>
-        <NextUpRow />
-        <LatestRows />
+        <OrderedSections
+          first={(row) => <div className={featured.length ? "relative -mt-20" : "pt-8"}>{row}</div>}
+          resume={
+            resume.isPending ? (
+              <RowSkeleton shape="landscape" />
+            ) : (
+              <ContinueWatchingRow items={resume.data ?? []} />
+            )
+          }
+        />
       </Rows>
     </>
   );
@@ -189,8 +222,12 @@ function DashboardHome() {
   const { user } = useSession();
   const { data: views } = useUserViews();
   const resume = useResumeItems();
-  const [first, ...rest] = resume.data ?? [];
-  const spotlight = resume.data?.slice(0, 3) ?? [];
+  const { preferences } = usePreferences();
+  const showResume = parseHomeSections(preferences.homeRows).some(
+    (section) => section.id === "resume" && section.visible,
+  );
+  const [first, ...rest] = showResume ? (resume.data ?? []) : [];
+  const spotlight = showResume ? (resume.data?.slice(0, 3) ?? []) : [];
 
   return (
     <Rows>
@@ -199,19 +236,21 @@ function DashboardHome() {
           {greeting()}, {user.Name}
         </h1>
         <nav aria-label="Libraries" className="mt-5 flex flex-wrap gap-2">
-          {views?.map((view) => {
-            const Icon = VIEW_ICONS[view.CollectionType ?? ""] ?? Folder;
-            return (
-              <Link
-                key={view.Id}
-                to={`/libraries/${view.Id}`}
-                className="inline-flex h-10 items-center gap-2 rounded-full bg-surface-raised px-4 text-label-md text-on-surface-muted transition-colors duration-[120ms] hover:bg-surface-overlay hover:text-on-surface"
-              >
-                <Icon aria-hidden className="size-4" />
-                {view.Name}
-              </Link>
-            );
-          })}
+          {views
+            ?.filter((view) => !user.Configuration?.MyMediaExcludes?.includes(view.Id ?? ""))
+            .map((view) => {
+              const Icon = VIEW_ICONS[view.CollectionType ?? ""] ?? Folder;
+              return (
+                <Link
+                  key={view.Id}
+                  to={`/libraries/${view.Id}`}
+                  className="inline-flex h-10 items-center gap-2 rounded-full bg-surface-raised px-4 text-label-md text-on-surface-muted transition-colors duration-[120ms] hover:bg-surface-overlay hover:text-on-surface"
+                >
+                  <Icon aria-hidden className="size-4" />
+                  {view.Name}
+                </Link>
+              );
+            })}
         </nav>
       </header>
 
@@ -251,9 +290,11 @@ function DashboardHome() {
           </div>
         </section>
       )}
-      {rest.length > 2 && <ContinueWatchingRow items={rest.slice(2)} title="More in progress" />}
-      <NextUpRow />
-      <LatestRows />
+      <OrderedSections
+        resume={
+          rest.length > 2 && <ContinueWatchingRow items={rest.slice(2)} title="More in progress" />
+        }
+      />
     </Rows>
   );
 }
@@ -321,9 +362,7 @@ function FocusHome() {
         </section>
       )}
       {resume.isPending && <RowSkeleton shape="landscape" />}
-      <ContinueWatchingRow items={others} title="Also in progress" />
-      <NextUpRow />
-      <LatestRows />
+      <OrderedSections resume={<ContinueWatchingRow items={others} title="Also in progress" />} />
     </Rows>
   );
 }

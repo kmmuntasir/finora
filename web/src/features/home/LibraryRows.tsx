@@ -2,7 +2,8 @@ import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { LandscapeCard, PosterCard } from "@/components/media/cards";
 import { MediaRow } from "@/components/media/MediaRow";
 import { RowSkeleton } from "./RowSkeleton";
-import { useLatest, useNextUp, useResumeItems, useUserViews } from "./queries";
+import { useSession } from "@/features/auth/context";
+import { useLatest, useNextUp, useRecentAlbums, useResumeItems, useUserViews } from "./queries";
 
 const LATEST_TYPES = new Set(["movies", "tvshows", "homevideos", "music"]);
 
@@ -55,13 +56,34 @@ export function NextUpRow({ title = "Next up" }: { title?: string }) {
   );
 }
 
-/** "Recently added" rows for every browsable library the user can see. */
+export function ContinueListeningRow() {
+  const { data, isPending } = useRecentAlbums();
+  if (isPending) return <RowSkeleton shape="square" />;
+  if (!data?.length) return null;
+  return (
+    <MediaRow title="Continue listening" itemClassName="w-36 md:w-44">
+      {data.map((album) => (
+        <PosterCard key={album.Id} item={album} />
+      ))}
+    </MediaRow>
+  );
+}
+
+/**
+ * "Recently added" rows for every browsable library the user can see, in
+ * their library order, skipping libraries excluded in their Jellyfin home
+ * settings (LatestItemsExcludes).
+ */
 export function LatestRows() {
+  const { user } = useSession();
   const { data: views } = useUserViews();
+  const excluded = new Set(user.Configuration?.LatestItemsExcludes ?? []);
   return (
     <>
       {views
-        ?.filter((view) => LATEST_TYPES.has(view.CollectionType ?? ""))
+        ?.filter(
+          (view) => LATEST_TYPES.has(view.CollectionType ?? "") && !excluded.has(view.Id ?? ""),
+        )
         .map((view) => (
           <LatestRow key={view.Id} view={view} />
         ))}

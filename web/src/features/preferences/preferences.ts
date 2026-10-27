@@ -21,8 +21,12 @@ const CHOICES = {
 
 type Choices = typeof CHOICES;
 export type FinoraPreferences = { [K in keyof Choices]: Choices[K][number] } & {
-  /** Home sections in display order; a leading "-" hides a section. */
-  homeSections: string;
+  /**
+   * Home rows in display order; a leading "-" hides a row. Not named
+   * "homesection…": Jellyfin parses keys with that prefix as its own
+   * (DisplayPreferencesController.cs:180) and fails with HTTP 500.
+   */
+  homeRows: string;
 };
 export type HomeLayout = FinoraPreferences["homeLayout"];
 
@@ -30,7 +34,7 @@ export const DEFAULT_PREFERENCES: FinoraPreferences = {
   ...(Object.fromEntries(Object.entries(CHOICES).map(([key, values]) => [key, values[0]])) as {
     [K in keyof Choices]: Choices[K][number];
   }),
-  homeSections: "",
+  homeRows: "",
 };
 
 const PREFERENCES_ID = "finora";
@@ -45,7 +49,7 @@ export function parsePreferences(
     const value = custom?.[key];
     if (value && (values as readonly string[]).includes(value)) result[key] = value;
   }
-  if (typeof custom?.homeSections === "string") result.homeSections = custom.homeSections;
+  if (typeof custom?.homeRows === "string") result.homeRows = custom.homeRows;
   return result as FinoraPreferences;
 }
 
