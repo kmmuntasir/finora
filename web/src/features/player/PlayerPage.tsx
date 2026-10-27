@@ -34,7 +34,7 @@ import {
   type SubtitleTrack,
 } from "./playback";
 import { chooseInitialSubtitle } from "./subtitle-choice";
-import { AudioMenu, CONTROL_BUTTON, SettingsMenu, SubtitleMenu } from "./PlayerMenus";
+import { AudioMenu, ChapterMenu, CONTROL_BUTTON, SettingsMenu, SubtitleMenu } from "./PlayerMenus";
 import { formatClock, readPlayerPreferences, savePlayerPreferences } from "./player-preferences";
 import { useNextEpisode, useSegments, type SkippableSegment } from "./queries";
 import { createReporter, type PlaybackSnapshot, type Reporter } from "./reporting";
@@ -757,6 +757,7 @@ function Player({ item }: { item: BaseItemDto }) {
             <span className="flex-1" />
             {source && (
               <>
+                <ChapterMenu chapters={item.Chapters ?? []} current={current} onSeek={seekTo} />
                 <SubtitleMenu tracks={tracks} selected={subtitleIndex} onSelect={selectSubtitle} />
                 <AudioMenu
                   tracks={source.audioTracks}

@@ -8,6 +8,7 @@ import { useQueue } from "@/features/music/queue-store";
 import { PlayButton } from "@/components/media/PlayButton";
 import { cn } from "@/lib/cn";
 import { ItemMenu } from "./ItemMenu";
+import { TrailerButton } from "./TrailerButton";
 import { useUserDataToggle } from "./queries";
 import { playHref, type PlaySelection } from "./selection";
 
@@ -123,6 +124,7 @@ export function ItemActions({ item, playTarget, playLabel, selection }: ItemActi
       >
         <Heart aria-hidden className={cn("size-5", isFavorite && "fill-current")} />
       </button>
+      <TrailerButton item={item} className={ROUND} />
       <ItemMenu item={item} className={ROUND} />
     </div>
   );

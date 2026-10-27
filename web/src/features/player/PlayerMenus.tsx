@@ -1,9 +1,10 @@
-import { AudioLines, Captions, Check, Settings } from "lucide-react";
+import type { ChapterInfo } from "@jellyfin/sdk/lib/generated-client/models";
+import { AudioLines, Captions, Check, ListVideo, Settings } from "lucide-react";
 import { DropdownMenu } from "radix-ui";
 import { offsetLabel, SUBTITLE_OFFSETS } from "./subtitle-timing";
 import type { ReactNode } from "react";
 import type { AudioTrack, SubtitleTrack } from "./playback";
-import { BITRATE_OPTIONS } from "./player-preferences";
+import { BITRATE_OPTIONS, formatClock } from "./player-preferences";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
@@ -38,6 +39,44 @@ function Menu({ label, icon, children }: { label: string; icon: ReactNode; child
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
+  );
+}
+
+/** Chapter list; the current chapter is checked. */
+export function ChapterMenu({
+  chapters,
+  current,
+  onSeek,
+}: {
+  chapters: ChapterInfo[];
+  current: number;
+  onSeek: (seconds: number) => void;
+}) {
+  if (chapters.length < 2) return null;
+  const starts = chapters.map((chapter) => (chapter.StartPositionTicks ?? 0) / 10_000_000);
+  const active = starts.findLastIndex((start) => start <= current + 0.5);
+  return (
+    <Menu label="Chapters" icon={<ListVideo aria-hidden className="size-6" />}>
+      <DropdownMenu.Label className={LABEL}>Chapters</DropdownMenu.Label>
+      <div className="max-h-[50vh] overflow-y-auto">
+        <DropdownMenu.RadioGroup
+          value={String(active)}
+          onValueChange={(value) => onSeek(starts[Number(value)] ?? 0)}
+        >
+          {chapters.map((chapter, index) => (
+            <DropdownMenu.RadioItem key={index} value={String(index)} className={ITEM}>
+              <Indicator />
+              <span className="min-w-0 flex-1 truncate">
+                {chapter.Name || `Chapter ${index + 1}`}
+              </span>
+              <span className="text-caption text-on-surface-subtle tabular-nums">
+                {formatClock(starts[index]!)}
+              </span>
+            </DropdownMenu.RadioItem>
+          ))}
+        </DropdownMenu.RadioGroup>
+      </div>
+    </Menu>
   );
 }
 
