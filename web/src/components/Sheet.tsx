@@ -51,7 +51,15 @@ export function Sheet({
               <X aria-hidden className="size-5" />
             </Dialog.Close>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto p-5">{children}</div>
+          <div
+            className={cn(
+              "min-h-0 flex-1 overflow-y-auto p-5",
+              // Without a footer, the body is the last thing above the home indicator.
+              !footer && "pb-[max(1.25rem,env(safe-area-inset-bottom))]",
+            )}
+          >
+            {children}
+          </div>
           {footer && (
             <div className="flex justify-end gap-2 border-t border-border px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
               {footer}

@@ -63,12 +63,13 @@ export function SelectionBar({
       <div
         role="toolbar"
         aria-label="Selected items"
-        className="fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-3xl flex-wrap items-center gap-1 rounded-xl bg-surface-overlay p-2 shadow-[0_12px_32px_rgb(0_0_0/0.5)] ring-1 ring-border md:bottom-6"
+        className="fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-3xl items-center gap-0.5 rounded-xl bg-surface-overlay p-2 shadow-[0_12px_32px_rgb(0_0_0/0.5)] ring-1 ring-border md:bottom-6"
       >
-        <span className="px-3 text-label-md tabular-nums" aria-live="polite">
-          {items.length} selected
+        <span className="shrink-0 px-2 text-label-md tabular-nums sm:px-3" aria-live="polite">
+          {items.length}
+          <span className="max-sm:sr-only"> selected</span>
         </span>
-        <span className="flex flex-1 flex-wrap items-center gap-1">
+        <span className="flex min-w-0 flex-1 items-center gap-0.5 sm:gap-1">
           <BarButton
             icon={<Eye aria-hidden className="size-4" />}
             disabled={disabled}
@@ -111,7 +112,7 @@ export function SelectionBar({
           <button
             type="button"
             onClick={onClear}
-            className="h-9 rounded-full px-3 text-label-md text-on-surface-muted hover:bg-surface-raised hover:text-on-surface"
+            className="h-9 shrink-0 rounded-full px-2 text-label-md text-on-surface-muted hover:bg-surface-raised hover:text-on-surface sm:px-3"
           >
             Clear
           </button>
@@ -120,7 +121,7 @@ export function SelectionBar({
           type="button"
           onClick={onDone}
           aria-label="Stop selecting"
-          className="grid size-9 place-items-center rounded-full text-on-surface-muted hover:bg-surface-raised hover:text-on-surface"
+          className="grid size-9 shrink-0 place-items-center rounded-full text-on-surface-muted hover:bg-surface-raised hover:text-on-surface"
         >
           <X aria-hidden className="size-5" />
         </button>
@@ -154,7 +155,8 @@ function BarButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-label-md text-on-surface hover:bg-surface-raised disabled:opacity-40"
+      title={typeof children === "string" ? children : undefined}
+      className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-label-md text-on-surface hover:bg-surface-raised disabled:opacity-40 sm:px-3"
     >
       {icon}
       <span className="max-sm:sr-only">{children}</span>

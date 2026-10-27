@@ -124,7 +124,8 @@ export function LibraryToolbar({
   onToggleSelecting,
 }: LibraryToolbarProps) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    // One scrolling row on phones; wraps on larger screens.
+    <div className="-mx-page-x-mobile flex items-center gap-2 overflow-x-auto px-page-x-mobile pb-1 [scrollbar-width:none] md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:pb-0 [&>*]:shrink-0">
       <div
         role="radiogroup"
         aria-label="View"
