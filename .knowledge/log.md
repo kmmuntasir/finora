@@ -10,6 +10,11 @@ links to the notes that changed.
 
 ## 2026-10-28
 
+- **Phase 4 (music) built.** App-wide audio engine (universal audio endpoint),
+  queue store with play next / add / reorder (dnd kit) / remove / shuffle /
+  repeat, mini player bar, full-screen now playing with queue and synced
+  lyrics, Instant Mix, album track rows, media session. Verified FLAC
+  playback across navigation; test traces restored exactly.
 - **Phase 3 (video player) built.** Own device profile, direct play / HLS
   fallback, subtitles and audio switching, quality and speed, trickplay seek
   previews, chapters, skip-segment button, up-next with countdown, keyboard

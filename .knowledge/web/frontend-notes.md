@@ -96,6 +96,18 @@ Facts and gotchas learned while building Finora Web.
 - Every playback start increments `PlayCount` and sets `LastPlayedDate`
   (`SessionManager.OnPlaybackStart`), in every client.
 
+## Music
+
+- One `<audio>` element lives in `SignedInLayout`, above both the app shell
+  and the video player, so music survives navigation; the video player
+  pauses it.
+- Streams use `/Audio/{id}/universal` with the browser's direct-play
+  containers and MP3 as the fallback; `PlaySessionId` is the queue entry key,
+  so the next track's URL is stable and can be pre-fetched for a smooth
+  transition.
+- Queue state (zustand) is separate from the fast-changing clock store so
+  long lists don't re-render on every time update.
+
 ## Verified against the reference server
 
 - A dev server on `http://127.0.0.1:5173` reads public server info from

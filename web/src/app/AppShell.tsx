@@ -5,6 +5,9 @@ import { Logo } from "@/components/Logo";
 import { UserMenu } from "@/features/auth/UserMenu";
 import { useUserViews } from "@/features/home/queries";
 import { viewIcon } from "@/features/library/view-icons";
+import { NowPlayingBar } from "@/features/music/NowPlayingBar";
+import { NowPlayingView } from "@/features/music/NowPlayingView";
+import { currentEntry, useQueue } from "@/features/music/queue-store";
 import { cn } from "@/lib/cn";
 import { libraryHref } from "@/lib/routes";
 
@@ -91,6 +94,7 @@ function useSearchShortcut() {
 
 export function AppShell() {
   const { data: views } = useUserViews();
+  const musicLoaded = useQueue((state) => currentEntry(state) !== null);
   useSearchShortcut();
 
   return (
@@ -119,9 +123,18 @@ export function AppShell() {
         </div>
       </aside>
 
-      <main className="min-w-0 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
+      <main
+        className={cn(
+          "min-w-0 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0",
+          musicLoaded &&
+            "pb-[calc(4rem+var(--spacing-player-bar)+env(safe-area-inset-bottom))] md:pb-[var(--spacing-player-bar)]",
+        )}
+      >
         <Outlet />
       </main>
+
+      <NowPlayingBar />
+      <NowPlayingView />
 
       <nav
         aria-label="Main"

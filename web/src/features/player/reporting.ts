@@ -2,7 +2,14 @@ import type { Api } from "@jellyfin/sdk";
 import { getHlsSegmentApi } from "@jellyfin/sdk/lib/utils/api/hls-segment-api";
 import { getPlaystateApi } from "@jellyfin/sdk/lib/utils/api/playstate-api";
 import { getDeviceId } from "@/api/device";
-import type { PlaybackSource } from "./playback";
+import type { PlayMethod } from "./playback";
+
+/** What the reporter needs to know about the stream being played. */
+export interface ReportedStream {
+  mediaSourceId: string;
+  playSessionId: string;
+  method: PlayMethod;
+}
 
 export interface PlaybackSnapshot {
   positionSeconds: number;
@@ -16,10 +23,10 @@ export interface PlaybackSnapshot {
 
 const TICKS_PER_SECOND = 10_000_000;
 
-function body(itemId: string, source: PlaybackSource, snapshot: PlaybackSnapshot) {
+function body(itemId: string, source: ReportedStream, snapshot: PlaybackSnapshot) {
   return {
     ItemId: itemId,
-    MediaSourceId: source.mediaSource.Id,
+    MediaSourceId: source.mediaSourceId,
     PlaySessionId: source.playSessionId,
     PlayMethod: source.method,
     PositionTicks: Math.round(snapshot.positionSeconds * TICKS_PER_SECOND),
@@ -36,7 +43,7 @@ function body(itemId: string, source: PlaybackSource, snapshot: PlaybackSnapshot
  * Tells Jellyfin what is playing so resume positions, "watched" state and the
  * admin's session list stay correct on every client.
  */
-export function createReporter(api: Api, itemId: string, source: PlaybackSource) {
+export function createReporter(api: Api, itemId: string, source: ReportedStream) {
   const playstate = getPlaystateApi(api);
   let started = false;
   let stopped = false;

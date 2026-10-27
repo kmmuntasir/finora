@@ -22,6 +22,7 @@ import { Spinner } from "@/components/Spinner";
 import { useRuntimeConfig } from "@/config/context";
 import { useSession } from "@/features/auth/context";
 import { useItemDetails } from "@/features/item/queries";
+import { useQueue } from "@/features/music/queue-store";
 import { cn } from "@/lib/cn";
 import { episodeCode } from "@/lib/format";
 import { requestPlayback, type PlaybackRequest, type PlaybackSource } from "./playback";
@@ -150,6 +151,9 @@ function Player({ item }: { item: BaseItemDto }) {
   const [ended, setEnded] = useState(false);
   const [upNextCancelled, setUpNextCancelled] = useState(false);
 
+  // Video takes over from music.
+  useEffect(() => useQueue.getState().setPlaying(false), []);
+
   const nextEpisode = useNextEpisode(item).data ?? null;
   const segments = useSegments(item.Id!).data ?? [];
 
@@ -185,7 +189,11 @@ function Player({ item }: { item: BaseItemDto }) {
     const video = videoRef.current;
     if (!video || !source) return;
     const startSeconds = request.startTicks / TICKS_PER_SECOND;
-    reporterRef.current = createReporter(api, item.Id!, source);
+    reporterRef.current = createReporter(api, item.Id!, {
+      mediaSourceId: source.mediaSource.Id!,
+      playSessionId: source.playSessionId,
+      method: source.method,
+    });
     setMediaError(null);
     setWaiting(true);
 

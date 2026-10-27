@@ -53,7 +53,10 @@ Open other notes only when the task needs them.
   user's play count and sets "last played". Test on unwatched items, stop
   before 5% (no resume point), then reset with
   `DELETE /UserPlayedItems/{itemId}?userId=…` (clears play count, position
-  and last-played date). Never test on items the user is partway through.
+  and last-played date). For items already played, save
+  `GET /UserItems/{itemId}/UserData?userId=…` first and restore it afterwards
+  with `POST` to the same URL. Never test on items the user is partway
+  through.
 - **Jellyfin source for lookups:** clone tag `v10.11.11` (the reference
   server's version) next to this repository and grep it instead of guessing:
   `git clone --depth 1 --branch v10.11.11 https://github.com/jellyfin/jellyfin.git`.
