@@ -685,7 +685,7 @@ function Player({ item }: { item: BaseItemDto }) {
                 setAutoplayNext(value);
                 savePlayerPreferences({ autoplayNext: value });
               }}
-              showAutoplay={item.Type === "Episode"}
+              showAutoplay={item.Type === "Episode" || item.Type === "Video"}
               onShowInfo={() => setShowInfo(true)}
             />
             {document.pictureInPictureEnabled && (
@@ -820,7 +820,7 @@ function UpNext({
           Up next{countdown ? ` in ${secondsLeft}s` : ""}
         </p>
         <p className="mt-1 line-clamp-2 text-label-md">
-          {episodeCode(episode)} · {episode.Name}
+          {[episodeCode(episode), episode.Name].filter(Boolean).join(" · ")}
         </p>
         <div className="mt-3 flex gap-2">
           <Button size="sm" onClick={onPlay}>

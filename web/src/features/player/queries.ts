@@ -1,17 +1,44 @@
-import { MediaSegmentType, type BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import {
+  BaseItemKind,
+  ItemSortBy,
+  MediaSegmentType,
+  type BaseItemDto,
+} from "@jellyfin/sdk/lib/generated-client/models";
+import { getItemsApi } from "@jellyfin/sdk/lib/utils/api/items-api";
 import { getMediaSegmentsApi } from "@jellyfin/sdk/lib/utils/api/media-segments-api";
 import { getTvShowsApi } from "@jellyfin/sdk/lib/utils/api/tv-shows-api";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "@/features/auth/context";
 
-/** The episode after this one in the series, if any. */
+/**
+ * What plays after this item: the next episode of a series, or for home
+ * videos the next video in the same folder (by name).
+ */
 export function useNextEpisode(item: BaseItemDto) {
   const { api, user } = useSession();
   return useQuery({
     queryKey: ["next-episode", user.Id, item.Id],
-    enabled: item.Type === "Episode" && Boolean(item.SeriesId),
+    enabled:
+      (item.Type === "Episode" && Boolean(item.SeriesId)) ||
+      (item.Type === "Video" && Boolean(item.ParentId)),
     staleTime: Infinity,
     queryFn: async ({ signal }) => {
+      if (item.Type === "Video") {
+        // Folder listings skip user data: Jellyfin computes it slowly for some folders.
+        const { data } = await getItemsApi(api).getItems(
+          {
+            userId: user.Id,
+            parentId: item.ParentId!,
+            includeItemTypes: [BaseItemKind.Video],
+            sortBy: [ItemSortBy.SortName],
+            enableUserData: false,
+          },
+          { signal },
+        );
+        const siblings = data.Items ?? [];
+        const position = siblings.findIndex((sibling) => sibling.Id === item.Id);
+        return position >= 0 ? (siblings[position + 1] ?? null) : null;
+      }
       const { data } = await getTvShowsApi(api).getEpisodes(
         {
           seriesId: item.SeriesId!,

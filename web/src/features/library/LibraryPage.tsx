@@ -1,7 +1,8 @@
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { ChevronRight } from "lucide-react";
 import { useMemo } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
+import { PlayButton } from "@/components/media/PlayButton";
 import { Button } from "@/components/Button";
 import { Spinner } from "@/components/Spinner";
 import { useUserViews } from "@/features/home/queries";
@@ -69,6 +70,9 @@ function Library({ view, kind }: { view: BaseItemDto; kind: LibraryKind }) {
             ? " "
             : `${total.toLocaleString()} ${total === 1 ? kind.noun.one : kind.noun.many}`}
         </p>
+        {!kind.recursive && list.some((item) => item.MediaType === "Video") && (
+          <PlayAll items={list} />
+        )}
         <div className="mt-5">
           <LibraryToolbar
             kind={kind}
@@ -193,5 +197,21 @@ function FolderTrail({
       </nav>
       <h1 className="mt-1 text-headline-lg">{current?.Name ?? " "}</h1>
     </div>
+  );
+}
+
+/** Plays the first video in this folder; Up next then continues through the folder by name. */
+function PlayAll({ items }: { items: BaseItemDto[] }) {
+  const navigate = useNavigate();
+  const first = [...items]
+    .filter((item) => item.MediaType === "Video" && !item.IsFolder)
+    .sort((a, b) => (a.SortName ?? a.Name ?? "").localeCompare(b.SortName ?? b.Name ?? ""))[0];
+  if (!first) return null;
+  return (
+    <PlayButton
+      className="mt-4"
+      label="Play all"
+      onClick={() => void navigate(`/play/${first.Id}`)}
+    />
   );
 }
