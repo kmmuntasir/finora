@@ -7,6 +7,7 @@ import { fetchInstantMix, fetchTracks, isMusic } from "@/features/music/playable
 import { useQueue } from "@/features/music/queue-store";
 import { PlayButton } from "@/components/media/PlayButton";
 import { cn } from "@/lib/cn";
+import { ItemMenu } from "./ItemMenu";
 import { useUserDataToggle } from "./queries";
 import { playHref, type PlaySelection } from "./selection";
 
@@ -28,6 +29,7 @@ export function ItemActions({ item, playTarget, playLabel, selection }: ItemActi
   const [loading, setLoading] = useState(false);
   const music = isMusic(item);
   const collection = ["MusicAlbum", "MusicArtist", "Playlist", "BoxSet"].includes(item.Type ?? "");
+  const list = item.Type === "Playlist" || item.Type === "BoxSet";
 
   /** Music goes to the queue; playlists of videos open the first video. */
   const playQueue = async (mode: "play" | "shuffle" | "mix") => {
@@ -42,7 +44,8 @@ export function ItemActions({ item, playTarget, playLabel, selection }: ItemActi
         useQueue.getState().play(audio, 0, { shuffle: mode === "shuffle" });
       } else {
         const firstVideo = tracks.find((track) => track.MediaType === "Video");
-        if (firstVideo) void navigate(playHref(firstVideo));
+        const listId = list ? item.Id! : undefined;
+        if (firstVideo) void navigate(playHref(firstVideo, {}, false, listId));
       }
     } finally {
       setLoading(false);
@@ -56,16 +59,16 @@ export function ItemActions({ item, playTarget, playLabel, selection }: ItemActi
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      {(music || item.Type === "Playlist") && (
+      {(music || list) && (
         <PlayButton label="Play" disabled={loading} onClick={() => void playQueue("play")} />
       )}
-      {!music && item.Type !== "Playlist" && target && (
+      {!music && !list && target && (
         <PlayButton
           label={playLabel ?? (resumable ? "Resume" : "Play")}
           onClick={() => void navigate(playHref(target, selection))}
         />
       )}
-      {(music || item.Type === "Playlist") && collection && (
+      {(music || list) && collection && (
         <button
           type="button"
           onClick={() => void playQueue("shuffle")}
@@ -120,6 +123,7 @@ export function ItemActions({ item, playTarget, playLabel, selection }: ItemActi
       >
         <Heart aria-hidden className={cn("size-5", isFavorite && "fill-current")} />
       </button>
+      <ItemMenu item={item} className={ROUND} />
     </div>
   );
 }

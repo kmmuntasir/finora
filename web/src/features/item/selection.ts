@@ -10,8 +10,10 @@ export function playHref(
   item: BaseItemDto,
   selection: PlaySelection = {},
   fromStart = false,
+  listId?: string,
 ): string {
   const params = new URLSearchParams();
+  if (listId) params.set("list", listId);
   if (selection.sourceId) params.set("source", selection.sourceId);
   if (selection.audioIndex !== undefined) params.set("audio", String(selection.audioIndex));
   if (selection.subtitleIndex !== undefined) params.set("sub", String(selection.subtitleIndex));

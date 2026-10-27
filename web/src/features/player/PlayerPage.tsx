@@ -163,7 +163,8 @@ function Player({ item }: { item: BaseItemDto }) {
   // Video takes over from music.
   useEffect(() => useQueue.getState().setPlaying(false), []);
 
-  const nextEpisode = useNextEpisode(item).data ?? null;
+  const listId = params.get("list");
+  const nextEpisode = useNextEpisode(item, listId).data ?? null;
   const segments = useSegments(item.Id!).data ?? [];
 
   // Subtitles added through Finora (decision 0005). Ones Jellyfin hasn't
@@ -389,8 +390,11 @@ function Player({ item }: { item: BaseItemDto }) {
   }, [navigate]);
 
   const goToNext = useCallback(() => {
-    if (nextEpisode?.Id) void navigate(`/play/${nextEpisode.Id}`, { replace: true });
-  }, [navigate, nextEpisode]);
+    if (nextEpisode?.Id) {
+      const query = listId ? `?list=${encodeURIComponent(listId)}` : "";
+      void navigate(`/play/${nextEpisode.Id}${query}`, { replace: true });
+    }
+  }, [navigate, nextEpisode, listId]);
 
   // Auto-hiding controls.
   const revealControls = useCallback(() => {

@@ -26,6 +26,7 @@ import { SeasonEpisodes } from "./SeasonEpisodes";
 import { TrackList } from "./TrackList";
 import { selectedSource, type PlaySelection } from "./selection";
 import { TrackPickers } from "./TrackPickers";
+import { CollectionItems, PlaylistItems } from "@/features/collections/ContainerItems";
 import { SubtitleFinder } from "@/features/subtitles/SubtitleFinder";
 
 export function ItemPage() {
@@ -247,10 +248,13 @@ function ItemDetails({ item }: { item: BaseItemDto }) {
           <TrackList album={item} tracks={related.data} />
         )}
 
-        {(item.Type === "MusicArtist" ||
-          item.Type === "Person" ||
-          item.Type === "BoxSet" ||
-          item.Type === "Playlist") && (
+        {item.Type === "Playlist" && (
+          <Section title="Items">
+            <PlaylistItems playlist={item} />
+          </Section>
+        )}
+
+        {(item.Type === "MusicArtist" || item.Type === "Person" || item.Type === "BoxSet") && (
           <Section
             title={
               item.Type === "Person"
@@ -262,6 +266,8 @@ function ItemDetails({ item }: { item: BaseItemDto }) {
           >
             {related.isPending ? (
               <Spinner />
+            ) : related.data?.length && item.Type === "BoxSet" ? (
+              <CollectionItems collection={item} items={related.data} />
             ) : related.data?.length ? (
               <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-x-4 gap-y-6 md:grid-cols-[repeat(auto-fill,minmax(10rem,1fr))]">
                 {related.data.map((child) => (

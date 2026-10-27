@@ -1,5 +1,6 @@
 import { ArrowDownUp, Check, ChevronDown } from "lucide-react";
 import { DropdownMenu } from "radix-ui";
+import { MENU_CONTENT, MENU_ITEM } from "@/components/menu";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import {
@@ -60,11 +61,6 @@ function ChoiceMenu({
     </DropdownMenu.Root>
   );
 }
-
-const MENU_CONTENT =
-  "z-50 max-h-[min(70vh,28rem)] min-w-48 overflow-y-auto rounded-lg bg-surface-overlay p-1.5 shadow-[0_8px_24px_rgb(0_0_0/0.5)] ring-1 ring-border";
-const MENU_ITEM =
-  "flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-body-sm outline-none select-none data-[highlighted]:bg-surface-raised";
 
 function MenuButton({ children, active }: { children: ReactNode; active?: boolean }) {
   return (
