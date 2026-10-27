@@ -29,10 +29,48 @@ type providerSet struct {
 	subdl         *subtitles.SubDL
 	openSubtitles *subtitles.OpenSubtitles
 	osKey         string
+	// cooldowns holds providers that reported a quota or throttling error.
+	cooldowns map[string]cooldown
+}
+
+type cooldown struct {
+	Until  time.Time
+	Reason string
 }
 
 func newProviderSet() *providerSet {
-	return &providerSet{addic7ed: subtitles.NewAddic7ed(), subdl: &subtitles.SubDL{}}
+	return &providerSet{
+		addic7ed:  subtitles.NewAddic7ed(),
+		subdl:     &subtitles.SubDL{},
+		cooldowns: map[string]cooldown{},
+	}
+}
+
+// throttleCooldown is how long a throttling provider is left alone.
+const throttleCooldown = 15 * time.Minute
+
+// noteQuota records a quota error: daily limits reset at midnight UTC.
+func (p *providerSet) noteQuota(id string, quota *subtitles.QuotaError, now time.Time) {
+	until := now.Add(throttleCooldown)
+	if quota.Daily {
+		y, m, d := now.UTC().Date()
+		until = time.Date(y, m, d+1, 0, 0, 0, 0, time.UTC)
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.cooldowns[id] = cooldown{Until: until, Reason: quota.Message}
+}
+
+// cooldown reports whether a provider is resting after a quota error.
+func (p *providerSet) cooldown(id string, now time.Time) (cooldown, bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	c, ok := p.cooldowns[id]
+	if ok && !now.Before(c.Until) {
+		delete(p.cooldowns, id)
+		return cooldown{}, false
+	}
+	return c, ok
 }
 
 func (p *providerSet) ordered(settings config.Settings) []subtitles.Provider {
@@ -222,6 +260,11 @@ func (s *Server) handleSubtitleSearch(w http.ResponseWriter, r *http.Request) {
 	var wg sync.WaitGroup
 	for i, provider := range providers {
 		statuses[i] = providerStatus{ID: provider.ID(), Name: provider.Name(), Status: "ok"}
+		if c, resting := s.providers.cooldown(provider.ID(), s.now()); resting {
+			statuses[i].Status = "quota"
+			statuses[i].Message = c.Reason + " (until " + c.Until.UTC().Format("15:04") + " UTC)"
+			continue
+		}
 		if !provider.Supports(query) {
 			statuses[i].Status = "skipped"
 			if provider.ID() == "opensubtitles" {
@@ -237,6 +280,12 @@ func (s *Server) handleSubtitleSearch(w http.ResponseWriter, r *http.Request) {
 			ctx, cancel := context.WithTimeout(r.Context(), 40*time.Second)
 			defer cancel()
 			candidates, err := provider.Search(ctx, query)
+			var quota *subtitles.QuotaError
+			if errors.As(err, &quota) {
+				s.providers.noteQuota(provider.ID(), quota, s.now())
+				statuses[i].Status, statuses[i].Message = "quota", quota.Message
+				return
+			}
 			if err != nil {
 				statuses[i].Status, statuses[i].Message = "error", err.Error()
 				s.log.Warn("subtitle search failed", "provider", provider.ID(), "error", err)
@@ -320,6 +369,7 @@ func (s *Server) handleSubtitleDownload(w http.ResponseWriter, r *http.Request) 
 	payload, err := provider.Download(ctx, candidate)
 	var quota *subtitles.QuotaError
 	if errors.As(err, &quota) {
+		s.providers.noteQuota(candidate.Provider, quota, s.now())
 		writeError(w, http.StatusTooManyRequests, quota.Message)
 		return
 	}
@@ -519,4 +569,52 @@ func (s *Server) handleDeleteSubtitle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+type providerHealth struct {
+	ID             string     `json:"id"`
+	Name           string     `json:"name"`
+	Enabled        bool       `json:"enabled"`
+	CooldownUntil  *time.Time `json:"cooldownUntil"`
+	CooldownReason string     `json:"cooldownReason,omitempty"`
+	DownloadsToday int        `json:"downloadsToday"`
+	// Remaining is the provider's own count of downloads left today, when it reports one.
+	Remaining *int `json:"remaining"`
+}
+
+// handleProviderHealth shows admins each provider's cooldown and today's downloads (UTC day).
+func (s *Server) handleProviderHealth(w http.ResponseWriter, r *http.Request) {
+	settings, err := s.settings(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "database unavailable")
+		return
+	}
+	now := s.now()
+	y, m, d := now.UTC().Date()
+	counts, err := s.store.CountSubtitlesByProviderSince(r.Context(), time.Date(y, m, d, 0, 0, 0, 0, time.UTC))
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "database unavailable")
+		return
+	}
+	s.providers.ordered(settings) // make sure the OpenSubtitles client reflects the settings
+	enabled := map[string]bool{}
+	for _, id := range settings.SubtitleProviders {
+		enabled[id] = true
+	}
+	all := []struct{ id, name string }{{"addic7ed", "Addic7ed"}, {"subdl", "SubDL"}, {"opensubtitles", "OpenSubtitles"}}
+	result := make([]providerHealth, 0, len(all))
+	for _, provider := range all {
+		health := providerHealth{ID: provider.id, Name: provider.name, Enabled: enabled[provider.id], DownloadsToday: counts[provider.id]}
+		if c, resting := s.providers.cooldown(provider.id, now); resting {
+			until := c.Until
+			health.CooldownUntil, health.CooldownReason = &until, c.Reason
+		}
+		if provider.id == "opensubtitles" && s.providers.openSubtitles != nil {
+			if remaining, resetAt := s.providers.openSubtitles.Quota(); !resetAt.IsZero() {
+				health.Remaining = &remaining
+			}
+		}
+		result = append(result, health)
+	}
+	writeJSON(w, http.StatusOK, result)
 }

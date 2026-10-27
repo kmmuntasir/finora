@@ -217,7 +217,7 @@ func (s *SubDL) Download(ctx context.Context, c Candidate) ([]byte, error) {
 		return readBody(resp)
 	case http.StatusForbidden, http.StatusNotAcceptable, http.StatusTooManyRequests:
 		_ = resp.Body.Close()
-		return nil, &QuotaError{Message: "SubDL's daily download limit for this server was reached"}
+		return nil, &QuotaError{Message: "SubDL's daily download limit for this server was reached", Daily: true}
 	default:
 		_ = resp.Body.Close()
 		return nil, fmt.Errorf("SubDL download failed (%d)", resp.StatusCode)

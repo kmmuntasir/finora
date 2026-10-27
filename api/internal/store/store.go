@@ -525,6 +525,25 @@ func (s *Store) DeleteSubtitle(ctx context.Context, id string) error {
 	return nil
 }
 
+// CountSubtitlesByProviderSince counts everyone's downloads per provider since a time.
+func (s *Store) CountSubtitlesByProviderSince(ctx context.Context, since time.Time) (map[string]int, error) {
+	rows, err := s.db.QueryContext(ctx, `SELECT provider, COUNT(*) FROM subtitles WHERE created_at >= ? GROUP BY provider`, since.UTC().Format(time.RFC3339))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	counts := map[string]int{}
+	for rows.Next() {
+		var provider string
+		var count int
+		if err := rows.Scan(&provider, &count); err != nil {
+			return nil, err
+		}
+		counts[provider] = count
+	}
+	return counts, rows.Err()
+}
+
 // CountSubtitlesSince counts a user's downloads since a time (daily limits).
 func (s *Store) CountSubtitlesSince(ctx context.Context, userID string, since time.Time) (int, error) {
 	var count int

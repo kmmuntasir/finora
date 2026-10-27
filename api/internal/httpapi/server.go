@@ -94,6 +94,7 @@ func (s *Server) Handler() http.Handler {
 
 	mux.HandleFunc("GET /api/v1/admin/settings", s.requireAdmin(s.handleGetSettings))
 	mux.HandleFunc("PUT /api/v1/admin/settings", s.requireAdmin(s.handlePutSettings))
+	mux.HandleFunc("GET /api/v1/admin/subtitle-providers", s.requireAdmin(s.handleProviderHealth))
 	mux.HandleFunc("GET /api/v1/admin/allowlist", s.requireAdmin(s.handleListAllowlist))
 	mux.HandleFunc("PUT /api/v1/admin/allowlist", s.requireAdmin(s.handlePutAllowlist))
 	mux.HandleFunc("DELETE /api/v1/admin/allowlist/{email}", s.requireAdmin(s.handleDeleteAllowlist))

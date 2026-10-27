@@ -223,7 +223,7 @@ func (o *OpenSubtitles) Download(ctx context.Context, c Candidate) ([]byte, erro
 	}
 	body, _ := readBody(resp)
 	if resp.StatusCode == http.StatusNotAcceptable {
-		return nil, &QuotaError{Message: "OpenSubtitles daily download limit reached"}
+		return nil, &QuotaError{Message: "OpenSubtitles daily download limit reached", Daily: true}
 	}
 	if resp.StatusCode == http.StatusTooManyRequests {
 		return nil, &QuotaError{Message: "OpenSubtitles is rate limiting; try again shortly"}

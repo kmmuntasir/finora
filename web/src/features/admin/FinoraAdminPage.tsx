@@ -9,6 +9,7 @@ import { TextField } from "@/components/TextField";
 import { useRuntimeConfig } from "@/config/context";
 import type { Announcement } from "@/features/announcements/AnnouncementBanner";
 import { useSession } from "@/features/auth/context";
+import { cn } from "@/lib/cn";
 import { formatDate } from "@/lib/format";
 import { useUsers } from "./queries";
 
@@ -531,11 +532,67 @@ function SubtitleSettingsFields({
         {settings.openSubtitlesActivity && (
           <OpenSubtitlesStatus activity={settings.openSubtitlesActivity} />
         )}
+        <ProviderHealthTable />
         <Button type="submit" disabled={save.isPending} className="justify-self-start">
           {save.isPending ? "Saving…" : "Save subtitle settings"}
         </Button>
       </form>
     </Section>
+  );
+}
+
+interface ProviderHealth {
+  id: string;
+  name: string;
+  enabled: boolean;
+  cooldownUntil: string | null;
+  cooldownReason?: string;
+  downloadsToday: number;
+  remaining: number | null;
+}
+
+/** Each provider's state: resting after a quota error, and downloads today (UTC). */
+function ProviderHealthTable() {
+  const call = useFinora();
+  const health = useQuery({
+    queryKey: ["finora", "subtitle-providers"],
+    queryFn: ({ signal }) => call<ProviderHealth[]>("/admin/subtitle-providers", { signal }),
+    refetchInterval: 60_000,
+  });
+  if (!health.data?.length) return null;
+  return (
+    <div>
+      <p className="mb-2 text-label-md">Provider status</p>
+      <ul className="divide-y divide-border rounded-md bg-background">
+        {health.data.map((provider) => (
+          <li
+            key={provider.id}
+            className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5"
+          >
+            <span className={cn("text-body-md", !provider.enabled && "text-on-surface-subtle")}>
+              {provider.name}
+              {!provider.enabled && " (off)"}
+            </span>
+            <span className="text-body-sm text-on-surface-muted">
+              {provider.cooldownUntil ? (
+                <span className="text-warning">
+                  Paused until {formatDate(provider.cooldownUntil, "datetime")}:{" "}
+                  {provider.cooldownReason}
+                </span>
+              ) : provider.enabled ? (
+                "Ready"
+              ) : (
+                "—"
+              )}
+              {" · "}
+              {provider.downloadsToday} {provider.downloadsToday === 1 ? "download" : "downloads"}{" "}
+              today
+              {provider.remaining !== null && ` · ${provider.remaining} left`}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

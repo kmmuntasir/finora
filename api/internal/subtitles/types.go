@@ -55,8 +55,12 @@ type Provider interface {
 	Download(ctx context.Context, c Candidate) ([]byte, error)
 }
 
-// QuotaError means a provider's daily allowance is used up; retry later.
-type QuotaError struct{ Message string }
+// QuotaError means a provider refused for now: its daily allowance is used up
+// (Daily, resets at midnight UTC) or it is throttling requests.
+type QuotaError struct {
+	Message string
+	Daily   bool
+}
 
 func (e *QuotaError) Error() string { return e.Message }
 

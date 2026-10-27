@@ -18,6 +18,7 @@ import (
 
 	"github.com/kmmuntasir/finora/api/internal/config"
 	"github.com/kmmuntasir/finora/api/internal/store"
+	"github.com/kmmuntasir/finora/api/internal/subtitles"
 )
 
 // fakeJellyfin implements the handful of endpoints the API uses.
@@ -446,5 +447,38 @@ func TestOpenSubtitlesActivityWarnsBeforePurge(t *testing.T) {
 	h.server.recordOSDownload(ctx)
 	if a := activity(); a["warning"] != false || a["lastDownload"] == nil {
 		t.Fatalf("after a download: %v", a)
+	}
+}
+
+func TestProviderCooldowns(t *testing.T) {
+	set := newProviderSet()
+	now := time.Date(2026, 3, 4, 22, 30, 0, 0, time.UTC)
+	set.noteQuota("subdl", &subtitles.QuotaError{Message: "daily limit", Daily: true}, now)
+	set.noteQuota("addic7ed", &subtitles.QuotaError{Message: "throttling"}, now)
+
+	if c, ok := set.cooldown("subdl", now.Add(time.Hour)); !ok || !c.Until.Equal(time.Date(2026, 3, 5, 0, 0, 0, 0, time.UTC)) {
+		t.Fatalf("daily cooldown = %v %v", c, ok)
+	}
+	if _, ok := set.cooldown("subdl", now.Add(2*time.Hour)); ok {
+		t.Fatal("daily cooldown should end at midnight UTC")
+	}
+	if _, ok := set.cooldown("addic7ed", now.Add(10*time.Minute)); !ok {
+		t.Fatal("throttle cooldown should last 15 minutes")
+	}
+	if _, ok := set.cooldown("addic7ed", now.Add(16*time.Minute)); ok {
+		t.Fatal("throttle cooldown should have ended")
+	}
+}
+
+func TestProviderHealthIsAdminOnly(t *testing.T) {
+	h := newHarness(t, true)
+	origin := "https://finora.example.com"
+	expectStatus(t, h.request("GET", "/api/v1/admin/subtitle-providers", "viewer-token", origin, nil), http.StatusForbidden)
+	resp := h.request("GET", "/api/v1/admin/subtitle-providers", "admin-token", origin, nil)
+	expectStatus(t, resp, http.StatusOK)
+	var health []map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&health)
+	if len(health) != 3 || health[0]["id"] != "addic7ed" {
+		t.Fatalf("health = %v", health)
 	}
 }
