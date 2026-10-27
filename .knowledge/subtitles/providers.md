@@ -33,3 +33,40 @@ live in August 2026). Finora's Go API ports this logic.
 - Release-name overlap with the actual file name (+8 per shared word),
   matching 720p/1080p, year match for movies, episode-range match for packs.
 - Prefer non-AI-translated, then non-hearing-impaired; skip foreign-parts-only.
+
+## OpenSubtitles terms and limits
+
+Checked 2026-10-28 against the
+[API docs](https://opensubtitles.stoplight.io/docs/opensubtitles-api/e3750fd63a100-getting-started)
+and the
+[integrator terms](https://opensubtitles.stoplight.io/docs/opensubtitles-api/f43c0749230b3-terms-of-use-for-integrators)
+(last updated 13 October 2026). The docs site is rendered with JavaScript, so
+open it in a browser rather than fetching it.
+
+- **Quota:** searching is unlimited. Without login a free key gets 5
+  downloads per IP per 24 hours. A signed-in user gets 20 (free) up to 1000
+  (VIP). A consumer marked "Under Development" gets 100 a day without login,
+  as a temporary measure. Counters reset at midnight UTC.
+- **Headers:** `Api-Key` and a `User-Agent` of the form `AppName vX.Y` are
+  required; a bad User-Agent gives 403. Finora sends `Finora v0.1.0`.
+- **Rate limits:** 5 requests per second per IP, and 1 per second on
+  `/login`. Follow redirects. Sorted, lowercase query parameters avoid
+  redirects.
+- **Shared use:** when one key serves users who have no OpenSubtitles
+  account, a paid plan is needed. Each user's own account on a free key is
+  fine. Never ship a username and password inside a released app. A
+  self-hosted Finora uses the admin's own key, as "a person who creates a key
+  for their own scripts and tools".
+- **Attribution:** free keys must show "Subtitles provided by
+  OpenSubtitles.com" where subtitles are searched. The subtitle finder shows
+  it whenever OpenSubtitles took part in a search.
+- **Storage:** keeping a downloaded subtitle next to the video is allowed.
+  Fetching subtitles nobody asked for is not.
+- **Inactive keys:** the opensubtitles.com consumer page says consumers with
+  no downloads for more than 60 days are purged automatically. A scheduled
+  "keep-alive" download would be a download nobody asked for, so Finora does
+  not do one. Instead the API records each OpenSubtitles download
+  (`opensubtitles_last_download`) and when it first saw the key
+  (`opensubtitles_key_seen`). From day 45 it warns in
+  **Admin → Finora → Subtitle finder** and once a day in the log. The date
+  covers only downloads made through Finora.

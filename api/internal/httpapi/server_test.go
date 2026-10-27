@@ -417,3 +417,34 @@ func TestBaseNameHandlesWindowsPaths(t *testing.T) {
 		t.Errorf("stem = %q", got)
 	}
 }
+
+func TestOpenSubtitlesActivityWarnsBeforePurge(t *testing.T) {
+	h := newHarness(t, true)
+	ctx := context.Background()
+	if err := h.store.SetSettings(ctx, map[string]string{config.KeyOSAPIKey: "os-key"}); err != nil {
+		t.Fatal(err)
+	}
+	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	h.server.now = func() time.Time { return start }
+	h.server.sweep(ctx) // notes when the key was first seen
+
+	activity := func() map[string]any {
+		resp := h.request("GET", "/api/v1/admin/settings", "admin-token", "https://finora.example.com", nil)
+		expectStatus(t, resp, http.StatusOK)
+		var view map[string]any
+		_ = json.NewDecoder(resp.Body).Decode(&view)
+		a, _ := view["openSubtitlesActivity"].(map[string]any)
+		return a
+	}
+	if a := activity(); a["warning"] != false || a["purgeAfter"] != "2026-03-02T00:00:00Z" {
+		t.Fatalf("fresh key: %v", a)
+	}
+	h.server.now = func() time.Time { return start.Add(50 * 24 * time.Hour) }
+	if a := activity(); a["warning"] != true {
+		t.Fatalf("after 50 idle days: %v", a)
+	}
+	h.server.recordOSDownload(ctx)
+	if a := activity(); a["warning"] != false || a["lastDownload"] == nil {
+		t.Fatalf("after a download: %v", a)
+	}
+}

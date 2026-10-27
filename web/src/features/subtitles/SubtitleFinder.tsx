@@ -148,6 +148,20 @@ function FinderBody({ item }: { item: BaseItemDto }) {
                 .join(" · ")}
             </p>
           )}
+          {search.data?.providers.some((provider) => provider.id === "opensubtitles") && (
+            // Required by the OpenSubtitles terms for free API keys.
+            <p className="pb-2 text-body-sm text-on-surface-muted">
+              Subtitles provided by{" "}
+              <a
+                href="https://opensubtitles.com"
+                target="_blank"
+                rel="noreferrer"
+                className="underline hover:text-on-surface"
+              >
+                OpenSubtitles.com
+              </a>
+            </p>
+          )}
         </div>
 
         {existing.data && existing.data.length > 0 && (

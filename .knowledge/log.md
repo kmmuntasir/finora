@@ -10,6 +10,15 @@ links to the notes that changed.
 
 ## 2026-10-28
 
+- **OpenSubtitles key care.** Read the OpenSubtitles API docs and integrator
+  terms ([providers](subtitles/providers.md#opensubtitles-terms-and-limits)).
+  Added download tracking and a 60-day purge warning, but no automatic
+  keep-alive download, because the terms forbid fetching subtitles nobody
+  asked for. Also added the attribution line that free keys require.
+- **E2E tests.** Playwright (`pnpm test:e2e`) runs against a Jellyfin mocked
+  with `page.route`. It covers sign-in, wrong password, reload, sign-out,
+  home rows, library grid and filters, the detail page and search, on
+  desktop and phone viewports.
 - **Phase 7 (subtitle finder) built.** Go providers ported from
   `subtitle-fetcher` (Addic7ed, SubDL updated for its new markup,
   OpenSubtitles), payload checks, OpenSubtitles hash via Jellyfin range

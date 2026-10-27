@@ -278,6 +278,7 @@ func (s *Server) RunJanitor(ctx context.Context) {
 }
 
 func (s *Server) sweep(ctx context.Context) {
+	s.checkOSActivity(ctx)
 	if err := s.store.PurgeExpired(ctx); err != nil {
 		s.log.Warn("purge failed", "error", err)
 	}

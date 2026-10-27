@@ -30,6 +30,8 @@ type Server struct {
 	providers *providerSet
 	dataDir   string
 	now       func() time.Time
+	// osCheckedAt is only touched by the janitor goroutine.
+	osCheckedAt time.Time
 }
 
 // Options configures a Server.

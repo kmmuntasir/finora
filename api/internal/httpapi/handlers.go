@@ -121,6 +121,7 @@ type settingsView struct {
 	OSAPIKeySet           bool            `json:"openSubtitlesApiKeySet"`
 	OSUsername            string          `json:"openSubtitlesUsername"`
 	OSPasswordSet         bool            `json:"openSubtitlesPasswordSet"`
+	OSActivity            *osActivity     `json:"openSubtitlesActivity"`
 	LockedByEnvironment   map[string]bool `json:"lockedByEnvironment"`
 }
 
@@ -144,6 +145,7 @@ func (s *Server) handleGetSettings(w http.ResponseWriter, r *http.Request) {
 		OSAPIKeySet:           settings.OSAPIKey != "",
 		OSUsername:            settings.OSUsername,
 		OSPasswordSet:         settings.OSPassword != "",
+		OSActivity:            s.osActivity(r.Context(), settings),
 		LockedByEnvironment:   settings.FromEnv,
 	})
 }

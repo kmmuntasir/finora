@@ -328,6 +328,9 @@ func (s *Server) handleSubtitleDownload(w http.ResponseWriter, r *http.Request) 
 		writeError(w, http.StatusBadGateway, provider.Name()+" did not deliver the file; try another result")
 		return
 	}
+	if candidate.Provider == "opensubtitles" {
+		s.recordOSDownload(r.Context())
+	}
 	text, err := subtitles.ExtractSubtitle(payload, query, query.Language)
 	if err != nil {
 		writeError(w, http.StatusUnprocessableEntity, "the downloaded file is not a usable subtitle; try another result")

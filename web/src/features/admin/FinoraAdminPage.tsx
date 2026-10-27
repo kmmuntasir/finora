@@ -25,7 +25,17 @@ interface ApiSettings {
   openSubtitlesApiKeySet: boolean;
   openSubtitlesUsername: string;
   openSubtitlesPasswordSet: boolean;
+  openSubtitlesActivity: OpenSubtitlesActivity | null;
   lockedByEnvironment: Record<string, boolean>;
+}
+
+interface OpenSubtitlesActivity {
+  lastDownload: string | null;
+  since: string | null;
+  purgeAfter: string | null;
+  warning: boolean;
+  remaining: number | null;
+  resetAt: string | null;
 }
 
 const PROVIDERS = [
@@ -517,11 +527,41 @@ function SubtitleSettingsFields({
             disabled={locked.opensubtitles_password}
           />
         </div>
+        {settings.openSubtitlesActivity && (
+          <OpenSubtitlesStatus activity={settings.openSubtitlesActivity} />
+        )}
         <Button type="submit" disabled={save.isPending} className="justify-self-start">
           {save.isPending ? "Saving…" : "Save subtitle settings"}
         </Button>
       </form>
     </Section>
+  );
+}
+
+const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
+
+/** OpenSubtitles deletes keys that download nothing for 60 days; Finora tracks the last download. */
+function OpenSubtitlesStatus({ activity }: { activity: OpenSubtitlesActivity }) {
+  const last = activity.lastDownload
+    ? `Last download through Finora: ${dateFormat.format(new Date(activity.lastDownload))}.`
+    : "No download through Finora yet.";
+  const purge = activity.purgeAfter
+    ? ` OpenSubtitles deletes keys with no downloads for 60 days — download a subtitle before ${dateFormat.format(new Date(activity.purgeAfter))} to keep this one.`
+    : " OpenSubtitles deletes keys with no downloads for 60 days.";
+  const quota = activity.remaining !== null ? ` ${activity.remaining} downloads left today.` : "";
+  return (
+    <p
+      role={activity.warning ? "alert" : undefined}
+      className={
+        activity.warning
+          ? "rounded-md bg-warning/15 px-3 py-2 text-body-sm text-on-surface"
+          : "text-body-sm text-on-surface-muted"
+      }
+    >
+      {last}
+      {purge}
+      {quota}
+    </p>
   );
 }
 
