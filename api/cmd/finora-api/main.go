@@ -73,7 +73,7 @@ func run(logger *slog.Logger) error {
 		logger.Warn("Finora API is not configured yet. Open Finora Web and enter this one-time setup code.", "setupCode", code)
 	}
 
-	server := httpapi.New(httpapi.Options{Store: st, Logger: logger, SetupCode: code})
+	server := httpapi.New(httpapi.Options{Store: st, Logger: logger, SetupCode: code, DataDir: dataDir})
 	go server.RunJanitor(ctx)
 
 	httpServer := &http.Server{

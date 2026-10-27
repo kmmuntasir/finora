@@ -21,6 +21,12 @@ const (
 	KeyGoogleClientID     = "google_client_id"
 	KeyGoogleClientSecret = "google_client_secret"
 	KeySessionHours       = "google_session_hours"
+	KeySubtitleProviders  = "subtitle_providers"
+	KeySubtitleAccess     = "subtitle_access"
+	KeySubtitleDailyLimit = "subtitle_daily_limit"
+	KeyOSAPIKey           = "opensubtitles_api_key"
+	KeyOSUsername         = "opensubtitles_username"
+	KeyOSPassword         = "opensubtitles_password"
 )
 
 var envNames = map[string]string{
@@ -31,6 +37,12 @@ var envNames = map[string]string{
 	KeyGoogleClientID:     "FINORA_GOOGLE_CLIENT_ID",
 	KeyGoogleClientSecret: "FINORA_GOOGLE_CLIENT_SECRET",
 	KeySessionHours:       "FINORA_GOOGLE_SESSION_HOURS",
+	KeySubtitleProviders:  "FINORA_SUBTITLE_PROVIDERS",
+	KeySubtitleAccess:     "FINORA_SUBTITLE_ACCESS",
+	KeySubtitleDailyLimit: "FINORA_SUBTITLE_DAILY_LIMIT",
+	KeyOSAPIKey:           "FINORA_OPENSUBTITLES_API_KEY",
+	KeyOSUsername:         "FINORA_OPENSUBTITLES_USERNAME",
+	KeyOSPassword:         "FINORA_OPENSUBTITLES_PASSWORD",
 }
 
 // Settings is a resolved snapshot.
@@ -42,6 +54,14 @@ type Settings struct {
 	GoogleClientID     string
 	GoogleClientSecret string
 	SessionHours       int
+	// SubtitleProviders is the search order, e.g. ["addic7ed", "subdl", "opensubtitles"].
+	SubtitleProviders []string
+	// SubtitleAccess is "all" (every signed-in user) or "admins".
+	SubtitleAccess     string
+	SubtitleDailyLimit int
+	OSAPIKey           string
+	OSUsername         string
+	OSPassword         string
 	// FromEnv lists keys fixed by environment variables (not editable in the UI).
 	FromEnv map[string]bool
 }
@@ -84,7 +104,28 @@ func Resolve(ctx context.Context, st *store.Store) (Settings, error) {
 	if err != nil || hours <= 0 {
 		hours = 12
 	}
+	providers := SplitList(values[KeySubtitleProviders])
+	switch values[KeySubtitleProviders] {
+	case "":
+		providers = []string{"addic7ed", "subdl", "opensubtitles"}
+	case "none":
+		providers = nil
+	}
+	access := values[KeySubtitleAccess]
+	if access != "admins" {
+		access = "all"
+	}
+	limit, err := strconv.Atoi(values[KeySubtitleDailyLimit])
+	if err != nil || limit < 0 {
+		limit = 20
+	}
 	return Settings{
+		SubtitleProviders:  providers,
+		SubtitleAccess:     access,
+		SubtitleDailyLimit: limit,
+		OSAPIKey:           values[KeyOSAPIKey],
+		OSUsername:         values[KeyOSUsername],
+		OSPassword:         values[KeyOSPassword],
 		JellyfinURL:        strings.TrimRight(values[KeyJellyfinURL], "/"),
 		JellyfinAPIKey:     values[KeyJellyfinAPIKey],
 		PublicURL:          strings.TrimRight(values[KeyPublicURL], "/"),
@@ -94,6 +135,17 @@ func Resolve(ctx context.Context, st *store.Store) (Settings, error) {
 		SessionHours:       hours,
 		FromEnv:            fromEnv,
 	}, nil
+}
+
+// SplitList parses a comma-separated list of lower-case identifiers.
+func SplitList(raw string) []string {
+	var items []string
+	for _, part := range strings.Split(raw, ",") {
+		if item := strings.ToLower(strings.TrimSpace(part)); item != "" {
+			items = append(items, item)
+		}
+	}
+	return items
 }
 
 // SplitOrigins parses a comma-separated origin list, normalising each entry.

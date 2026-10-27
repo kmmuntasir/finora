@@ -11,7 +11,7 @@ change over time. Connection details live only in the local, untracked
 
 | Aspect | Value |
 | --- | --- |
-| Version | Jellyfin 10.11.11, x64 |
+| Version | Jellyfin 10.11.11, x64, **on Windows** (paths like `D:\\…`) |
 | Libraries | Movies, TV Series, Music, Collections (boxsets), three Home Videos libraries |
 | Size | ~4,200 movies; ~195 series / ~14,000 episodes; ~5,500 songs / ~480 albums; ~300 collections |
 | Home Videos | Folder-based; some titles mix Bengali and Latin script and are long |

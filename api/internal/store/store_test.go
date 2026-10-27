@@ -152,3 +152,30 @@ func TestGoogleGrantMustMatchUser(t *testing.T) {
 		t.Fatalf("grant reused: %v", err)
 	}
 }
+
+func TestSubtitles(t *testing.T) {
+	ctx := context.Background()
+	s := open(t)
+	sub := Subtitle{ID: "abc", ItemID: "i1", MediaSourceID: "m1", Language: "en", Provider: "subdl", Release: "Rel", FileName: "abc.srt", PathsBefore: "[]", CreatedByID: "u1", CreatedByName: "Alex"}
+	if err := s.SaveSubtitle(ctx, sub); err != nil {
+		t.Fatal(err)
+	}
+	list, err := s.SubtitlesForItem(ctx, "i1")
+	if err != nil || len(list) != 1 || list[0].Release != "Rel" || list[0].JellyfinPath != "" {
+		t.Fatalf("list = %+v, %v", list, err)
+	}
+	_ = s.SetSubtitleJellyfinPath(ctx, "abc", "/media/x.en.srt")
+	got, _ := s.Subtitle(ctx, "abc")
+	if got.JellyfinPath != "/media/x.en.srt" {
+		t.Fatalf("path = %q", got.JellyfinPath)
+	}
+	if n, _ := s.CountSubtitlesSince(ctx, "u1", time.Now().Add(-time.Hour)); n != 1 {
+		t.Fatalf("count = %d", n)
+	}
+	if err := s.DeleteSubtitle(ctx, "abc"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Subtitle(ctx, "abc"); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("deleted subtitle still found: %v", err)
+	}
+}

@@ -437,3 +437,97 @@ func (s *Store) TakeGoogleGrant(ctx context.Context, qcCode, jellyfinUserID stri
 	}
 	return g, nil
 }
+
+// ---- subtitles ----
+
+// Subtitle is a subtitle added through Finora.
+type Subtitle struct {
+	ID              string    `json:"id"`
+	ItemID          string    `json:"itemId"`
+	MediaSourceID   string    `json:"mediaSourceId"`
+	Language        string    `json:"language"`
+	Provider        string    `json:"provider"`
+	Release         string    `json:"release"`
+	HearingImpaired bool      `json:"hearingImpaired"`
+	Forced          bool      `json:"forced"`
+	FileName        string    `json:"-"`
+	PathsBefore     string    `json:"-"`
+	JellyfinPath    string    `json:"-"`
+	UploadError     string    `json:"uploadError,omitempty"`
+	CreatedByID     string    `json:"createdById"`
+	CreatedByName   string    `json:"createdByName"`
+	CreatedAt       time.Time `json:"createdAt"`
+}
+
+const subtitleColumns = `id, item_id, media_source_id, language, provider, release_name, hearing_impaired, forced, file_name, paths_before, COALESCE(jellyfin_path, ''), COALESCE(upload_error, ''), created_by_id, created_by_name, created_at`
+
+func scanSubtitle(row interface{ Scan(...any) error }) (Subtitle, error) {
+	var s Subtitle
+	var created string
+	err := row.Scan(&s.ID, &s.ItemID, &s.MediaSourceID, &s.Language, &s.Provider, &s.Release, &s.HearingImpaired, &s.Forced,
+		&s.FileName, &s.PathsBefore, &s.JellyfinPath, &s.UploadError, &s.CreatedByID, &s.CreatedByName, &created)
+	s.CreatedAt, _ = time.Parse(time.RFC3339, created)
+	return s, err
+}
+
+// SaveSubtitle records a new subtitle.
+func (s *Store) SaveSubtitle(ctx context.Context, sub Subtitle) error {
+	_, err := s.db.ExecContext(ctx,
+		`INSERT INTO subtitles (id, item_id, media_source_id, language, provider, release_name, hearing_impaired, forced, file_name, paths_before, upload_error, created_by_id, created_by_name, created_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULLIF(?, ''), ?, ?, ?)`,
+		sub.ID, sub.ItemID, sub.MediaSourceID, sub.Language, sub.Provider, sub.Release, sub.HearingImpaired, sub.Forced,
+		sub.FileName, sub.PathsBefore, sub.UploadError, sub.CreatedByID, sub.CreatedByName, now())
+	return err
+}
+
+// Subtitle returns one subtitle.
+func (s *Store) Subtitle(ctx context.Context, id string) (Subtitle, error) {
+	sub, err := scanSubtitle(s.db.QueryRowContext(ctx, `SELECT `+subtitleColumns+` FROM subtitles WHERE id = ?`, id))
+	if errors.Is(err, sql.ErrNoRows) {
+		return sub, ErrNotFound
+	}
+	return sub, err
+}
+
+// SubtitlesForItem lists subtitles added for an item, newest first.
+func (s *Store) SubtitlesForItem(ctx context.Context, itemID string) ([]Subtitle, error) {
+	rows, err := s.db.QueryContext(ctx, `SELECT `+subtitleColumns+` FROM subtitles WHERE item_id = ? ORDER BY created_at DESC`, itemID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	result := []Subtitle{}
+	for rows.Next() {
+		sub, err := scanSubtitle(rows)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, sub)
+	}
+	return result, rows.Err()
+}
+
+// SetSubtitleJellyfinPath records where Jellyfin indexed the file.
+func (s *Store) SetSubtitleJellyfinPath(ctx context.Context, id, path string) error {
+	_, err := s.db.ExecContext(ctx, `UPDATE subtitles SET jellyfin_path = ? WHERE id = ?`, path, id)
+	return err
+}
+
+// DeleteSubtitle removes the record.
+func (s *Store) DeleteSubtitle(ctx context.Context, id string) error {
+	res, err := s.db.ExecContext(ctx, `DELETE FROM subtitles WHERE id = ?`, id)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// CountSubtitlesSince counts a user's downloads since a time (daily limits).
+func (s *Store) CountSubtitlesSince(ctx context.Context, userID string, since time.Time) (int, error) {
+	var count int
+	err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM subtitles WHERE created_by_id = ? AND created_at >= ?`, userID, since.UTC().Format(time.RFC3339)).Scan(&count)
+	return count, err
+}

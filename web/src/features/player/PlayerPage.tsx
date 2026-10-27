@@ -23,9 +23,16 @@ import { useRuntimeConfig } from "@/config/context";
 import { useSession } from "@/features/auth/context";
 import { useItemDetails } from "@/features/item/queries";
 import { useQueue } from "@/features/music/queue-store";
+import { useItemSubtitles, useSubtitlesEnabled } from "@/features/subtitles/api";
 import { cn } from "@/lib/cn";
 import { episodeCode } from "@/lib/format";
-import { requestPlayback, type PlaybackRequest, type PlaybackSource } from "./playback";
+import {
+  requestPlayback,
+  type PlaybackRequest,
+  type PlaybackSource,
+  type SubtitleTrack,
+} from "./playback";
+import { chooseInitialSubtitle } from "./subtitle-choice";
 import { AudioMenu, CONTROL_BUTTON, SettingsMenu, SubtitleMenu } from "./PlayerMenus";
 import { formatClock, readPlayerPreferences, savePlayerPreferences } from "./player-preferences";
 import { useNextEpisode, useSegments, type SkippableSegment } from "./queries";
@@ -159,19 +166,45 @@ function Player({ item }: { item: BaseItemDto }) {
   const nextEpisode = useNextEpisode(item).data ?? null;
   const segments = useSegments(item.Id!).data ?? [];
 
+  // Subtitles added through Finora (decision 0005). Ones Jellyfin hasn't
+  // indexed yet are served by the Finora API as extra tracks with negative
+  // indices, so they never collide with Jellyfin's stream indices.
+  const subtitlesEnabled = useSubtitlesEnabled();
+  const finoraSubtitles = useItemSubtitles(item.Id!);
+  const finoraReady = !subtitlesEnabled || finoraSubtitles.isFetched;
+  const tracks = useMemo<SubtitleTrack[]>(() => {
+    if (!source) return [];
+    const pending = (finoraSubtitles.data ?? [])
+      .filter(
+        (subtitle) =>
+          !source.subtitleTracks.some((track) => track.index === subtitle.jellyfinStreamIndex),
+      )
+      .map((subtitle, position) => ({
+        index: -100 - position,
+        label: `${subtitle.release || subtitle.language.toUpperCase()} (added in Finora)`,
+        language: subtitle.language,
+        url: `${config.apiUrl}${subtitle.url}`,
+        isForced: subtitle.forced,
+      }));
+    return [...source.subtitleTracks, ...pending];
+  }, [source, finoraSubtitles.data, config.apiUrl]);
+
   // Choose the initial subtitle once the server has resolved the source.
   useEffect(() => {
-    if (!source) return;
-    const burned = source.burnedSubtitleIndex;
-    if (burned !== null) {
-      setSubtitleIndex(burned);
-      return;
-    }
-    const requested = request.subtitleIndex ?? source.mediaSource.DefaultSubtitleStreamIndex ?? -1;
+    if (!source || !finoraReady) return;
     setSubtitleIndex(
-      source.subtitleTracks.some((track) => track.index === requested) ? requested : -1,
+      chooseInitialSubtitle({
+        source,
+        tracks,
+        requested: request.subtitleIndex,
+        finoraSubtitles: finoraSubtitles.data ?? [],
+        preferredLanguage: user.Configuration?.SubtitleLanguagePreference ?? null,
+        apiUrl: config.apiUrl,
+      }),
     );
-  }, [source, request.subtitleIndex]);
+    // Only when the source or the Finora list first becomes available.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source, request.subtitleIndex, finoraReady]);
 
   const snapshot = useCallback((): PlaybackSnapshot => {
     const video = videoRef.current;
@@ -181,7 +214,8 @@ function Player({ item }: { item: BaseItemDto }) {
       isMuted: video?.muted ?? false,
       volume: video?.volume ?? 1,
       audioIndex: request.audioIndex ?? source?.mediaSource.DefaultAudioStreamIndex ?? undefined,
-      subtitleIndex,
+      // Finora-only tracks are not Jellyfin streams.
+      subtitleIndex: subtitleIndex < -1 ? -1 : subtitleIndex,
       playbackRate: video?.playbackRate ?? 1,
     };
   }, [request.audioIndex, source, subtitleIndex]);
@@ -255,12 +289,12 @@ function Player({ item }: { item: BaseItemDto }) {
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !source) return;
-    const textTracks = source.subtitleTracks.filter((track) => track.url);
+    const textTracks = tracks.filter((track) => track.url);
     for (let i = 0; i < video.textTracks.length; i++) {
       const textTrack = video.textTracks[i]!;
       textTrack.mode = textTracks[i]?.index === subtitleIndex ? "showing" : "disabled";
     }
-  }, [subtitleIndex, source]);
+  }, [subtitleIndex, source, tracks]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -296,13 +330,13 @@ function Player({ item }: { item: BaseItemDto }) {
 
   const selectSubtitle = (index: number) => {
     if (!source) return;
-    const track = source.subtitleTracks.find((candidate) => candidate.index === index);
+    const track = tracks.find((candidate) => candidate.index === index);
     const needsBurnIn = track !== undefined && track.url === null;
     if (needsBurnIn || source.burnedSubtitleIndex !== null) {
-      reload({ subtitleIndex: index });
+      reload({ subtitleIndex: index < -1 ? -1 : index });
     }
     setSubtitleIndex(index);
-    reporterRef.current?.progress({ ...snapshot(), subtitleIndex: index });
+    reporterRef.current?.progress({ ...snapshot(), subtitleIndex: index < -1 ? -1 : index });
   };
 
   const togglePlay = useCallback(() => {
@@ -392,7 +426,7 @@ function Player({ item }: { item: BaseItemDto }) {
         f: toggleFullscreen,
         i: () => setShowInfo((value) => !value),
         c: () => {
-          const first = source?.subtitleTracks[0];
+          const first = tracks[0];
           if (first) selectSubtitle(subtitleIndex === -1 ? first.index : -1);
         },
         Escape: () => {
@@ -548,11 +582,11 @@ function Player({ item }: { item: BaseItemDto }) {
         }}
         onError={onVideoError}
       >
-        {source?.subtitleTracks
+        {tracks
           .filter((track) => track.url)
           .map((track) => (
             <track
-              key={`${source.playSessionId}-${track.index}`}
+              key={`${source?.playSessionId}-${track.index}`}
               kind="subtitles"
               src={track.url!}
               label={track.label}
@@ -657,11 +691,7 @@ function Player({ item }: { item: BaseItemDto }) {
             <span className="flex-1" />
             {source && (
               <>
-                <SubtitleMenu
-                  tracks={source.subtitleTracks}
-                  selected={subtitleIndex}
-                  onSelect={selectSubtitle}
-                />
+                <SubtitleMenu tracks={tracks} selected={subtitleIndex} onSelect={selectSubtitle} />
                 <AudioMenu
                   tracks={source.audioTracks}
                   selected={

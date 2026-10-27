@@ -40,7 +40,7 @@ func (s *Server) handlePublicConfig(w http.ResponseWriter, r *http.Request) {
 		"googleSignIn": settings.Configured() && settings.GoogleEnabled(),
 		"features": map[string]bool{
 			"announcements": true,
-			"subtitles":     false,
+			"subtitles":     settings.Configured() && len(settings.SubtitleProviders) > 0,
 		},
 	})
 }
@@ -115,6 +115,12 @@ type settingsView struct {
 	GoogleClientID        string          `json:"googleClientId"`
 	GoogleClientSecretSet bool            `json:"googleClientSecretSet"`
 	SessionHours          int             `json:"googleSessionHours"`
+	SubtitleProviders     []string        `json:"subtitleProviders"`
+	SubtitleAccess        string          `json:"subtitleAccess"`
+	SubtitleDailyLimit    int             `json:"subtitleDailyLimit"`
+	OSAPIKeySet           bool            `json:"openSubtitlesApiKeySet"`
+	OSUsername            string          `json:"openSubtitlesUsername"`
+	OSPasswordSet         bool            `json:"openSubtitlesPasswordSet"`
 	LockedByEnvironment   map[string]bool `json:"lockedByEnvironment"`
 }
 
@@ -132,6 +138,12 @@ func (s *Server) handleGetSettings(w http.ResponseWriter, r *http.Request) {
 		GoogleClientID:        settings.GoogleClientID,
 		GoogleClientSecretSet: settings.GoogleClientSecret != "",
 		SessionHours:          settings.SessionHours,
+		SubtitleProviders:     append([]string{}, settings.SubtitleProviders...),
+		SubtitleAccess:        settings.SubtitleAccess,
+		SubtitleDailyLimit:    settings.SubtitleDailyLimit,
+		OSAPIKeySet:           settings.OSAPIKey != "",
+		OSUsername:            settings.OSUsername,
+		OSPasswordSet:         settings.OSPassword != "",
 		LockedByEnvironment:   settings.FromEnv,
 	})
 }
@@ -145,6 +157,12 @@ type settingsUpdate struct {
 	GoogleClientID     *string   `json:"googleClientId"`
 	GoogleClientSecret *string   `json:"googleClientSecret"`
 	SessionHours       *int      `json:"googleSessionHours"`
+	SubtitleProviders  *[]string `json:"subtitleProviders"`
+	SubtitleAccess     *string   `json:"subtitleAccess"`
+	SubtitleDailyLimit *int      `json:"subtitleDailyLimit"`
+	OSAPIKey           *string   `json:"openSubtitlesApiKey"`
+	OSUsername         *string   `json:"openSubtitlesUsername"`
+	OSPassword         *string   `json:"openSubtitlesPassword"`
 }
 
 func (s *Server) handlePutSettings(w http.ResponseWriter, r *http.Request) {
@@ -190,6 +208,45 @@ func (s *Server) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		values[config.KeySessionHours] = strconv.Itoa(*req.SessionHours)
+	}
+	if req.SubtitleProviders != nil {
+		var providers []string
+		for _, id := range *req.SubtitleProviders {
+			id = strings.ToLower(strings.TrimSpace(id))
+			if id != "addic7ed" && id != "subdl" && id != "opensubtitles" {
+				writeError(w, http.StatusBadRequest, "unknown subtitle provider: "+id)
+				return
+			}
+			providers = append(providers, id)
+		}
+		// An empty list is stored as "none" so it is not mistaken for "unset".
+		values[config.KeySubtitleProviders] = strings.Join(providers, ",")
+		if len(providers) == 0 {
+			values[config.KeySubtitleProviders] = "none"
+		}
+	}
+	if req.SubtitleAccess != nil {
+		if *req.SubtitleAccess != "all" && *req.SubtitleAccess != "admins" {
+			writeError(w, http.StatusBadRequest, "subtitle access must be all or admins")
+			return
+		}
+		values[config.KeySubtitleAccess] = *req.SubtitleAccess
+	}
+	if req.SubtitleDailyLimit != nil {
+		if *req.SubtitleDailyLimit < 0 || *req.SubtitleDailyLimit > 1000 {
+			writeError(w, http.StatusBadRequest, "the daily limit must be between 0 (no limit) and 1000")
+			return
+		}
+		values[config.KeySubtitleDailyLimit] = strconv.Itoa(*req.SubtitleDailyLimit)
+	}
+	if req.OSAPIKey != nil {
+		values[config.KeyOSAPIKey] = strings.TrimSpace(*req.OSAPIKey)
+	}
+	if req.OSUsername != nil {
+		values[config.KeyOSUsername] = strings.TrimSpace(*req.OSUsername)
+	}
+	if req.OSPassword != nil {
+		values[config.KeyOSPassword] = *req.OSPassword
 	}
 	settings, err := s.settings(r.Context())
 	if err != nil {

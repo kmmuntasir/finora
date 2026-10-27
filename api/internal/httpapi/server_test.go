@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -21,9 +22,10 @@ import (
 
 // fakeJellyfin implements the handful of endpoints the API uses.
 type fakeJellyfin struct {
-	mu             sync.Mutex
-	authorized     []string
-	deletedDevices []string
+	mu               sync.Mutex
+	authorized       []string
+	deletedDevices   []string
+	deletedSubtitles []string
 	*httptest.Server
 }
 
@@ -79,6 +81,17 @@ func newFakeJellyfin(t *testing.T) *fakeJellyfin {
 		f.authorized = append(f.authorized, r.URL.Query().Get("code")+":"+r.URL.Query().Get("userId"))
 		f.mu.Unlock()
 		_, _ = io.WriteString(w, "true")
+	})
+	mux.HandleFunc("GET /Items", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.WriteString(w, `{"Items":[{"Id":"item1","Name":"Movie","Type":"Movie","Path":"/media/Movie.mkv","MediaSources":[{"Id":"ms1","Path":"/media/Movie.mkv","Size":1000,"MediaStreams":[`+
+			`{"Index":3,"Type":"Subtitle","IsExternal":true,"Path":"/media/Movie.en.srt"},`+
+			`{"Index":4,"Type":"Subtitle","IsExternal":true,"Path":"/media/Movie.eng.srt"}]}]}]}`)
+	})
+	mux.HandleFunc("DELETE /Videos/{id}/Subtitles/{index}", func(w http.ResponseWriter, r *http.Request) {
+		f.mu.Lock()
+		f.deletedSubtitles = append(f.deletedSubtitles, r.PathValue("id")+"/"+r.PathValue("index"))
+		f.mu.Unlock()
+		w.WriteHeader(http.StatusNoContent)
 	})
 	mux.HandleFunc("GET /Devices", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = io.WriteString(w, `{"Items":[{"Id":"dev-google","LastUserId":"`+r.URL.Query().Get("userId")+`"}]}`)
@@ -321,4 +334,86 @@ func TestAllowlistOnlyAcceptsAdmins(t *testing.T) {
 	expectStatus(t, h.request("PUT", "/api/v1/admin/allowlist", "admin-token", origin, map[string]string{"email": "v@example.com", "jellyfinUserId": "uviewer"}), http.StatusBadRequest)
 	expectStatus(t, h.request("PUT", "/api/v1/admin/allowlist", "admin-token", origin, map[string]string{"email": "A@Example.com", "jellyfinUserId": "uadmin"}), http.StatusOK)
 	expectStatus(t, h.request("DELETE", "/api/v1/admin/allowlist/a@example.com", "admin-token", origin, nil), http.StatusNoContent)
+}
+
+func TestItemSubtitlesFindJellyfinCopyAndServeVTT(t *testing.T) {
+	h := newHarness(t, true)
+	ctx := context.Background()
+	h.server.dataDir = t.TempDir()
+	if err := os.MkdirAll(h.server.subtitlesDir(), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	id := strings.Repeat("a", 32)
+	_ = os.WriteFile(filepath.Join(h.server.subtitlesDir(), id+".srt"), []byte("1\n00:00:01,000 --> 00:00:02,000\nHi\n"), 0o600)
+	_ = h.store.SaveSubtitle(ctx, store.Subtitle{
+		ID: id, ItemID: "item1", MediaSourceID: "ms1", Language: "en", Provider: "subdl", Release: "R",
+		FileName: id + ".srt", PathsBefore: `["/media/Movie.en.srt"]`, CreatedByID: "uviewer", CreatedByName: "Viewer",
+	})
+
+	resp := h.request("GET", "/api/v1/subtitles/items/item1", "viewer-token", "", nil)
+	expectStatus(t, resp, http.StatusOK)
+	var views []struct {
+		ID                  string `json:"id"`
+		JellyfinStreamIndex *int   `json:"jellyfinStreamIndex"`
+	}
+	_ = json.NewDecoder(resp.Body).Decode(&views)
+	// The fake item has the pre-existing file at index 3 and our new one at index 4.
+	if len(views) != 1 || views[0].JellyfinStreamIndex == nil || *views[0].JellyfinStreamIndex != 4 {
+		t.Fatalf("views = %+v", views)
+	}
+
+	resp = h.request("GET", "/api/v1/subtitles/files/"+id+".vtt", "", "", nil)
+	expectStatus(t, resp, http.StatusOK)
+	body, _ := io.ReadAll(resp.Body)
+	if !strings.HasPrefix(string(body), "WEBVTT") || !strings.Contains(string(body), "00:00:01.000") {
+		t.Fatalf("vtt = %q", body)
+	}
+	// Path tricks never reach a file (the router cleans the path; the handler only accepts hex IDs).
+	if resp := h.request("GET", "/api/v1/subtitles/files/../../etc.vtt", "", "", nil); resp.StatusCode == http.StatusOK {
+		t.Fatal("path traversal served a file")
+	}
+	expectStatus(t, h.request("GET", "/api/v1/subtitles/files/notanid.vtt", "", "", nil), http.StatusNotFound)
+
+	// Only the creator or an admin may remove it.
+	expectStatus(t, h.request("DELETE", "/api/v1/subtitles/"+id, "viewer-token", "", nil), http.StatusNoContent)
+	if len(h.jellyfin.deletedSubtitles) != 1 || h.jellyfin.deletedSubtitles[0] != "item1/4" {
+		t.Fatalf("deleted = %v", h.jellyfin.deletedSubtitles)
+	}
+}
+
+func TestSubtitleSettings(t *testing.T) {
+	h := newHarness(t, true)
+	origin := "https://finora.example.com"
+	resp := h.request("PUT", "/api/v1/admin/settings", "admin-token", origin, map[string]any{
+		"subtitleProviders": []string{"subdl"}, "subtitleAccess": "admins", "subtitleDailyLimit": 5, "openSubtitlesApiKey": "os-key",
+	})
+	expectStatus(t, resp, http.StatusOK)
+	var view map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&view)
+	if view["subtitleAccess"] != "admins" || view["openSubtitlesApiKeySet"] != true {
+		t.Fatalf("view = %v", view)
+	}
+	raw, _ := json.Marshal(view)
+	if strings.Contains(string(raw), "os-key") {
+		t.Fatal("OpenSubtitles key leaked")
+	}
+	// Viewers are now refused.
+	expectStatus(t, h.request("GET", "/api/v1/subtitles/search?itemId=item1&lang=en", "viewer-token", "", nil), http.StatusForbidden)
+	expectStatus(t, h.request("PUT", "/api/v1/admin/settings", "admin-token", origin, map[string]any{"subtitleProviders": []string{"bogus"}}), http.StatusBadRequest)
+}
+
+func TestBaseNameHandlesWindowsPaths(t *testing.T) {
+	cases := map[string]string{
+		`D:\\media\\Show\\Episode.S01E01.mkv`: "Episode.S01E01.mkv",
+		"/media/show/Episode.mkv":             "Episode.mkv",
+		"plain.mkv":                           "plain.mkv",
+	}
+	for in, want := range cases {
+		if got := baseName(in); got != want {
+			t.Errorf("baseName(%q) = %q, want %q", in, got, want)
+		}
+	}
+	if got := stem(`D:\\media\\Movie.2010.mkv`); got != "Movie.2010" {
+		t.Errorf("stem = %q", got)
+	}
 }

@@ -27,6 +27,8 @@ type Server struct {
 	google    GoogleAuthFactory
 	limiter   *rateLimiter
 	users     *userCache
+	providers *providerSet
+	dataDir   string
 	now       func() time.Time
 }
 
@@ -35,6 +37,8 @@ type Options struct {
 	Store     *store.Store
 	Logger    *slog.Logger
 	SetupCode string
+	// DataDir holds stored subtitle files.
+	DataDir string
 	// Google builds the Google sign-in client from current settings; nil uses the real one.
 	Google GoogleAuthFactory
 }
@@ -52,6 +56,8 @@ func New(opts Options) *Server {
 		google:    google,
 		limiter:   newRateLimiter(10, time.Minute),
 		users:     newUserCache(time.Minute),
+		providers: newProviderSet(),
+		dataDir:   opts.DataDir,
 		now:       time.Now,
 	}
 }
@@ -76,6 +82,13 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v1/auth/google/callback", s.handleGoogleCallback)
 	mux.HandleFunc("POST /api/v1/auth/google/confirm", s.requireUser(s.handleGoogleConfirm))
 	mux.HandleFunc("GET /api/v1/auth/session", s.requireUser(s.handleSession))
+
+	mux.HandleFunc("GET /api/v1/subtitles/languages", s.handleSubtitleLanguages)
+	mux.HandleFunc("GET /api/v1/subtitles/search", s.requireUser(s.handleSubtitleSearch))
+	mux.HandleFunc("POST /api/v1/subtitles/download", s.requireUser(s.handleSubtitleDownload))
+	mux.HandleFunc("GET /api/v1/subtitles/items/{itemId}", s.requireUser(s.handleItemSubtitles))
+	mux.HandleFunc("GET /api/v1/subtitles/files/{file}", s.handleSubtitleFile)
+	mux.HandleFunc("DELETE /api/v1/subtitles/{id}", s.requireUser(s.handleDeleteSubtitle))
 
 	mux.HandleFunc("GET /api/v1/admin/settings", s.requireAdmin(s.handleGetSettings))
 	mux.HandleFunc("PUT /api/v1/admin/settings", s.requireAdmin(s.handlePutSettings))

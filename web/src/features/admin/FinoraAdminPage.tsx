@@ -19,8 +19,24 @@ interface ApiSettings {
   googleClientId: string;
   googleClientSecretSet: boolean;
   googleSessionHours: number;
+  subtitleProviders: string[];
+  subtitleAccess: "all" | "admins";
+  subtitleDailyLimit: number;
+  openSubtitlesApiKeySet: boolean;
+  openSubtitlesUsername: string;
+  openSubtitlesPasswordSet: boolean;
   lockedByEnvironment: Record<string, boolean>;
 }
+
+const PROVIDERS = [
+  { id: "addic7ed", name: "Addic7ed", hint: "TV episodes; free, no account" },
+  { id: "subdl", name: "SubDL", hint: "Movies and TV; free, about 300 downloads a day per server" },
+  {
+    id: "opensubtitles",
+    name: "OpenSubtitles",
+    hint: "Needs a free API key from opensubtitles.com",
+  },
+];
 
 interface AllowedAdmin {
   email: string;
@@ -80,6 +96,7 @@ export function FinoraAdminPage() {
   return (
     <div className="max-w-3xl space-y-6">
       <SettingsForm />
+      <SubtitleSettings />
       <Allowlist />
       <Announcements />
     </div>
@@ -295,6 +312,213 @@ function SettingsFormFields({
         </p>
         <Button type="submit" disabled={save.isPending} className="justify-self-start">
           {save.isPending ? "Saving…" : "Save settings"}
+        </Button>
+      </form>
+    </Section>
+  );
+}
+
+function SubtitleSettings() {
+  const call = useFinora();
+  const queryClient = useQueryClient();
+  const settings = useQuery({
+    queryKey: ["finora", "admin-settings"],
+    queryFn: ({ signal }) => call<ApiSettings>("/admin/settings", { signal }),
+  });
+  if (!settings.data) return null;
+  return (
+    <SubtitleSettingsFields
+      key={JSON.stringify([
+        settings.data.subtitleProviders,
+        settings.data.subtitleAccess,
+        settings.data.subtitleDailyLimit,
+      ])}
+      settings={settings.data}
+      onSaved={(next) => {
+        queryClient.setQueryData(["finora", "admin-settings"], next);
+        void queryClient.invalidateQueries({ queryKey: ["finora", "public-config"] });
+      }}
+    />
+  );
+}
+
+function SubtitleSettingsFields({
+  settings,
+  onSaved,
+}: {
+  settings: ApiSettings;
+  onSaved: (settings: ApiSettings) => void;
+}) {
+  const call = useFinora();
+  const locked = settings.lockedByEnvironment;
+  const [enabled, setEnabled] = useState<string[]>(settings.subtitleProviders);
+  const [access, setAccess] = useState(settings.subtitleAccess);
+  const [limit, setLimit] = useState(String(settings.subtitleDailyLimit));
+  const [osKey, setOsKey] = useState("");
+  const [osUser, setOsUser] = useState(settings.openSubtitlesUsername);
+  const [osPassword, setOsPassword] = useState("");
+  const ids = { access: useId(), limit: useId() };
+
+  const save = useMutation({
+    mutationFn: () =>
+      call<ApiSettings>("/admin/settings", {
+        method: "PUT",
+        body: {
+          ...(locked.subtitle_providers ? {} : { subtitleProviders: enabled }),
+          ...(locked.subtitle_access ? {} : { subtitleAccess: access }),
+          ...(locked.subtitle_daily_limit ? {} : { subtitleDailyLimit: Number(limit) || 0 }),
+          ...(osKey && !locked.opensubtitles_api_key ? { openSubtitlesApiKey: osKey } : {}),
+          ...(locked.opensubtitles_username ? {} : { openSubtitlesUsername: osUser }),
+          ...(osPassword && !locked.opensubtitles_password
+            ? { openSubtitlesPassword: osPassword }
+            : {}),
+        },
+      }),
+    onSuccess: (next) => {
+      setOsKey("");
+      setOsPassword("");
+      onSaved(next);
+      toast.success("Subtitle settings saved.");
+    },
+    onError: (error) => toast.error(errorText(error, "Couldn't save.")),
+  });
+
+  const move = (id: string, delta: -1 | 1) => {
+    const position = enabled.indexOf(id);
+    const next = [...enabled];
+    const target = position + delta;
+    if (position < 0 || target < 0 || target >= next.length) return;
+    [next[position], next[target]] = [next[target]!, next[position]!];
+    setEnabled(next);
+  };
+
+  const ordered = [
+    ...enabled,
+    ...PROVIDERS.map((provider) => provider.id).filter((id) => !enabled.includes(id)),
+  ];
+  return (
+    <Section
+      title="Subtitle finder"
+      description="Providers are searched together; results are ranked by how well they match the file."
+    >
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          save.mutate();
+        }}
+        className="grid gap-5"
+      >
+        <ul className="divide-y divide-border rounded-md bg-background">
+          {ordered.map((id) => {
+            const provider = PROVIDERS.find((candidate) => candidate.id === id)!;
+            const on = enabled.includes(id);
+            return (
+              <li key={id} className="flex items-center gap-3 px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={on}
+                  disabled={locked.subtitle_providers}
+                  onChange={(event) =>
+                    setEnabled(
+                      event.target.checked
+                        ? [...enabled, id]
+                        : enabled.filter((value) => value !== id),
+                    )
+                  }
+                  aria-label={`Use ${provider.name}`}
+                  className="size-4 accent-primary"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-label-md">{provider.name}</span>
+                  <span className="block text-caption text-on-surface-muted">{provider.hint}</span>
+                </span>
+                {on && (
+                  <span className="flex gap-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => move(id, -1)}
+                      aria-label={`Move ${provider.name} up`}
+                    >
+                      ↑
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => move(id, 1)}
+                      aria-label={`Move ${provider.name} down`}
+                    >
+                      ↓
+                    </Button>
+                  </span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor={ids.access} className="mb-1.5 block text-label-md">
+              Who can download subtitles
+            </label>
+            <select
+              id={ids.access}
+              value={access}
+              disabled={locked.subtitle_access}
+              onChange={(event) => setAccess(event.target.value as "all" | "admins")}
+              className="h-12 w-full rounded-md border border-border-strong bg-background px-3 text-body-md"
+            >
+              <option value="all">Everyone</option>
+              <option value="admins">Administrators only</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor={ids.limit} className="mb-1.5 block text-label-md">
+              Downloads per person per day (0 = no limit)
+            </label>
+            <input
+              id={ids.limit}
+              type="number"
+              min={0}
+              max={1000}
+              value={limit}
+              disabled={locked.subtitle_daily_limit}
+              onChange={(event) => setLimit(event.target.value)}
+              className="h-12 w-full rounded-md border border-border-strong bg-background px-3 text-body-md"
+            />
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <TextField
+            label="OpenSubtitles API key"
+            type="password"
+            autoComplete="off"
+            placeholder={settings.openSubtitlesApiKeySet ? "Saved — leave empty to keep" : ""}
+            value={osKey}
+            onChange={(event) => setOsKey(event.target.value)}
+            disabled={locked.opensubtitles_api_key}
+          />
+          <TextField
+            label="Username (optional)"
+            autoComplete="off"
+            value={osUser}
+            onChange={(event) => setOsUser(event.target.value)}
+            disabled={locked.opensubtitles_username}
+          />
+          <TextField
+            label="Password (optional)"
+            type="password"
+            autoComplete="off"
+            placeholder={settings.openSubtitlesPasswordSet ? "Saved" : ""}
+            value={osPassword}
+            onChange={(event) => setOsPassword(event.target.value)}
+            disabled={locked.opensubtitles_password}
+          />
+        </div>
+        <Button type="submit" disabled={save.isPending} className="justify-self-start">
+          {save.isPending ? "Saving…" : "Save subtitle settings"}
         </Button>
       </form>
     </Section>

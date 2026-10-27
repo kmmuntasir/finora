@@ -3,7 +3,9 @@
 package jellyfin
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -140,4 +142,94 @@ func (c *Client) DeviceBelongsTo(ctx context.Context, deviceID, userID string) (
 		}
 	}
 	return false, nil
+}
+
+// MediaStream is the subset of a Jellyfin media stream the API needs.
+type MediaStream struct {
+	Index      int    `json:"Index"`
+	Type       string `json:"Type"`
+	IsExternal bool   `json:"IsExternal"`
+	Path       string `json:"Path"`
+	Language   string `json:"Language"`
+}
+
+// MediaSource is the subset of a Jellyfin media source the API needs.
+type MediaSource struct {
+	ID           string        `json:"Id"`
+	Path         string        `json:"Path"`
+	Size         int64         `json:"Size"`
+	MediaStreams []MediaStream `json:"MediaStreams"`
+}
+
+// Item is the subset of Jellyfin's BaseItemDto used for subtitle searches.
+type Item struct {
+	ID                string            `json:"Id"`
+	Name              string            `json:"Name"`
+	Type              string            `json:"Type"`
+	Path              string            `json:"Path"`
+	ProductionYear    int               `json:"ProductionYear"`
+	SeriesName        string            `json:"SeriesName"`
+	SeriesID          string            `json:"SeriesId"`
+	ParentIndexNumber int               `json:"ParentIndexNumber"`
+	IndexNumber       int               `json:"IndexNumber"`
+	ProviderIDs       map[string]string `json:"ProviderIds"`
+	MediaSources      []MediaSource     `json:"MediaSources"`
+}
+
+// Item fetches an item as the given user would see it (respecting their library access).
+func (c *Client) Item(ctx context.Context, userID, itemID string) (Item, error) {
+	var result struct {
+		Items []Item `json:"Items"`
+	}
+	query := url.Values{"userId": {userID}, "ids": {itemID}, "fields": {"Path,ProviderIds,MediaSources,MediaStreams"}, "enableUserData": {"false"}}
+	if err := c.do(ctx, http.MethodGet, "/Items", c.APIKey, query, nil, &result); err != nil {
+		return Item{}, err
+	}
+	if len(result.Items) == 0 {
+		return Item{}, ErrNotFound
+	}
+	return result.Items[0], nil
+}
+
+// ErrNotFound means the item does not exist or the user can't see it.
+var ErrNotFound = errors.New("jellyfin: not found")
+
+// ReadRange reads part of an item's original file (for the OpenSubtitles hash).
+func (c *Client) ReadRange(ctx context.Context, itemID string, offset, length int64) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/Items/"+url.PathEscape(itemID)+"/Download", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", authHeader(c.APIKey))
+	req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", offset, offset+length-1))
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusPartialContent {
+		return nil, fmt.Errorf("jellyfin: range read returned %d", resp.StatusCode)
+	}
+	return io.ReadAll(io.LimitReader(resp.Body, length))
+}
+
+// UploadSubtitle sends a subtitle to Jellyfin, which saves it beside the
+// video (when the library allows it) and queues a refresh of the item.
+func (c *Client) UploadSubtitle(ctx context.Context, itemID, language3, format string, data []byte, forced, hearingImpaired bool) error {
+	body, err := json.Marshal(map[string]any{
+		"Language":          language3,
+		"Format":            format,
+		"IsForced":          forced,
+		"IsHearingImpaired": hearingImpaired,
+		"Data":              base64.StdEncoding.EncodeToString(data),
+	})
+	if err != nil {
+		return err
+	}
+	return c.do(ctx, http.MethodPost, "/Videos/"+url.PathEscape(itemID)+"/Subtitles", c.APIKey, nil, bytes.NewReader(body), nil)
+}
+
+// DeleteSubtitle removes an external subtitle stream from an item.
+func (c *Client) DeleteSubtitle(ctx context.Context, itemID string, index int) error {
+	return c.do(ctx, http.MethodDelete, fmt.Sprintf("/Videos/%s/Subtitles/%d", url.PathEscape(itemID), index), c.APIKey, nil, nil, nil)
 }

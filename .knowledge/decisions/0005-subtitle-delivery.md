@@ -30,3 +30,19 @@ before Jellyfin re-indexes the item.
 - No FTP or file-share access needed.
 - Other Jellyfin clients see the subtitle after indexing; whether they show
   it by default depends on each user's Jellyfin subtitle settings.
+
+## Implementation notes (2026-10-28)
+
+- Jellyfin names the upload `<video stem>.<lang3>[.forced][.sdh].srt`, adding
+  a counter when the name exists (`SubtitleManager.TrySaveToFiles`). Finora
+  snapshots the item's external subtitle paths before uploading; the first
+  new path that starts with `<video stem>.<lang3>` afterwards is Finora's.
+- Paths come from the Jellyfin host's OS. The reference server runs on
+  Windows, so the API splits paths on both `/` and `\`.
+- Stored subtitles are served as WebVTT at `/api/v1/subtitles/files/<id>.vtt`.
+  The 128-bit random ID is the capability, because `<track>` cannot send an
+  `Authorization` header.
+- Verified end to end on the reference server: SubDL result → upload →
+  Jellyfin indexed it as an external stream within seconds → removed through
+  Finora (Jellyfin deleted the file).
+

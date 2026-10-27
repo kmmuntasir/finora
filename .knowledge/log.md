@@ -10,6 +10,13 @@ links to the notes that changed.
 
 ## 2026-10-28
 
+- **Phase 7 (subtitle finder) built.** Go providers ported from
+  `subtitle-fetcher` (Addic7ed, SubDL updated for its new markup,
+  OpenSubtitles), payload checks, OpenSubtitles hash via Jellyfin range
+  reads, upload to Jellyfin with indexed-copy detection, WebVTT fallback,
+  delete. Web: "Find subtitles" dialog, player default selection, admin
+  subtitle settings. Verified live, then reverted (the test episode is
+  unchanged).
 - **Tier 1 complete.** Added the last Must filters (year, age rating,
   resolution, has subtitles). Found a Jellyfin 10.11.11 bug where
   `hasSubtitles` drops resolution filters; the two are mutually exclusive in

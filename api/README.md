@@ -1,7 +1,7 @@
 # Finora API
 
-Optional Go service for features Jellyfin lacks: announcements, Google
-sign-in for admins and Finora-wide settings (the subtitle finder comes next).
+Optional Go service for features Jellyfin lacks: the subtitle finder,
+announcements, Google sign-in for admins and Finora-wide settings.
 It never serves the frontend and never proxies media. See
 [../docs/concept.md](../docs/concept.md), section 7.
 
@@ -28,6 +28,11 @@ variables (they override saved settings and lock them in the UI):
 | `FINORA_GOOGLE_CLIENT_ID` | Google OAuth client ID |
 | `FINORA_GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
 | `FINORA_GOOGLE_SESSION_HOURS` | Lifetime of Google admin sessions, default `12` |
+| `FINORA_SUBTITLE_PROVIDERS` | Search order, default `addic7ed,subdl,opensubtitles`; `none` disables |
+| `FINORA_SUBTITLE_ACCESS` | `all` (default) or `admins` |
+| `FINORA_SUBTITLE_DAILY_LIMIT` | Downloads per user per day, default `20`, `0` = no limit |
+| `FINORA_OPENSUBTITLES_API_KEY` | OpenSubtitles.com API key (optional) |
+| `FINORA_OPENSUBTITLES_USERNAME` / `_PASSWORD` | Optional account for a higher daily quota |
 
 Google sign-in needs an OAuth client in Google Cloud with the redirect URI
 `<FINORA_PUBLIC_URL>/api/v1/auth/google/callback`, and at least one Google

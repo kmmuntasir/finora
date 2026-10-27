@@ -26,6 +26,7 @@ import { SeasonEpisodes } from "./SeasonEpisodes";
 import { TrackList } from "./TrackList";
 import { selectedSource, type PlaySelection } from "./selection";
 import { TrackPickers } from "./TrackPickers";
+import { SubtitleFinder } from "@/features/subtitles/SubtitleFinder";
 
 export function ItemPage() {
   const { itemId } = useParams();
@@ -220,7 +221,12 @@ function ItemDetails({ item }: { item: BaseItemDto }) {
               playLabel={playLabel}
               selection={selection}
             />
-            {source && <TrackPickers item={item} selection={selection} onChange={setSelection} />}
+            {source && (
+              <div className="flex flex-wrap items-end gap-4">
+                <TrackPickers item={item} selection={selection} onChange={setSelection} />
+                <SubtitleFinder item={item} />
+              </div>
+            )}
           </div>
         </div>
       </section>

@@ -5,13 +5,16 @@ updated: 2026-10-28
 
 # Subtitle Providers
 
+> **Status (2026-10-28):** ported to Go in `api/internal/subtitles/`. Changes
+> found while porting are noted inline as **Update**.
+
 Learned in the author's earlier `subtitle-fetcher` project (Node, verified
 live in August 2026). Finora's Go API ports this logic.
 
 | Provider | Scope | Access | Behaviour to respect |
 | --- | --- | --- | --- |
 | Addic7ed | TV episodes only | Anonymous scraping | Unique match → 302 to the episode page; multi-match → result list. Download needs a `Referer` from that page. Throttles hard: pace requests globally (~3.2 s), cool down 25 s on a throttle page, give up after a second throttle. Skip rows still "NN%" (incomplete). |
-| SubDL | Movies and episodes | Anonymous scraping | Search → detail pages with per-language sections and `dl.subdl.com` zip links. Episodes searched per season. Daily cap ≈ 300 downloads per IP: hard (403/406/429 on zip) or soft (search results silently empty). |
+| SubDL | Movies and episodes | Anonymous scraping | Search → detail pages with per-language sections and `dl.subdl.com` zip links. Daily cap ≈ 300 downloads per IP: hard (403/406/429 on zip) or soft (search results silently empty). **Update:** searching "Show s01" now finds nothing; search the series name, then follow the season link (`…/first-season`, `…/second-season`). Language sections use full names (`data-language="english"`, `"bengali"` labelled "Bangla"). |
 | OpenSubtitles.com | Movies and episodes | REST API key; optional login raises quota | Query by file hash first, then title / season / episode (Finora can also use IMDb IDs from Jellyfin). `/download` returns `remaining` and `reset_time_utc`; 406 = quota exhausted, 429 = honour `Retry-After`. |
 | Podnapisi, Gestdown, YTS | — | — | Adapters exist but are often ISP-blocked; off by default. |
 
