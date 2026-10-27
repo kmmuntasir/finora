@@ -71,8 +71,36 @@ Facts and gotchas learned while building Finora Web.
 - Next Up includes episodes already in Continue Watching; Finora removes
   those duplicates.
 
+## Player
+
+- Device profile is Finora's own (`web/src/features/player/device-profile.ts`);
+  the SDK's `getBrowserDeviceProfile` only covers subtitles. Codecs are
+  probed with `MediaSource.isTypeSupported` and `canPlayType`.
+- Direct play uses `/Videos/{id}/stream.{container}?Static=true&ApiKey=…`.
+  `<video>` and `<img>` cannot send headers, so the token goes in the URL for
+  streams and trickplay tiles (same as jellyfin-web). API calls still use the
+  `Authorization` header.
+- Server-side conversion uses HLS with fMP4 segments (`Container: mp4`) so
+  H.264, HEVC and AV1 can be copied without re-encoding; hls.js plays it
+  where the browser lacks native HLS.
+- Text subtitles are requested as external WebVTT (`Stream.vtt`) and shown
+  through `<track>`; image subtitles (PGS, VobSub) are burned in, which
+  needs a transcode.
+- Play method shown in the info panel: only `ContainerNotSupported` is a
+  remux ("direct stream"); a bitrate cap means re-encoding.
+- If direct play fails in the browser, the player retries once with direct
+  play disabled.
+- Progress is reported every 10 s and on pause/seek; the final stop uses a
+  keepalive `fetch` on page hide, then `DELETE /Videos/ActiveEncodings` frees
+  ffmpeg for converted streams.
+- Every playback start increments `PlayCount` and sets `LastPlayedDate`
+  (`SessionManager.OnPlaybackStart`), in every client.
+
 ## Verified against the reference server
 
 - A dev server on `http://127.0.0.1:5173` reads public server info from
   Jellyfin directly (CORS allowed); no console errors.
 - SolaimanLipi 400 and 700 load and render; 100 loads on demand.
+- Player (Chromium): MP4 H.264/AAC direct plays; capped quality switches to
+  HLS fMP4 via hls.js; trickplay thumbnails and chapter names show; exiting
+  ends the server session and its encoder.

@@ -7,9 +7,9 @@ import { LibrariesPage } from "@/features/library/LibrariesPage";
 import { BrowsePage } from "@/features/library/BrowsePage";
 import { LibraryPage } from "@/features/library/LibraryPage";
 import { ItemPage } from "@/features/item/ItemPage";
+import { PlayerPage } from "@/features/player/PlayerPage";
 import { SearchPage } from "@/features/search/SearchPage";
 import { MePage } from "./MePage";
-import { PlayPlaceholderPage } from "./PlayPlaceholderPage";
 import { ServerPage } from "./ServerPage";
 import { NotFoundPage } from "./NotFoundPage";
 
@@ -21,6 +21,7 @@ export const router = createBrowserRouter([
   {
     element: <RequireAuth />,
     children: [
+      { path: "/play/:itemId", element: <PlayerPage /> },
       {
         element: <AppShell />,
         children: [
@@ -30,7 +31,6 @@ export const router = createBrowserRouter([
           { path: "items/:itemId", element: <ItemPage /> },
           { path: "search", element: <SearchPage /> },
           { path: "browse", element: <BrowsePage /> },
-          { path: "play/:itemId", element: <PlayPlaceholderPage /> },
           { path: "server", element: <ServerPage /> },
           { path: "me", element: <MePage /> },
         ],

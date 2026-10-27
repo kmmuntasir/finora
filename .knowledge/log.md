@@ -10,6 +10,11 @@ links to the notes that changed.
 
 ## 2026-10-28
 
+- **Phase 3 (video player) built.** Own device profile, direct play / HLS
+  fallback, subtitles and audio switching, quality and speed, trickplay seek
+  previews, chapters, skip-segment button, up-next with countdown, keyboard
+  and media-session controls, progress reporting. Test traces on the
+  reference server were reverted (see `CLAUDE.md`).
 - Phase 2 browsing complete for Tier 1: item detail pages (movie, series,
   episode, album, artist, person, collection, playlist), search across all
   libraries (Bengali verified), genre/studio browse pages, `/` and Ctrl+K

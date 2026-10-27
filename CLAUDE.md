@@ -49,6 +49,11 @@ Open other notes only when the task needs them.
   them into tracked files. Add new private values to `.secrets.md`.
 - **Read-only against the reference server** unless the user approves a
   change. It is a live family server.
+- **Playback tests leave traces.** Every playback start increments the
+  user's play count and sets "last played". Test on unwatched items, stop
+  before 5% (no resume point), then reset with
+  `DELETE /UserPlayedItems/{itemId}?userId=…` (clears play count, position
+  and last-played date). Never test on items the user is partway through.
 - **Jellyfin source for lookups:** clone tag `v10.11.11` (the reference
   server's version) next to this repository and grep it instead of guessing:
   `git clone --depth 1 --branch v10.11.11 https://github.com/jellyfin/jellyfin.git`.
