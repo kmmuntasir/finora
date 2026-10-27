@@ -50,7 +50,12 @@ their reasons, research, and a running log.
 
 - [subtitles/providers.md](subtitles/providers.md) — provider behaviour learned in `subtitle-fetcher`
 
+### Frontend
+
+- [web/frontend-notes.md](web/frontend-notes.md) — toolchain, SDK version pin, token pipeline gotchas
+
 ### Brand and design
 
 - [brand/logo.md](brand/logo.md) — logo assets, colours, how the SVGs were made
 - [design/references.md](design/references.md) — evaluated design tools and references
+- [DESIGN.md](../DESIGN.md) — the design system (tokens + rationale)

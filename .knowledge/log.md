@@ -10,6 +10,11 @@ links to the notes that changed.
 
 ## 2026-10-28
 
+- **Phase 0 done.** `web/` scaffolded (Vite 8, React 19, TS 6, Tailwind 4),
+  runtime `config.json` with HTTPS/HTTP mix check, `@jellyfin/sdk` 0.13.0,
+  `DESIGN.md` (lint clean) with generated Tailwind tokens, SolaimanLipi
+  WOFF2 fonts, minimal app shell. Verified in a browser against the
+  reference server. See [web/frontend-notes.md](web/frontend-notes.md).
 - Chose SolaimanLipi as the UI typeface ([0006](decisions/0006-typeface-solaimanlipi.md)).
 - Wrote `docs/ui-plan.md` and vendored five design skills into
   `.claude/skills/` ([0007](decisions/0007-design-workflow.md)).

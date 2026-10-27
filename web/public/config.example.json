@@ -1,0 +1,4 @@
+{
+  "jellyfinUrl": "http://<public-ip>:<port>",
+  "apiUrl": null
+}
