@@ -41,6 +41,7 @@ their reasons, research, and a running log.
 | [0005](decisions/0005-subtitle-delivery.md) | Subtitles uploaded through the API with immediate fallback | Accepted |
 | [0006](decisions/0006-typeface-solaimanlipi.md) | Typeface: SolaimanLipi | Accepted |
 | [0007](decisions/0007-design-workflow.md) | Design workflow without a designer | Accepted |
+| [0008](decisions/0008-display-language.md) | Display language: formats now, interface translation later | Accepted |
 
 ### Jellyfin
 
