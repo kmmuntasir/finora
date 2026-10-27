@@ -10,6 +10,12 @@ links to the notes that changed.
 
 ## 2026-10-28
 
+- **Phase 1 (sign-in) built.** Password login, Quick Connect, remember-me
+  (localStorage vs sessionStorage), session restore via `/Users/Me`, 401 →
+  "session ended", sign-out, route guards. Verified in a browser: guard
+  redirect, Quick Connect code issued by the reference server, expiry path.
+  A real password sign-in still needs the owner to try it. Notes in
+  [web/frontend-notes.md](web/frontend-notes.md#authentication).
 - **Phase 0 done.** `web/` scaffolded (Vite 8, React 19, TS 6, Tailwind 4),
   runtime `config.json` with HTTPS/HTTP mix check, `@jellyfin/sdk` 0.13.0,
   `DESIGN.md` (lint clean) with generated Tailwind tokens, SolaimanLipi

@@ -1,6 +1,7 @@
 import { House } from "lucide-react";
 import { NavLink, Outlet } from "react-router";
 import { Logo } from "@/components/Logo";
+import { UserMenu } from "@/features/auth/UserMenu";
 import { cn } from "@/lib/cn";
 
 /**
@@ -10,8 +11,11 @@ import { cn } from "@/lib/cn";
 export function AppShell() {
   return (
     <div className="min-h-dvh bg-background md:grid md:grid-cols-[var(--spacing-sidebar)_1fr]">
-      <header className="flex items-center border-b border-border px-page-x-mobile py-3 md:hidden">
+      <header className="flex items-center justify-between gap-4 border-b border-border px-page-x-mobile py-2 md:hidden">
         <Logo />
+        <div className="min-w-0 max-w-[60%]">
+          <UserMenu />
+        </div>
       </header>
 
       <aside className="sticky top-0 hidden h-dvh flex-col border-r border-border bg-surface px-4 py-6 md:flex">
@@ -33,7 +37,10 @@ export function AppShell() {
             Home
           </NavLink>
         </nav>
-        <p className="mt-auto px-2 text-caption text-on-surface-subtle">Finora {__APP_VERSION__}</p>
+        <div className="mt-auto">
+          <UserMenu />
+          <p className="mt-3 px-2 text-caption text-on-surface-subtle">Finora {__APP_VERSION__}</p>
+        </div>
       </aside>
 
       <main className="min-w-0 px-page-x-mobile py-6 md:px-page-x md:py-8">

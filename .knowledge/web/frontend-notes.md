@@ -40,6 +40,21 @@ Facts and gotchas learned while building Finora Web.
 - Typography tokens become `text-<name>` utilities that set size, line
   height, weight and letter spacing together.
 
+## Authentication
+
+- Only the access token is stored (`finora.session`): localStorage with
+  "keep me signed in", sessionStorage without. Sessions are bound to the
+  configured Jellyfin URL.
+- Each SDK `Api` gets its own Axios instance; the signed-in client has an
+  interceptor that treats any 401 as an ended session.
+- Quick Connect: `POST /QuickConnect/Initiate` → poll
+  `GET /QuickConnect/Connect?secret=` every 3 s → `POST
+  /Users/AuthenticateWithQuickConnect`. Requests expire after 10 minutes
+  (`QuickConnectManager.Timeout`), after which the poll returns 404.
+- The login disclaimer is rendered as plain text (no HTML) to avoid XSS.
+- In development, React StrictMode runs the restore effect twice, so an
+  invalid token shows two 401s in the console; this is expected.
+
 ## Verified against the reference server
 
 - A dev server on `http://127.0.0.1:5173` reads public server info from
