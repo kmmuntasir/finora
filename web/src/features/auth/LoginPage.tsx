@@ -1,5 +1,5 @@
 import type { AuthenticationResult, UserDto } from "@jellyfin/sdk/lib/generated-client/models";
-import { Eye, EyeOff, UserRound } from "lucide-react";
+import { Eye, EyeOff, Languages, UserRound } from "lucide-react";
 import { useCallback, useState, type FormEvent } from "react";
 import { Button } from "@/components/Button";
 import { Logo } from "@/components/Logo";
@@ -13,6 +13,7 @@ import { startGoogleSignIn } from "./google-signin";
 import { ForgotPasswordPanel } from "./ForgotPasswordPanel";
 import { useLoginInfo, usePublicUsers } from "./useLoginInfo";
 import { useFinoraConfig } from "@/api/finora";
+import { currentLanguage, LANGUAGES, setLanguage, type Language } from "@/i18n";
 import { useQuickConnect } from "./useQuickConnect";
 
 export function LoginPage() {
@@ -251,6 +252,22 @@ export function LoginPage() {
             />
           )}
         </div>
+
+        <label className="mt-6 flex items-center justify-center gap-2 text-caption text-on-surface-subtle">
+          <Languages aria-hidden className="size-4" />
+          <span className="sr-only">Language</span>
+          <select
+            value={currentLanguage()}
+            onChange={(event) => void setLanguage(event.target.value as Language)}
+            className="rounded-md bg-transparent px-1 py-1 text-caption text-on-surface-muted hover:text-on-surface"
+          >
+            {LANGUAGES.map((language) => (
+              <option key={language.value} value={language.value}>
+                {language.label}
+              </option>
+            ))}
+          </select>
+        </label>
 
         {disclaimer && (
           <p className="mt-6 whitespace-pre-line text-caption text-on-surface-subtle">

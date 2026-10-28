@@ -10,6 +10,8 @@ import { useSession } from "@/features/auth/context";
  */
 const CHOICES = {
   homeLayout: ["spotlight", "dashboard", "focus"],
+  /** Interface language (see i18n/index.ts). */
+  language: ["en", "bn"],
   subtitleSize: ["medium", "small", "large", "xlarge"],
   subtitleColor: ["white", "yellow"],
   subtitleBackground: ["box", "shadow", "none"],

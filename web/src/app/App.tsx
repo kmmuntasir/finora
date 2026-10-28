@@ -3,6 +3,7 @@ import { RouterProvider } from "react-router";
 import { Toaster } from "sonner";
 import { ConfigProvider } from "@/config/ConfigProvider";
 import { AuthProvider } from "@/features/auth/AuthProvider";
+import { useLanguage } from "@/i18n/useLanguage";
 import { router } from "./router";
 
 const queryClient = new QueryClient({
@@ -12,11 +13,13 @@ const queryClient = new QueryClient({
 });
 
 export function App() {
+  // Changing the language re-renders every page with the new text.
+  const language = useLanguage();
   return (
     <ConfigProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <RouterProvider router={router} />
+          <RouterProvider key={language} router={router} />
           <Toaster
             position="bottom-center"
             toastOptions={{

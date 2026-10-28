@@ -33,6 +33,7 @@ import {
 } from "@/features/home/sections";
 import { cn } from "@/lib/cn";
 import { readTvMode, saveTvMode } from "@/features/tv/tv-mode";
+import { LANGUAGES, setLanguage, type Language } from "@/i18n";
 import { languageOptions, SUBTITLE_MODES } from "./subtitle-options";
 import {
   useChangePassword,
@@ -218,6 +219,7 @@ function AppearanceSection() {
   const themeId = useId();
   const layoutId = useId();
   const localeId = useId();
+  const languageId = useId();
   const tvId = useId();
   const [tvMode, setTvMode] = useState(readTvMode);
   return (
@@ -254,6 +256,28 @@ function AppearanceSection() {
           {HOME_LAYOUTS.map((layout) => (
             <option key={layout.value} value={layout.value}>
               {layout.label}
+            </option>
+          ))}
+        </select>
+      </Row>
+      <Row
+        label="Language"
+        hint="বাংলা is a draft that is still being reviewed."
+        htmlFor={languageId}
+      >
+        <select
+          id={languageId}
+          className={SELECT}
+          value={preferences.language}
+          onChange={(event) => {
+            const language = event.target.value as Language;
+            setPreference.mutate({ language });
+            void setLanguage(language);
+          }}
+        >
+          {LANGUAGES.map((language) => (
+            <option key={language.value} value={language.value}>
+              {language.label}
             </option>
           ))}
         </select>
