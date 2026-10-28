@@ -4,6 +4,8 @@ import { FinoraAdminPage } from "@/features/admin/FinoraAdminPage";
 import { LibrariesAdminPage } from "@/features/admin/LibrariesAdminPage";
 import { SessionsPage } from "@/features/admin/SessionsPage";
 import { UserEditPage } from "@/features/admin/UserEditPage";
+import { ActivityPage } from "@/features/admin/ActivityPage";
+import { OverviewPage } from "@/features/admin/OverviewPage";
 import { UsersPage } from "@/features/admin/UsersPage";
 import { RedirectIfSignedIn, RequireAuth } from "@/features/auth/guards";
 import { GoogleCallbackPage } from "@/features/auth/GoogleCallbackPage";
@@ -51,7 +53,9 @@ export const router = createBrowserRouter([
                 path: "admin",
                 element: <AdminLayout />,
                 children: [
-                  { index: true, element: <Navigate to="users" replace /> },
+                  { index: true, element: <Navigate to="overview" replace /> },
+                  { path: "overview", element: <OverviewPage /> },
+                  { path: "activity", element: <ActivityPage /> },
                   { path: "users", element: <UsersPage /> },
                   { path: "users/:userId", element: <UserEditPage /> },
                   { path: "sessions", element: <SessionsPage /> },

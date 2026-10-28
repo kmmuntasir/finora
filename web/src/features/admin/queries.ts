@@ -1,4 +1,5 @@
 import type { UserDto, UserPolicy } from "@jellyfin/sdk/lib/generated-client/models";
+import { getActivityLogApi } from "@jellyfin/sdk/lib/utils/api/activity-log-api";
 import { getDevicesApi } from "@jellyfin/sdk/lib/utils/api/devices-api";
 import { getItemRefreshApi } from "@jellyfin/sdk/lib/utils/api/item-refresh-api";
 import { getLibraryApi } from "@jellyfin/sdk/lib/utils/api/library-api";
@@ -7,6 +8,7 @@ import { getLocalizationApi } from "@jellyfin/sdk/lib/utils/api/localization-api
 import { getQuickConnectApi } from "@jellyfin/sdk/lib/utils/api/quick-connect-api";
 import { getScheduledTasksApi } from "@jellyfin/sdk/lib/utils/api/scheduled-tasks-api";
 import { getSessionApi } from "@jellyfin/sdk/lib/utils/api/session-api";
+import { getSystemApi } from "@jellyfin/sdk/lib/utils/api/system-api";
 import { getUserApi } from "@jellyfin/sdk/lib/utils/api/user-api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "@/features/auth/context";
@@ -231,4 +233,50 @@ export function useDeviceMutations(userId: string) {
       onSuccess: refresh,
     }),
   };
+}
+
+export function useSystemInfo() {
+  const { api } = useSession();
+  return useQuery({
+    queryKey: ["admin", "system-info"],
+    queryFn: async ({ signal }) => (await getSystemApi(api).getSystemInfo({ signal })).data,
+    refetchInterval: 30_000,
+  });
+}
+
+export function useItemCounts() {
+  const { api } = useSession();
+  return useQuery({
+    queryKey: ["admin", "item-counts"],
+    queryFn: async ({ signal }) => (await getLibraryApi(api).getItemCounts({}, { signal })).data,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export const ACTIVITY_PAGE = 50;
+
+/** Jellyfin's activity log, newest first. `users` limits it to user activity (sign-ins, playback). */
+export function useActivityLog(page: number, users: boolean | null) {
+  const { api } = useSession();
+  return useQuery({
+    queryKey: ["admin", "activity", page, users],
+    queryFn: async ({ signal }) =>
+      (
+        await getActivityLogApi(api).getLogEntries(
+          {
+            startIndex: page * ACTIVITY_PAGE,
+            limit: ACTIVITY_PAGE,
+            hasUserId: users ?? undefined,
+          },
+          { signal },
+        )
+      ).data,
+    refetchInterval: page === 0 ? 30_000 : false,
+    placeholderData: (previous) => previous,
+  });
+}
+
+export function useRestartServer() {
+  const { api } = useSession();
+  return useMutation({ mutationFn: () => getSystemApi(api).restartApplication() });
 }

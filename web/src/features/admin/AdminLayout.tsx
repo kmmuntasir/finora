@@ -7,9 +7,11 @@ import { useAdminAccess } from "./access";
 import { useGoogleSession } from "./useGoogleSession";
 
 const TABS = [
+  { to: "/admin/overview", label: "Overview" },
   { to: "/admin/users", label: "Users" },
   { to: "/admin/sessions", label: "Active sessions" },
   { to: "/admin/libraries", label: "Libraries" },
+  { to: "/admin/activity", label: "Activity" },
   { to: "/admin/finora", label: "Finora", needsApi: true },
 ];
 
