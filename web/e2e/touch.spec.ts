@@ -58,3 +58,40 @@ test("phone in landscape: swipes set brightness and volume; full screen locks la
     )
     .toEqual(["landscape"]);
 });
+
+/** A quick tap at (x, y), as real touch events. */
+async function tap(page: Page, x: number, y: number) {
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+}
+
+test("phone: double tap the left half to go back, the right half to go forward", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "Runs once, with its own phone settings");
+  await signIn(page);
+  await page.goto("/play/movie3");
+  const video = page.locator("video");
+  await expect
+    .poll(() => video.evaluate((element: HTMLVideoElement) => element.readyState))
+    .toBeGreaterThan(0);
+  const time = () => video.evaluate((element: HTMLVideoElement) => element.currentTime);
+  await video.evaluate((element: HTMLVideoElement) => {
+    element.pause();
+    element.currentTime = 4;
+  });
+  const { width, height } = page.viewportSize()!;
+
+  await tap(page, width * 0.25, height / 2);
+  await tap(page, width * 0.25, height / 2);
+  await expect(page.getByRole("status", { name: "Back 10 seconds" })).toBeVisible();
+  await expect.poll(time).toBe(0);
+  expect(await page.evaluate(() => document.fullscreenElement)).toBeNull();
+
+  await page.waitForTimeout(400);
+  await tap(page, width * 0.75, height / 2);
+  await tap(page, width * 0.75, height / 2);
+  await expect(page.getByRole("status", { name: "Forward 10 seconds" })).toBeVisible();
+  await expect.poll(time).toBeGreaterThan(5);
+});

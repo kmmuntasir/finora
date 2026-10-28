@@ -10,6 +10,14 @@ links to the notes that changed.
 
 ## 2026-10-29
 
+- **Double tap to seek; Suggestions fixed** (deployed). On touch screens a
+  double tap on the left half goes back 10 s and on the right half forward
+  10 s, each further quick tap adds 10 s; on touch, a double tap no longer
+  toggles full screen. Suggestions showed the same movies in every row
+  because of a Jellyfin 10.11.11 bug
+  ([api-notes](jellyfin/api-notes.md#movie-recommendations)); Finora now
+  fills those rows from each movie's similar items.
+
 - **Phone player gestures** (deployed). Full screen on a landscape video
   calls `screen.orientation.lock("landscape")`, which Chrome on Android maps
   to `SCREEN_ORIENTATION_SENSOR_LANDSCAPE`

@@ -1,4 +1,5 @@
 import type { BaseItemDto, RecommendationDto } from "@jellyfin/sdk/lib/generated-client/models";
+import { getLibraryApi } from "@jellyfin/sdk/lib/utils/api/library-api";
 import { getMoviesApi } from "@jellyfin/sdk/lib/utils/api/movies-api";
 import { getStudiosApi } from "@jellyfin/sdk/lib/utils/api/studios-api";
 import { getTvShowsApi } from "@jellyfin/sdk/lib/utils/api/tv-shows-api";
@@ -66,18 +67,36 @@ function recommendationTitle(group: RecommendationDto): string {
   }
 }
 
+const ROW_LIMIT = 16;
+const SIMILAR_TO = new Set(["SimilarToRecentlyPlayed", "SimilarToLikedItem"]);
+
 /** "Because you watched…" rows from Jellyfin's movie recommendations. */
 export function SuggestionsView({ view }: { view: BaseItemDto }) {
   const { api, user } = useSession();
   const { data, isPending, isError } = useQuery({
     queryKey: ["recommendations", user.Id, view.Id],
-    queryFn: async ({ signal }) =>
-      (
+    queryFn: async ({ signal }) => {
+      const groups = (
         await getMoviesApi(api).getMovieRecommendations(
-          { userId: user.Id, parentId: view.Id, categoryLimit: 6, itemLimit: 16 },
+          { userId: user.Id, parentId: view.Id, categoryLimit: 6, itemLimit: ROW_LIMIT },
           { signal },
         )
-      ).data,
+      ).data;
+      // Jellyfin 10.11 fills every "similar to" row with the same alphabetical
+      // movies: its query never names the baseline item
+      // (Jellyfin.Api/Controllers/MoviesController.cs, GetSimilarTo). Fill
+      // those rows from the item's own similar items instead.
+      return Promise.all(
+        groups.map(async (group) => {
+          if (!SIMILAR_TO.has(group.RecommendationType ?? "") || !group.CategoryId) return group;
+          const similar = await getLibraryApi(api).getSimilarItems(
+            { itemId: group.CategoryId, userId: user.Id, limit: ROW_LIMIT },
+            { signal },
+          );
+          return { ...group, Items: (similar.data.Items ?? []).slice(0, ROW_LIMIT) };
+        }),
+      );
+    },
     staleTime: 10 * 60 * 1000,
   });
   if (isPending) return <Spinner className="flex justify-center py-12" />;

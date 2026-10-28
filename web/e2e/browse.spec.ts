@@ -48,3 +48,13 @@ test("a card's play button plays; the rest of the card opens details", async ({
   await page.getByText("Movie 03").first().click();
   await expect(page).toHaveURL(/\/items\/movie3$/);
 });
+
+test("suggestion rows hold movies similar to each watched one", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/libraries/view-movies?tab=suggestions");
+  const first = page.getByRole("region", { name: "Because you watched Movie 01" });
+  const second = page.getByRole("region", { name: "Because you watched Movie 02" });
+  await expect(first.getByText("Movie 06")).toBeVisible();
+  await expect(second.getByText("Movie 07")).toBeVisible();
+  await expect(first.getByText("Movie 02", { exact: true })).toHaveCount(0);
+});

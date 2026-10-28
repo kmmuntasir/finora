@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BRIGHTNESS_RANGE, swipeValue } from "./useSwipeAdjust";
+import { BRIGHTNESS_RANGE, swipeValue } from "./useTouchGestures";
 
 describe("swipeValue", () => {
   const volume = { min: 0, max: 1 };

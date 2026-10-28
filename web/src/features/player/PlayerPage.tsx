@@ -46,9 +46,9 @@ import { trickplayFrame, trickplayInfo } from "./trickplay";
 import {
   BRIGHTNESS_RANGE,
   canAdjustVolume,
-  useSwipeAdjust,
-  type SwipeKind,
-} from "./useSwipeAdjust";
+  useTouchGestures,
+  type GestureIndicator,
+} from "./useTouchGestures";
 import { msg, t } from "@/i18n";
 
 const TICKS_PER_SECOND = 10_000_000;
@@ -458,11 +458,12 @@ function Player({ item }: { item: BaseItemDto }) {
     savePlayerPreferences({ volume: next, muted: next === 0 });
   }, []);
 
-  const swipe = useSwipeAdjust({
+  const gestures = useTouchGestures({
     brightness,
     volume: muted ? 0 : volume,
     setBrightness,
     setVolume: changeVolume,
+    seekBy,
     volumeAdjustable,
   });
 
@@ -658,11 +659,14 @@ function Player({ item }: { item: BaseItemDto }) {
         poster={poster ? imageUrl(config.jellyfinUrl, poster, 1280) : undefined}
         className="size-full touch-none object-contain"
         style={brightness === 1 ? undefined : { filter: `brightness(${brightness})` }}
-        {...swipe.handlers}
+        {...gestures.handlers}
         onClick={(event) => {
           if (event.detail === 1 && window.matchMedia("(pointer: fine)").matches) togglePlay();
         }}
-        onDoubleClick={toggleFullscreen}
+        onDoubleClick={() => {
+          // On touch screens a double tap seeks instead (useTouchGestures).
+          if (window.matchMedia("(pointer: fine)").matches) toggleFullscreen();
+        }}
         onPlay={() => setPlaying(true)}
         onPause={() => {
           setPlaying(false);
@@ -712,7 +716,7 @@ function Player({ item }: { item: BaseItemDto }) {
         </div>
       )}
 
-      {swipe.indicator && <SwipeIndicator {...swipe.indicator} />}
+      {gestures.indicator && <TouchIndicator indicator={gestures.indicator} />}
 
       {showInfo && source && (
         <PlaybackInfoPanel source={source} onClose={() => setShowInfo(false)} />
@@ -1075,8 +1079,37 @@ function PlaybackInfoPanel({ source, onClose }: { source: PlaybackSource; onClos
   );
 }
 
-/** Shows the level while swiping: brightness on the left, volume on the right. */
-function SwipeIndicator({ kind, value }: { kind: SwipeKind; value: number }) {
+/**
+ * Feedback for touch gestures: the seek amount after double taps, or the
+ * level while swiping (brightness on the left, volume on the right).
+ */
+function TouchIndicator({ indicator }: { indicator: GestureIndicator }) {
+  if (indicator.kind === "seek") {
+    const back = indicator.side === "left";
+    const Icon = back ? RotateCcw : RotateCw;
+    return (
+      <div
+        role="status"
+        aria-label={
+          back
+            ? t("Back {seconds} seconds", { seconds: indicator.seconds })
+            : t("Forward {seconds} seconds", { seconds: indicator.seconds })
+        }
+        className={cn(
+          "pointer-events-none absolute top-1/2 flex size-28 -translate-y-1/2 flex-col items-center justify-center gap-1 rounded-full bg-black/50 text-white backdrop-blur-sm",
+          back ? "left-[12%]" : "right-[12%]",
+        )}
+      >
+        <Icon aria-hidden className="size-7" />
+        <span className="text-label-md tabular-nums">
+          {back
+            ? t("−{seconds} s", { seconds: indicator.seconds })
+            : t("+{seconds} s", { seconds: indicator.seconds })}
+        </span>
+      </div>
+    );
+  }
+  const { kind, value } = indicator;
   const brightness = kind === "brightness";
   const share = brightness
     ? (value - BRIGHTNESS_RANGE.min) / (BRIGHTNESS_RANGE.max - BRIGHTNESS_RANGE.min)

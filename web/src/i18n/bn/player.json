@@ -198,5 +198,9 @@
   "{count} download": "{count} বার ডাউনলোড",
   "{count} downloads": "{count} বার ডাউনলোড",
   "Brightness {percent}%": "উজ্জ্বলতা {percent}%",
-  "Volume {percent}%": "ভলিউম {percent}%"
+  "Volume {percent}%": "ভলিউম {percent}%",
+  "Back {seconds} seconds": "{seconds} সেকেন্ড পিছনে",
+  "Forward {seconds} seconds": "{seconds} সেকেন্ড সামনে",
+  "−{seconds} s": "−{seconds} সে.",
+  "+{seconds} s": "+{seconds} সে."
 }

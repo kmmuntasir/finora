@@ -1,6 +1,6 @@
 ---
 tags: [jellyfin, api, verified]
-updated: 2026-10-28
+updated: 2026-10-29
 ---
 
 # Jellyfin API Notes
@@ -146,6 +146,22 @@ Re-verify when the target version changes.
   `MaxParentalSubRating`.
 - `AccessSchedules` use `DayOfWeek` values `Sunday`…`Saturday`, `Everyday`,
   `Weekday` and `Weekend`, with fractional hours (`8.5` = 08:30).
+
+## Movie recommendations
+
+`GET /Movies/Recommendations` in 10.11.11 returns the **same movies in every
+"similar to" row** (`SimilarToRecentlyPlayed`, `SimilarToLikedItem`): the
+first movies of the library in alphabetical order. `GetSimilarTo` builds an
+`InternalItemsQuery` without naming the baseline item
+(`Jellyfin.Api/Controllers/MoviesController.cs:275-282`). Verified on the
+reference server: three rows, identical items, and `itemLimit` not honoured.
+Rows by director or actor filter by person and are fine. Upstream `master`
+has rewritten this around `ISimilarItemsManager`.
+
+Finora keeps the rows and titles but fills each "similar to" row from
+`GET /Items/{CategoryId}/Similar`, which gives per-movie results (it also
+ignores `limit`, so Finora trims the list). Rows whose movie has no similar
+items are dropped.
 
 ## Other verified behaviour
 

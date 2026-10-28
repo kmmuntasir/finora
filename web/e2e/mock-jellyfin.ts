@@ -215,7 +215,22 @@ export async function mockJellyfin(
         ],
       });
     }
-    if (/\/Similar$/.test(path)) return json(route, { Items: movies.slice(5, 9) });
+    const similarMatch = path.match(/^\/Items\/movie(\d+)\/Similar$/);
+    if (similarMatch) {
+      const start = (Number(similarMatch[1]) + 5) % 20;
+      return json(route, { Items: movies.slice(start, start + 4) });
+    }
+    // Like Jellyfin 10.11: every "similar to" row holds the same first movies.
+    if (path === "/Movies/Recommendations")
+      return json(
+        route,
+        [movies[1]!, movies[2]!].map((baseline) => ({
+          BaselineItemName: baseline.Name,
+          CategoryId: baseline.Id,
+          RecommendationType: "SimilarToRecentlyPlayed",
+          Items: movies.slice(0, 4),
+        })),
+      );
     return json(route, { Items: [], TotalRecordCount: 0 });
   });
 }
