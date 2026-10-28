@@ -27,6 +27,10 @@ const (
 	KeyOSAPIKey           = "opensubtitles_api_key"
 	KeyOSUsername         = "opensubtitles_username"
 	KeyOSPassword         = "opensubtitles_password"
+	KeyAutoSubtitles      = "auto_subtitles"
+	KeyAutoLanguages      = "auto_subtitle_languages"
+	KeyAutoHour           = "auto_subtitle_hour"
+	KeyAutoPerRun         = "auto_subtitle_per_run"
 )
 
 var envNames = map[string]string{
@@ -43,6 +47,10 @@ var envNames = map[string]string{
 	KeyOSAPIKey:           "FINORA_OPENSUBTITLES_API_KEY",
 	KeyOSUsername:         "FINORA_OPENSUBTITLES_USERNAME",
 	KeyOSPassword:         "FINORA_OPENSUBTITLES_PASSWORD",
+	KeyAutoSubtitles:      "FINORA_AUTO_SUBTITLES",
+	KeyAutoLanguages:      "FINORA_AUTO_SUBTITLE_LANGUAGES",
+	KeyAutoHour:           "FINORA_AUTO_SUBTITLE_HOUR",
+	KeyAutoPerRun:         "FINORA_AUTO_SUBTITLE_PER_RUN",
 }
 
 // Settings is a resolved snapshot.
@@ -62,6 +70,14 @@ type Settings struct {
 	OSAPIKey           string
 	OSUsername         string
 	OSPassword         string
+	// AutoSubtitles turns on the nightly job that fetches missing subtitles.
+	AutoSubtitles bool
+	// AutoLanguages are two-letter codes, e.g. ["en", "bn"].
+	AutoLanguages []string
+	// AutoHour is the local hour (0–23) the job starts.
+	AutoHour int
+	// AutoPerRun caps downloads per run, to stay well inside provider quotas.
+	AutoPerRun int
 	// FromEnv lists keys fixed by environment variables (not editable in the UI).
 	FromEnv map[string]bool
 }
@@ -119,7 +135,23 @@ func Resolve(ctx context.Context, st *store.Store) (Settings, error) {
 	if err != nil || limit < 0 {
 		limit = 20
 	}
+	autoHour, err := strconv.Atoi(values[KeyAutoHour])
+	if err != nil || autoHour < 0 || autoHour > 23 {
+		autoHour = 3
+	}
+	perRun, err := strconv.Atoi(values[KeyAutoPerRun])
+	if err != nil || perRun <= 0 {
+		perRun = 25
+	}
+	autoLanguages := SplitList(values[KeyAutoLanguages])
+	if len(autoLanguages) == 0 {
+		autoLanguages = []string{"en"}
+	}
 	return Settings{
+		AutoSubtitles:      values[KeyAutoSubtitles] == "on" || values[KeyAutoSubtitles] == "true",
+		AutoLanguages:      autoLanguages,
+		AutoHour:           autoHour,
+		AutoPerRun:         perRun,
 		SubtitleProviders:  providers,
 		SubtitleAccess:     access,
 		SubtitleDailyLimit: limit,

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -24,6 +25,7 @@ import (
 // fakeJellyfin implements the handful of endpoints the API uses.
 type fakeJellyfin struct {
 	mu               sync.Mutex
+	uploads          []string
 	authorized       []string
 	deletedDevices   []string
 	deletedSubtitles []string
@@ -87,6 +89,12 @@ func newFakeJellyfin(t *testing.T) *fakeJellyfin {
 		_, _ = io.WriteString(w, `{"Items":[{"Id":"item1","Name":"Movie","Type":"Movie","Path":"/media/Movie.mkv","MediaSources":[{"Id":"ms1","Path":"/media/Movie.mkv","Size":1000,"MediaStreams":[`+
 			`{"Index":3,"Type":"Subtitle","IsExternal":true,"Path":"/media/Movie.en.srt"},`+
 			`{"Index":4,"Type":"Subtitle","IsExternal":true,"Path":"/media/Movie.eng.srt"}]}]}]}`)
+	})
+	mux.HandleFunc("POST /Videos/{id}/Subtitles", func(w http.ResponseWriter, r *http.Request) {
+		f.mu.Lock()
+		f.uploads = append(f.uploads, r.PathValue("id"))
+		f.mu.Unlock()
+		w.WriteHeader(http.StatusNoContent)
 	})
 	mux.HandleFunc("DELETE /Videos/{id}/Subtitles/{index}", func(w http.ResponseWriter, r *http.Request) {
 		f.mu.Lock()
@@ -480,5 +488,122 @@ func TestProviderHealthIsAdminOnly(t *testing.T) {
 	_ = json.NewDecoder(resp.Body).Decode(&health)
 	if len(health) != 3 || health[0]["id"] != "addic7ed" {
 		t.Fatalf("health = %v", health)
+	}
+}
+
+// fakeProvider returns one English result (or none) for the automatic job tests.
+type fakeProvider struct {
+	empty     bool
+	title     string
+	downloads int
+}
+
+func (p *fakeProvider) ID() string                    { return "fake" }
+func (p *fakeProvider) Name() string                  { return "Fake" }
+func (p *fakeProvider) Supports(subtitles.Query) bool { return true }
+func (p *fakeProvider) Search(context.Context, subtitles.Query) ([]subtitles.Candidate, error) {
+	if p.empty {
+		return nil, nil
+	}
+	title := p.title
+	if title == "" {
+		title = "Movie"
+	}
+	return []subtitles.Candidate{{Provider: "fake", Ref: "1", Release: "Movie.1080p.WEB", Title: title}}, nil
+}
+func (p *fakeProvider) Download(context.Context, subtitles.Candidate) ([]byte, error) {
+	p.downloads++
+	// Enough cues to pass the "real subtitle" check (small files need 25).
+	var srt strings.Builder
+	for i := 1; i <= 30; i++ {
+		fmt.Fprintf(&srt, "%d\n00:00:%02d,000 --> 00:00:%02d,500\nLine number %d of the test\n\n", i, i, i, i)
+	}
+	return []byte(srt.String()), nil
+}
+
+func TestAutoSubtitlesFetchMissingOnce(t *testing.T) {
+	h := newHarness(t, true)
+	ctx := context.Background()
+	provider := &fakeProvider{}
+	h.server.providers.override = []subtitles.Provider{provider}
+	h.server.dataDir = t.TempDir()
+	settings, err := h.server.settings(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.AutoLanguages, settings.AutoPerRun = []string{"en"}, 5
+
+	h.server.runAutoSubtitles(ctx, settings)
+	last := h.server.lastAutoRun(ctx)
+	if last == nil || last.Downloaded != 1 || last.Checked != 1 || last.Stopped != "" {
+		t.Fatalf("first run = %+v", last)
+	}
+	if len(h.jellyfin.uploads) != 1 || h.jellyfin.uploads[0] != "item1" {
+		t.Fatalf("uploads = %v", h.jellyfin.uploads)
+	}
+	saved, _ := h.store.SubtitlesForItem(ctx, "item1")
+	if len(saved) != 1 || saved[0].CreatedByID != autoActorID {
+		t.Fatalf("saved = %+v", saved)
+	}
+
+	// The subtitle now exists (in Finora until Jellyfin indexes it): nothing more to do.
+	h.server.runAutoSubtitles(ctx, settings)
+	if last := h.server.lastAutoRun(ctx); last.Checked != 0 || provider.downloads != 1 {
+		t.Fatalf("second run = %+v, downloads = %d", last, provider.downloads)
+	}
+}
+
+func TestAutoSubtitlesWaitAfterAMiss(t *testing.T) {
+	h := newHarness(t, true)
+	ctx := context.Background()
+	h.server.providers.override = []subtitles.Provider{&fakeProvider{empty: true}}
+	settings, _ := h.server.settings(ctx)
+	settings.AutoLanguages, settings.AutoPerRun = []string{"en"}, 5
+
+	h.server.runAutoSubtitles(ctx, settings)
+	if last := h.server.lastAutoRun(ctx); last.Failed != 1 {
+		t.Fatalf("first run = %+v", last)
+	}
+	// Tried today: skipped until a week has passed.
+	h.server.runAutoSubtitles(ctx, settings)
+	if last := h.server.lastAutoRun(ctx); last.Checked != 0 {
+		t.Fatalf("second run = %+v", last)
+	}
+	later := time.Now().Add(8 * 24 * time.Hour)
+	h.server.now = func() time.Time { return later }
+	h.server.runAutoSubtitles(ctx, settings)
+	if last := h.server.lastAutoRun(ctx); last.Checked != 1 {
+		t.Fatalf("after a week = %+v", last)
+	}
+}
+
+func TestNextAutoRun(t *testing.T) {
+	at := func(day, hour int) time.Time { return time.Date(2026, 5, day, hour, 0, 0, 0, time.Local) }
+	if got := nextAutoRun(at(10, 1), 3, nil); !got.Equal(at(10, 3)) {
+		t.Fatalf("before the hour: %v", got)
+	}
+	if got := nextAutoRun(at(10, 5), 3, &autoRun{Started: at(9, 3)}); !got.Equal(at(10, 3)) {
+		t.Fatalf("missed today's run should be due now: %v", got)
+	}
+	if got := nextAutoRun(at(10, 5), 3, &autoRun{Started: at(10, 3)}); !got.Equal(at(11, 3)) {
+		t.Fatalf("after today's run: %v", got)
+	}
+}
+
+func TestAutoSubtitlesSkipUncertainMatches(t *testing.T) {
+	h := newHarness(t, true)
+	ctx := context.Background()
+	provider := &fakeProvider{title: "Some Other Film"}
+	h.server.providers.override = []subtitles.Provider{provider}
+	settings, _ := h.server.settings(ctx)
+	settings.AutoLanguages, settings.AutoPerRun = []string{"en"}, 5
+
+	h.server.runAutoSubtitles(ctx, settings)
+	if last := h.server.lastAutoRun(ctx); last.Downloaded != 0 || last.Failed != 1 || provider.downloads != 0 {
+		t.Fatalf("run = %+v, downloads = %d", last, provider.downloads)
+	}
+	attempts, _ := h.store.AutoAttempts(ctx, "en", []string{"item1"})
+	if attempts["item1"].LastError != "no result clearly matched the title" {
+		t.Fatalf("attempts = %+v", attempts)
 	}
 }

@@ -550,3 +550,53 @@ func (s *Store) CountSubtitlesSince(ctx context.Context, userID string, since ti
 	err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM subtitles WHERE created_by_id = ? AND created_at >= ?`, userID, since.UTC().Format(time.RFC3339)).Scan(&count)
 	return count, err
 }
+
+// ---- automatic subtitles ----
+
+// AutoAttempt is the automatic job's memory of one item and language.
+type AutoAttempt struct {
+	Attempts    int
+	LastAttempt time.Time
+	LastError   string
+}
+
+// AutoAttempts returns the attempts recorded for these items in one language.
+func (s *Store) AutoAttempts(ctx context.Context, language string, itemIDs []string) (map[string]AutoAttempt, error) {
+	result := map[string]AutoAttempt{}
+	if len(itemIDs) == 0 {
+		return result, nil
+	}
+	placeholders := strings.TrimSuffix(strings.Repeat("?,", len(itemIDs)), ",")
+	args := []any{language}
+	for _, id := range itemIDs {
+		args = append(args, id)
+	}
+	rows, err := s.db.QueryContext(ctx, `SELECT item_id, attempts, last_attempt, last_error FROM auto_subtitle_attempts WHERE language = ? AND item_id IN (`+placeholders+`)`, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id, last, lastError string
+		var attempts int
+		if err := rows.Scan(&id, &attempts, &last, &lastError); err != nil {
+			return nil, err
+		}
+		when, _ := time.Parse(time.RFC3339, last)
+		result[id] = AutoAttempt{Attempts: attempts, LastAttempt: when, LastError: lastError}
+	}
+	return result, rows.Err()
+}
+
+// RecordAutoAttempt counts a failed automatic attempt for an item and language.
+func (s *Store) RecordAutoAttempt(ctx context.Context, itemID, language, failure string) error {
+	_, err := s.db.ExecContext(ctx, `INSERT INTO auto_subtitle_attempts (item_id, language, attempts, last_attempt, last_error) VALUES (?, ?, 1, ?, ?)
+		ON CONFLICT(item_id, language) DO UPDATE SET attempts = attempts + 1, last_attempt = excluded.last_attempt, last_error = excluded.last_error`, itemID, language, now(), failure)
+	return err
+}
+
+// ClearAutoAttempt forgets an item once it has a subtitle in that language.
+func (s *Store) ClearAutoAttempt(ctx context.Context, itemID, language string) error {
+	_, err := s.db.ExecContext(ctx, `DELETE FROM auto_subtitle_attempts WHERE item_id = ? AND language = ?`, itemID, language)
+	return err
+}

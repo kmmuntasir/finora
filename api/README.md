@@ -33,6 +33,10 @@ variables (they override saved settings and lock them in the UI):
 | `FINORA_SUBTITLE_DAILY_LIMIT` | Downloads per user per day, default `20`, `0` = no limit |
 | `FINORA_OPENSUBTITLES_API_KEY` | OpenSubtitles.com API key (optional) |
 | `FINORA_OPENSUBTITLES_USERNAME` / `_PASSWORD` | Optional account for a higher daily quota |
+| `FINORA_AUTO_SUBTITLES` | `on` runs the nightly job that fetches missing subtitles (default off) |
+| `FINORA_AUTO_SUBTITLE_LANGUAGES` | Languages for that job, default `en` (e.g. `en,bn`) |
+| `FINORA_AUTO_SUBTITLE_HOUR` | Local hour the job starts, default `3` |
+| `FINORA_AUTO_SUBTITLE_PER_RUN` | Downloads per run, default `25` |
 
 Google sign-in needs an OAuth client in Google Cloud with the redirect URI
 `<FINORA_PUBLIC_URL>/api/v1/auth/google/callback`, and at least one Google

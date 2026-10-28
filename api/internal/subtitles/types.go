@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 // Kind is what is being searched for.
@@ -42,6 +43,11 @@ type Candidate struct {
 	ReleaseMatch    bool    `json:"releaseMatch"`
 	Downloads       int     `json:"downloads"`
 	Score           float64 `json:"score"`
+	// Title and Year are the work the provider matched, when it says.
+	Title string `json:"-"`
+	Year  int    `json:"-"`
+	// ExactMatch means the provider looked the item up by ID (IMDb), not by name.
+	ExactMatch bool `json:"-"`
 }
 
 // Provider is one subtitle source.
@@ -133,4 +139,39 @@ func Rank(c *Candidate, q Query) {
 		score -= 15
 	}
 	c.Score = score
+}
+
+// normalTitle lower-cases a title or URL slug, drops a leading "the", a
+// trailing year and punctuation, so "The.Matrix.1999" and "the-matrix" agree.
+func normalTitle(title string) string {
+	words := strings.FieldsFunc(strings.ToLower(title), func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsNumber(r)
+	})
+	if len(words) > 1 && words[0] == "the" {
+		words = words[1:]
+	}
+	if n := len(words); n > 1 && len(words[n-1]) == 4 && (strings.HasPrefix(words[n-1], "19") || strings.HasPrefix(words[n-1], "20")) {
+		words = words[:n-1]
+	}
+	return strings.Join(words, " ")
+}
+
+// Trustworthy reports whether a result is certainly for this item, which
+// unattended downloads require: an exact file hash, a lookup by ID, or the
+// provider's own title (and year, for movies) matching the item's.
+func Trustworthy(c Candidate, q Query) bool {
+	if c.HashMatch || c.ExactMatch {
+		return true
+	}
+	want := q.Title
+	if q.Kind == KindEpisode {
+		want = q.Show
+	}
+	if c.Title == "" || normalTitle(c.Title) != normalTitle(want) {
+		return false
+	}
+	if q.Kind == KindMovie && c.Year > 0 && q.Year > 0 && (c.Year-q.Year > 1 || q.Year-c.Year > 1) {
+		return false
+	}
+	return true
 }

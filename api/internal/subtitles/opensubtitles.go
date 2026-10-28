@@ -112,7 +112,12 @@ type osAttributes struct {
 	Ratings          float64 `json:"ratings"`
 	Votes            int     `json:"votes"`
 	HashMatch        bool    `json:"moviehash_match"`
-	Files            []struct {
+	Feature          struct {
+		Title       string `json:"title"`
+		Year        int    `json:"year"`
+		ParentTitle string `json:"parent_title"`
+	} `json:"feature_details"`
+	Files []struct {
 		FileID   int    `json:"file_id"`
 		FileName string `json:"file_name"`
 	} `json:"files"`
@@ -162,6 +167,7 @@ func (o *OpenSubtitles) Search(ctx context.Context, q Query) ([]Candidate, error
 			return candidates, err
 		}
 		body, _ := readBody(resp)
+		byID := values.Has("imdb_id") || values.Has("parent_imdb_id") || values.Has("moviehash")
 		if resp.StatusCode == http.StatusUnauthorized {
 			return nil, errors.New("OpenSubtitles rejected the API key")
 		}
@@ -190,7 +196,14 @@ func (o *OpenSubtitles) Search(ctx context.Context, q Query) ([]Candidate, error
 				if release == "" {
 					release = file.FileName
 				}
+				title := a.Feature.Title
+				if q.Kind == KindEpisode && a.Feature.ParentTitle != "" {
+					title = a.Feature.ParentTitle
+				}
 				candidates = append(candidates, Candidate{
+					Title:           title,
+					Year:            a.Feature.Year,
+					ExactMatch:      byID,
 					Provider:        o.ID(),
 					Ref:             strconv.Itoa(file.FileID),
 					Release:         release,

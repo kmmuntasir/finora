@@ -169,3 +169,38 @@ func TestReleaseMatchIgnoresTitleWords(t *testing.T) {
 		t.Fatalf("show-only %v, same release %v", sameShowOnly.ReleaseMatch, sameRelease.ReleaseMatch)
 	}
 }
+
+func TestTrustworthy(t *testing.T) {
+	movie := Query{Kind: KindMovie, Title: "The Matrix", Year: 1999}
+	cases := []struct {
+		name string
+		c    Candidate
+		want bool
+	}{
+		{"hash match", Candidate{HashMatch: true}, true},
+		{"looked up by IMDb", Candidate{ExactMatch: true}, true},
+		{"same title", Candidate{Title: "the-matrix"}, true},
+		{"same title with year", Candidate{Title: "The Matrix", Year: 1999}, true},
+		{"another film", Candidate{Title: "Le Couperet", Year: 2005}, false},
+		{"same title, other year", Candidate{Title: "The Matrix", Year: 2021}, false},
+		{"no title", Candidate{Release: "The.Matrix.1999.1080p"}, false},
+	}
+	for _, c := range cases {
+		if got := Trustworthy(c.c, movie); got != c.want {
+			t.Errorf("%s: got %v", c.name, got)
+		}
+	}
+	episode := Query{Kind: KindEpisode, Show: "The Office (US)", Season: 2, Episode: 3}
+	if !Trustworthy(Candidate{Title: "The Office (US)"}, episode) {
+		t.Error("show title should match")
+	}
+}
+
+func TestProviderTitles(t *testing.T) {
+	if got := subdlTitle("/subtitle/sd12345/the-matrix/first-season"); got != "the matrix" {
+		t.Errorf("subdl = %q", got)
+	}
+	if got := addic7edShow("/serie/The_Office_(US)/2/3/Office_Olympics"); got != "The Office (US)" {
+		t.Errorf("addic7ed = %q", got)
+	}
+}

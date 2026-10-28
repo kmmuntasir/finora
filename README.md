@@ -32,7 +32,8 @@ never stores your media.
   repeat), full-screen now playing, synced lyrics and Instant Mix.
 - **Subtitle finder:** search Addic7ed, SubDL and OpenSubtitles from any
   movie or episode; the subtitle is stored beside the video in Jellyfin and
-  is usable immediately.
+  is usable immediately. Optionally, a nightly job fetches missing
+  subtitles across the library, accepting only certain matches.
 - **Admin console:** users, library access, permissions, parental controls,
   viewing times, stream and bitrate limits, devices, Quick Connect for a
   user, active sessions, library scans, site-wide announcements, and
@@ -44,6 +45,10 @@ never stores your media.
   password reset, and Google sign-in for admins.
 - **Installable:** add Finora to a phone or desktop as an app when it is
   served over HTTPS.
+- **TV mode:** remote-control navigation with the arrow keys and Back.
+- **Extras:** theme songs and videos on detail pages, copy a stream link
+  for VLC, an admin overview and activity log, and subtitle settings for
+  many users at once.
 
 ## How it fits together
 

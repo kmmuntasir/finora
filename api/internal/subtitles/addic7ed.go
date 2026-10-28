@@ -126,6 +126,7 @@ func parseAddic7edPage(html, referer string, lang Language) []Candidate {
 			score = 6
 		}
 		candidates = append(candidates, Candidate{
+			Title:           addic7edShow(referer),
 			Provider:        "addic7ed",
 			Ref:             href[1] + "|" + referer,
 			Release:         team,
@@ -175,4 +176,17 @@ func (a *Addic7ed) Download(ctx context.Context, c Candidate) ([]byte, error) {
 		return body, nil
 	}
 	return nil, errors.New("unreachable")
+}
+
+// addic7edShow turns "/serie/The_Office_(US)/2/3/Title" into "The Office (US)".
+func addic7edShow(path string) string {
+	parts := strings.Split(strings.Trim(path, "/"), "/")
+	if len(parts) < 2 {
+		return ""
+	}
+	show, err := url.PathUnescape(parts[1])
+	if err != nil {
+		show = parts[1]
+	}
+	return strings.ReplaceAll(show, "_", " ")
 }

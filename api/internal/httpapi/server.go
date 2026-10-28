@@ -30,6 +30,7 @@ type Server struct {
 	providers *providerSet
 	dataDir   string
 	now       func() time.Time
+	auto      *autoState
 	// osCheckedAt is only touched by the janitor goroutine.
 	osCheckedAt time.Time
 }
@@ -59,6 +60,7 @@ func New(opts Options) *Server {
 		limiter:   newRateLimiter(10, time.Minute),
 		users:     newUserCache(time.Minute),
 		providers: newProviderSet(),
+		auto:      newAutoState(),
 		dataDir:   opts.DataDir,
 		now:       time.Now,
 	}
@@ -94,6 +96,8 @@ func (s *Server) Handler() http.Handler {
 
 	mux.HandleFunc("GET /api/v1/admin/settings", s.requireAdmin(s.handleGetSettings))
 	mux.HandleFunc("PUT /api/v1/admin/settings", s.requireAdmin(s.handlePutSettings))
+	mux.HandleFunc("GET /api/v1/admin/auto-subtitles", s.requireAdmin(s.handleAutoStatus))
+	mux.HandleFunc("POST /api/v1/admin/auto-subtitles/run", s.requireAdmin(s.handleAutoRunNow))
 	mux.HandleFunc("GET /api/v1/admin/subtitle-providers", s.requireAdmin(s.handleProviderHealth))
 	mux.HandleFunc("GET /api/v1/admin/allowlist", s.requireAdmin(s.handleListAllowlist))
 	mux.HandleFunc("PUT /api/v1/admin/allowlist", s.requireAdmin(s.handlePutAllowlist))

@@ -11,6 +11,7 @@ import type { Announcement } from "@/features/announcements/AnnouncementBanner";
 import { useSession } from "@/features/auth/context";
 import { cn } from "@/lib/cn";
 import { formatDate } from "@/lib/format";
+import { useSubtitleLanguages } from "@/features/subtitles/api";
 import { useUsers } from "./queries";
 
 interface ApiSettings {
@@ -28,6 +29,10 @@ interface ApiSettings {
   openSubtitlesUsername: string;
   openSubtitlesPasswordSet: boolean;
   openSubtitlesActivity: OpenSubtitlesActivity | null;
+  autoSubtitles: boolean;
+  autoSubtitleLanguages: string[];
+  autoSubtitleHour: number;
+  autoSubtitlePerRun: number;
   lockedByEnvironment: Record<string, boolean>;
 }
 
@@ -109,6 +114,7 @@ export function FinoraAdminPage() {
     <div className="max-w-3xl space-y-6">
       <SettingsForm />
       <SubtitleSettings />
+      <AutoSubtitleSettings />
       <Allowlist />
       <Announcements />
     </div>
@@ -880,5 +886,249 @@ function Announcements() {
         </Button>
       </form>
     </Section>
+  );
+}
+
+interface AutoRun {
+  started: string;
+  finished: string | null;
+  checked: number;
+  downloaded: number;
+  failed: number;
+  stopped?: string;
+}
+
+interface AutoStatus {
+  enabled: boolean;
+  running: boolean;
+  current: AutoRun | null;
+  lastRun: AutoRun | null;
+  nextRun: string | null;
+}
+
+function runSummary(run: AutoRun): string {
+  const parts = [
+    `${run.downloaded} downloaded`,
+    `${run.checked} checked`,
+    run.failed ? `${run.failed} without a match` : null,
+  ].filter(Boolean);
+  return parts.join(", ") + (run.stopped ? `. Stopped early: ${run.stopped}.` : ".");
+}
+
+/** The nightly job that fetches missing subtitles across the library. */
+function AutoSubtitleSettings() {
+  const call = useFinora();
+  const queryClient = useQueryClient();
+  const settings = useQuery({
+    queryKey: ["finora", "admin-settings"],
+    queryFn: ({ signal }) => call<ApiSettings>("/admin/settings", { signal }),
+  });
+  const status = useQuery({
+    queryKey: ["finora", "auto-subtitles"],
+    queryFn: ({ signal }) => call<AutoStatus>("/admin/auto-subtitles", { signal }),
+    refetchInterval: (query) => (query.state.data?.running ? 3000 : 60_000),
+  });
+  const runNow = useMutation({
+    mutationFn: () => call("/admin/auto-subtitles/run", { method: "POST" }),
+    onSuccess: () => {
+      toast.success("Started. Progress shows here.");
+      window.setTimeout(() => void status.refetch(), 1000);
+    },
+    onError: (error) => toast.error(errorText(error, "Couldn't start the run.")),
+  });
+  if (!settings.data) return null;
+  const current = status.data?.current;
+  const last = status.data?.lastRun;
+
+  return (
+    <Section
+      title="Automatic subtitles"
+      description="Every night, look for movies and episodes without subtitles in your languages and download the best match, newest first. Off by default."
+    >
+      <AutoSubtitleFields
+        key={JSON.stringify([
+          settings.data.autoSubtitles,
+          settings.data.autoSubtitleLanguages,
+          settings.data.autoSubtitleHour,
+          settings.data.autoSubtitlePerRun,
+        ])}
+        settings={settings.data}
+        onSaved={(next) => {
+          queryClient.setQueryData(["finora", "admin-settings"], next);
+          void status.refetch();
+        }}
+      />
+      <div
+        className="mt-6 space-y-2 rounded-md bg-background px-4 py-3 text-body-sm"
+        aria-live="polite"
+      >
+        {status.data?.running && current ? (
+          <p className="flex items-center gap-2">
+            <Spinner label="Running" />
+            Running now: {runSummary(current).replace(/\.$/, "")}…
+          </p>
+        ) : last ? (
+          <p>
+            Last run {formatDate(last.started, "datetime")}: {runSummary(last)}
+          </p>
+        ) : (
+          <p className="text-on-surface-muted">Hasn't run yet.</p>
+        )}
+        {status.data?.nextRun && !status.data.running && (
+          <p className="text-on-surface-muted">
+            Next run {formatDate(status.data.nextRun, "datetime")}.
+          </p>
+        )}
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={runNow.isPending || status.data?.running}
+          onClick={() => runNow.mutate()}
+        >
+          Run now
+        </Button>
+      </div>
+    </Section>
+  );
+}
+
+function AutoSubtitleFields({
+  settings,
+  onSaved,
+}: {
+  settings: ApiSettings;
+  onSaved: (settings: ApiSettings) => void;
+}) {
+  const call = useFinora();
+  const languages = useSubtitleLanguages();
+  const locked = settings.lockedByEnvironment;
+  const [on, setOn] = useState(settings.autoSubtitles);
+  const [codes, setCodes] = useState<string[]>(settings.autoSubtitleLanguages);
+  const [hour, setHour] = useState(settings.autoSubtitleHour);
+  const [perRun, setPerRun] = useState(String(settings.autoSubtitlePerRun));
+  const ids = { on: useId(), hour: useId(), perRun: useId(), language: useId() };
+
+  const save = useMutation({
+    mutationFn: () =>
+      call<ApiSettings>("/admin/settings", {
+        method: "PUT",
+        body: {
+          ...(locked.auto_subtitles ? {} : { autoSubtitles: on }),
+          ...(locked.auto_subtitle_languages ? {} : { autoSubtitleLanguages: codes }),
+          ...(locked.auto_subtitle_hour ? {} : { autoSubtitleHour: hour }),
+          ...(locked.auto_subtitle_per_run ? {} : { autoSubtitlePerRun: Number(perRun) || 25 }),
+        },
+      }),
+    onSuccess: (next) => {
+      onSaved(next);
+      toast.success("Automatic subtitle settings saved.");
+    },
+    onError: (error) => toast.error(errorText(error, "Couldn't save.")),
+  });
+
+  return (
+    <form
+      className="grid gap-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        save.mutate();
+      }}
+    >
+      <label htmlFor={ids.on} className="flex cursor-pointer items-center gap-3 text-body-md">
+        <input
+          id={ids.on}
+          type="checkbox"
+          checked={on}
+          disabled={locked.auto_subtitles}
+          onChange={(event) => setOn(event.target.checked)}
+          className="size-4 accent-primary"
+        />
+        Download missing subtitles automatically
+      </label>
+      <fieldset disabled={locked.auto_subtitle_languages}>
+        <legend className="mb-1.5 text-label-md">Languages</legend>
+        <div className="flex flex-wrap gap-2">
+          {codes.map((code) => (
+            <span
+              key={code}
+              className="inline-flex items-center gap-1 rounded-full bg-surface-raised py-1 pr-1 pl-3 text-label-sm"
+            >
+              {languages.data?.find((language) => language.code === code)?.name ?? code}
+              <button
+                type="button"
+                aria-label={`Remove ${code}`}
+                disabled={codes.length === 1}
+                onClick={() => setCodes(codes.filter((other) => other !== code))}
+                className="grid size-6 place-items-center rounded-full hover:bg-surface-overlay disabled:opacity-40"
+              >
+                <Trash2 aria-hidden className="size-3.5" />
+              </button>
+            </span>
+          ))}
+          <select
+            id={ids.language}
+            aria-label="Add a language"
+            value=""
+            onChange={(event) => {
+              const code = event.target.value;
+              if (code && !codes.includes(code)) setCodes([...codes, code]);
+            }}
+            className="h-8 rounded-full border border-border-strong bg-background px-3 text-label-sm"
+          >
+            <option value="">Add a language…</option>
+            {languages.data
+              ?.filter((language) => !codes.includes(language.code))
+              .map((language) => (
+                <option key={language.code} value={language.code}>
+                  {language.name}
+                </option>
+              ))}
+          </select>
+        </div>
+      </fieldset>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor={ids.hour} className="mb-1.5 block text-label-md">
+            Start time (server's time zone)
+          </label>
+          <select
+            id={ids.hour}
+            value={hour}
+            disabled={locked.auto_subtitle_hour}
+            onChange={(event) => setHour(Number(event.target.value))}
+            className="h-12 w-full rounded-md border border-border-strong bg-background px-3 text-body-md"
+          >
+            {Array.from({ length: 24 }, (_, value) => (
+              <option key={value} value={value}>
+                {String(value).padStart(2, "0")}:00
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor={ids.perRun} className="mb-1.5 block text-label-md">
+            Downloads per night
+          </label>
+          <input
+            id={ids.perRun}
+            type="number"
+            min={1}
+            max={200}
+            value={perRun}
+            disabled={locked.auto_subtitle_per_run}
+            onChange={(event) => setPerRun(event.target.value)}
+            className="h-12 w-full rounded-md border border-border-strong bg-background px-3 text-body-md"
+          />
+        </div>
+      </div>
+      <p className="text-body-sm text-on-surface-muted">
+        A title with no match is tried again after a week, three times at most. Providers that reach
+        their daily limit are paused until the next day. OpenSubtitles allows automatic downloads
+        for your own library on your own account.
+      </p>
+      <Button type="submit" disabled={save.isPending} className="justify-self-start">
+        {save.isPending ? "Saving…" : "Save"}
+      </Button>
+    </form>
   );
 }

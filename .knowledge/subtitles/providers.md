@@ -70,3 +70,39 @@ open it in a browser rather than fetching it.
   (`opensubtitles_key_seen`). From day 45 it warns in
   **Admin → Finora → Subtitle finder** and once a day in the log. The date
   covers only downloads made through Finora.
+
+## Automatic downloads (Tier 3)
+
+The Finora API can fetch missing subtitles across the library every night
+(Admin → Finora → Automatic subtitles; off by default). It follows the
+rules of the owner's `subtitle-fetcher`:
+
+- It goes through movies and episodes, newest additions first, one language
+  at a time, with at most "downloads per night" per run.
+- An item counts as covered when it has any non-forced subtitle stream in
+  that language, or a Finora copy that Jellyfin hasn't indexed yet.
+- A miss waits a week before the next try, and the job gives up after three
+  tries (`auto_subtitle_attempts` table).
+- A provider that reports a quota or throttling error rests until midnight
+  UTC (daily limits) or for 15 minutes. If every provider is resting, the
+  run stops.
+- It runs once a day at the chosen local hour. A server that was off at that
+  hour catches up when it starts. "Run now" starts a run immediately.
+
+Unattended downloads accept only results that are certainly for the item
+(`subtitles.Trustworthy`):
+
+- a file-hash match, or an OpenSubtitles lookup by IMDb ID, or
+- the provider's own title for the match agreeing with the item's, plus the
+  year (within one) for movies. The titles come from OpenSubtitles
+  `feature_details`, the SubDL page slug, and the Addic7ed show path.
+
+Release-name ranking alone is not enough. The first live test, before this
+rule, downloaded "Le Couperet" and "The Intern (2015)" subtitles for test
+videos whose titles OpenSubtitles' text search matched loosely.
+
+On the OpenSubtitles terms: automatic fetching "for one signed-in user's own
+library, on that user's quota" is allowed, so a self-hosted Finora with the
+owner's key and account fits. Fetching subtitles nobody asked for, to fill a
+cache, is not. The job only fetches for videos in the library.
+

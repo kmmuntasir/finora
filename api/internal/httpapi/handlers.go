@@ -11,6 +11,7 @@ import (
 	"github.com/kmmuntasir/finora/api/internal/config"
 	"github.com/kmmuntasir/finora/api/internal/jellyfin"
 	"github.com/kmmuntasir/finora/api/internal/store"
+	"github.com/kmmuntasir/finora/api/internal/subtitles"
 )
 
 // ---- public ----
@@ -122,6 +123,10 @@ type settingsView struct {
 	OSUsername            string          `json:"openSubtitlesUsername"`
 	OSPasswordSet         bool            `json:"openSubtitlesPasswordSet"`
 	OSActivity            *osActivity     `json:"openSubtitlesActivity"`
+	AutoSubtitles         bool            `json:"autoSubtitles"`
+	AutoLanguages         []string        `json:"autoSubtitleLanguages"`
+	AutoHour              int             `json:"autoSubtitleHour"`
+	AutoPerRun            int             `json:"autoSubtitlePerRun"`
 	LockedByEnvironment   map[string]bool `json:"lockedByEnvironment"`
 }
 
@@ -146,6 +151,10 @@ func (s *Server) handleGetSettings(w http.ResponseWriter, r *http.Request) {
 		OSUsername:            settings.OSUsername,
 		OSPasswordSet:         settings.OSPassword != "",
 		OSActivity:            s.osActivity(r.Context(), settings),
+		AutoSubtitles:         settings.AutoSubtitles,
+		AutoLanguages:         append([]string{}, settings.AutoLanguages...),
+		AutoHour:              settings.AutoHour,
+		AutoPerRun:            settings.AutoPerRun,
 		LockedByEnvironment:   settings.FromEnv,
 	})
 }
@@ -165,6 +174,10 @@ type settingsUpdate struct {
 	OSAPIKey           *string   `json:"openSubtitlesApiKey"`
 	OSUsername         *string   `json:"openSubtitlesUsername"`
 	OSPassword         *string   `json:"openSubtitlesPassword"`
+	AutoSubtitles      *bool     `json:"autoSubtitles"`
+	AutoLanguages      *[]string `json:"autoSubtitleLanguages"`
+	AutoHour           *int      `json:"autoSubtitleHour"`
+	AutoPerRun         *int      `json:"autoSubtitlePerRun"`
 }
 
 func (s *Server) handlePutSettings(w http.ResponseWriter, r *http.Request) {
@@ -240,6 +253,39 @@ func (s *Server) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		values[config.KeySubtitleDailyLimit] = strconv.Itoa(*req.SubtitleDailyLimit)
+	}
+	if req.AutoSubtitles != nil {
+		values[config.KeyAutoSubtitles] = map[bool]string{true: "on", false: "off"}[*req.AutoSubtitles]
+	}
+	if req.AutoLanguages != nil {
+		var codes []string
+		for _, code := range *req.AutoLanguages {
+			language, ok := subtitles.LookupLanguage(code)
+			if !ok {
+				writeError(w, http.StatusBadRequest, "unknown language: "+code)
+				return
+			}
+			codes = append(codes, language.Code)
+		}
+		if len(codes) == 0 {
+			writeError(w, http.StatusBadRequest, "choose at least one language")
+			return
+		}
+		values[config.KeyAutoLanguages] = strings.Join(codes, ",")
+	}
+	if req.AutoHour != nil {
+		if *req.AutoHour < 0 || *req.AutoHour > 23 {
+			writeError(w, http.StatusBadRequest, "the hour must be between 0 and 23")
+			return
+		}
+		values[config.KeyAutoHour] = strconv.Itoa(*req.AutoHour)
+	}
+	if req.AutoPerRun != nil {
+		if *req.AutoPerRun < 1 || *req.AutoPerRun > 200 {
+			writeError(w, http.StatusBadRequest, "downloads per run must be between 1 and 200")
+			return
+		}
+		values[config.KeyAutoPerRun] = strconv.Itoa(*req.AutoPerRun)
 	}
 	if req.OSAPIKey != nil {
 		values[config.KeyOSAPIKey] = strings.TrimSpace(*req.OSAPIKey)

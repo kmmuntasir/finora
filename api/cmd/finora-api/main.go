@@ -75,6 +75,7 @@ func run(logger *slog.Logger) error {
 
 	server := httpapi.New(httpapi.Options{Store: st, Logger: logger, SetupCode: code, DataDir: dataDir})
 	go server.RunJanitor(ctx)
+	go server.RunAutoSubtitles(ctx)
 
 	httpServer := &http.Server{
 		Addr:              env("FINORA_LISTEN", ":8080"),

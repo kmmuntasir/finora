@@ -97,6 +97,7 @@ func (s *SubDL) Search(ctx context.Context, q Query) ([]Candidate, error) {
 				continue
 			}
 			candidates = append(candidates, Candidate{
+				Title:           subdlTitle(page),
 				Provider:        s.ID(),
 				Ref:             release.zip + "|" + page,
 				Release:         release.name,
@@ -222,4 +223,13 @@ func (s *SubDL) Download(ctx context.Context, c Candidate) ([]byte, error) {
 		_ = resp.Body.Close()
 		return nil, fmt.Errorf("SubDL download failed (%d)", resp.StatusCode)
 	}
+}
+
+// subdlTitle turns "/subtitle/sd123/the-matrix[/first-season]" into "the matrix".
+func subdlTitle(page string) string {
+	parts := strings.Split(strings.Trim(page, "/"), "/")
+	if len(parts) < 3 {
+		return ""
+	}
+	return strings.ReplaceAll(parts[2], "-", " ")
 }

@@ -107,7 +107,10 @@ func (s *Server) requireUser(next http.HandlerFunc) http.HandlerFunc {
 				return
 			}
 			if err != nil {
-				s.log.Warn("token check failed", "error", err)
+				// A browser that navigates away cancels its requests; that's not worth a warning.
+				if !errors.Is(err, context.Canceled) {
+					s.log.Warn("token check failed", "error", err)
+				}
 				writeError(w, http.StatusBadGateway, "could not reach Jellyfin")
 				return
 			}

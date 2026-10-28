@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -151,6 +152,7 @@ type MediaStream struct {
 	IsExternal bool   `json:"IsExternal"`
 	Path       string `json:"Path"`
 	Language   string `json:"Language"`
+	IsForced   bool   `json:"IsForced"`
 }
 
 // MediaSource is the subset of a Jellyfin media source the API needs.
@@ -174,14 +176,20 @@ type Item struct {
 	IndexNumber       int               `json:"IndexNumber"`
 	ProviderIDs       map[string]string `json:"ProviderIds"`
 	MediaSources      []MediaSource     `json:"MediaSources"`
+	// MediaStreams is filled by list queries that ask for the MediaStreams field.
+	MediaStreams []MediaStream `json:"MediaStreams"`
 }
 
-// Item fetches an item as the given user would see it (respecting their library access).
+// Item fetches an item as the given user would see it (respecting their
+// library access). An empty userID asks as the server (the API key's admin view).
 func (c *Client) Item(ctx context.Context, userID, itemID string) (Item, error) {
 	var result struct {
 		Items []Item `json:"Items"`
 	}
-	query := url.Values{"userId": {userID}, "ids": {itemID}, "fields": {"Path,ProviderIds,MediaSources,MediaStreams"}, "enableUserData": {"false"}}
+	query := url.Values{"ids": {itemID}, "fields": {"Path,ProviderIds,MediaSources,MediaStreams"}, "enableUserData": {"false"}}
+	if userID != "" {
+		query.Set("userId", userID)
+	}
 	if err := c.do(ctx, http.MethodGet, "/Items", c.APIKey, query, nil, &result); err != nil {
 		return Item{}, err
 	}
@@ -189,6 +197,31 @@ func (c *Client) Item(ctx context.Context, userID, itemID string) (Item, error) 
 		return Item{}, ErrNotFound
 	}
 	return result.Items[0], nil
+}
+
+// VideosNewestFirst lists movies and episodes, newest additions first, with
+// their streams, a page at a time. Returns the page and the total count.
+func (c *Client) VideosNewestFirst(ctx context.Context, start, limit int) ([]Item, int, error) {
+	var result struct {
+		Items            []Item `json:"Items"`
+		TotalRecordCount int    `json:"TotalRecordCount"`
+	}
+	query := url.Values{
+		"recursive":        {"true"},
+		"includeItemTypes": {"Movie,Episode"},
+		"isMissing":        {"false"},
+		"sortBy":           {"DateCreated,SortName"},
+		"sortOrder":        {"Descending"},
+		"fields":           {"MediaStreams"},
+		"enableUserData":   {"false"},
+		"enableImages":     {"false"},
+		"startIndex":       {strconv.Itoa(start)},
+		"limit":            {strconv.Itoa(limit)},
+	}
+	if err := c.do(ctx, http.MethodGet, "/Items", c.APIKey, query, nil, &result); err != nil {
+		return nil, 0, err
+	}
+	return result.Items, result.TotalRecordCount, nil
 }
 
 // ErrNotFound means the item does not exist or the user can't see it.

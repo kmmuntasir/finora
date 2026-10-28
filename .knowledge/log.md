@@ -8,6 +8,22 @@ updated: 2026-10-28
 Newest first. One entry per meaningful step: what happened, what was learned,
 links to the notes that changed.
 
+## 2026-10-29
+
+- **Tier 3 built.**
+  - Admin overview (version, pending restart with a restart button, library
+    counts, now playing, recent activity) and an activity log tab.
+  - Hero rotation with sensible pauses; copy stream link; optional theme
+    songs and videos on detail pages.
+  - Bulk subtitle mode and language for many users.
+  - TV mode (spatial arrow-key navigation, per device).
+  - Automatic subtitle downloads in the Finora API
+    ([providers](subtitles/providers.md#automatic-downloads-tier-3)).
+  - "Easy PIN" is dropped: Jellyfin 10.11 refuses
+    `POST /Users/{id}/EasyPassword` and points to Quick Connect
+    (`Jellyfin.Api/Controllers/UserController.cs:349`).
+  - Interface translation stays open (decision 0008).
+
 ## 2026-10-28
 
 - **Tier 2 complete** (overnight, unattended). Interface translation is

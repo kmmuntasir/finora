@@ -31,6 +31,8 @@ type providerSet struct {
 	osKey         string
 	// cooldowns holds providers that reported a quota or throttling error.
 	cooldowns map[string]cooldown
+	// override replaces the real providers in tests.
+	override []subtitles.Provider
 }
 
 type cooldown struct {
@@ -76,6 +78,9 @@ func (p *providerSet) cooldown(id string, now time.Time) (cooldown, bool) {
 func (p *providerSet) ordered(settings config.Settings) []subtitles.Provider {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	if p.override != nil {
+		return p.override
+	}
 	key := settings.OSAPIKey + "\x00" + settings.OSUsername + "\x00" + settings.OSPassword
 	if p.openSubtitles == nil || p.osKey != key {
 		p.openSubtitles = &subtitles.OpenSubtitles{APIKey: settings.OSAPIKey, Username: settings.OSUsername, Password: settings.OSPassword}
@@ -238,22 +243,9 @@ func (s *Server) handleSubtitleLanguages(w http.ResponseWriter, _ *http.Request)
 	writeJSON(w, http.StatusOK, result)
 }
 
-func (s *Server) handleSubtitleSearch(w http.ResponseWriter, r *http.Request) {
-	settings, ok := s.subtitleAccess(w, r)
-	if !ok {
-		return
-	}
-	client := s.jellyfin(settings)
-	query, _, err := s.buildQuery(r.Context(), client, userFrom(r.Context()), r.URL.Query().Get("itemId"), r.URL.Query().Get("lang"))
-	if errors.Is(err, jellyfin.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "item not found")
-		return
-	}
-	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
+// searchCandidates asks every enabled provider (skipping resting ones) and
+// returns the results ranked best first, with each provider's status.
+func (s *Server) searchCandidates(ctx context.Context, settings config.Settings, query subtitles.Query) ([]searchResult, []providerStatus) {
 	providers := s.providers.ordered(settings)
 	statuses := make([]providerStatus, len(providers))
 	found := make([][]subtitles.Candidate, len(providers))
@@ -277,7 +269,7 @@ func (s *Server) handleSubtitleSearch(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func(i int, provider subtitles.Provider) {
 			defer wg.Done()
-			ctx, cancel := context.WithTimeout(r.Context(), 40*time.Second)
+			ctx, cancel := context.WithTimeout(ctx, 40*time.Second)
 			defer cancel()
 			candidates, err := provider.Search(ctx, query)
 			var quota *subtitles.QuotaError
@@ -318,6 +310,26 @@ func (s *Server) handleSubtitleSearch(w http.ResponseWriter, r *http.Request) {
 		}
 		return 0
 	})
+	return results, statuses
+}
+
+func (s *Server) handleSubtitleSearch(w http.ResponseWriter, r *http.Request) {
+	settings, ok := s.subtitleAccess(w, r)
+	if !ok {
+		return
+	}
+	client := s.jellyfin(settings)
+	query, _, err := s.buildQuery(r.Context(), client, userFrom(r.Context()), r.URL.Query().Get("itemId"), r.URL.Query().Get("lang"))
+	if errors.Is(err, jellyfin.ErrNotFound) {
+		writeError(w, http.StatusNotFound, "item not found")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	results, statuses := s.searchCandidates(r.Context(), settings, query)
 	if len(results) > 40 {
 		results = results[:40]
 	}
@@ -364,64 +376,14 @@ func (s *Server) handleSubtitleDownload(w http.ResponseWriter, r *http.Request) 
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	ctx, cancel := context.WithTimeout(r.Context(), 90*time.Second)
-	defer cancel()
-	payload, err := provider.Download(ctx, candidate)
-	var quota *subtitles.QuotaError
-	if errors.As(err, &quota) {
-		s.providers.noteQuota(candidate.Provider, quota, s.now())
-		writeError(w, http.StatusTooManyRequests, quota.Message)
+	record, err := s.fetchSubtitle(r.Context(), client, provider, item, query, candidate, user.ID, user.Name)
+	var failure *fetchError
+	if errors.As(err, &failure) {
+		writeError(w, failure.status, failure.message)
 		return
 	}
 	if err != nil {
-		s.log.Warn("subtitle download failed", "provider", candidate.Provider, "error", err)
-		writeError(w, http.StatusBadGateway, provider.Name()+" did not deliver the file; try another result")
-		return
-	}
-	if candidate.Provider == "opensubtitles" {
-		s.recordOSDownload(r.Context())
-	}
-	text, err := subtitles.ExtractSubtitle(payload, query, query.Language)
-	if err != nil {
-		writeError(w, http.StatusUnprocessableEntity, "the downloaded file is not a usable subtitle; try another result")
-		return
-	}
-
-	id := randomToken(16)
-	if err := os.MkdirAll(s.subtitlesDir(), 0o700); err != nil {
 		writeError(w, http.StatusInternalServerError, "could not store the subtitle")
-		return
-	}
-	fileName := id + ".srt"
-	if err := os.WriteFile(filepath.Join(s.subtitlesDir(), fileName), []byte(text), 0o600); err != nil {
-		writeError(w, http.StatusInternalServerError, "could not store the subtitle")
-		return
-	}
-
-	source := jellyfin.MediaSource{}
-	if len(item.MediaSources) > 0 {
-		source = item.MediaSources[0]
-	}
-	before := []string{}
-	for _, stream := range source.MediaStreams {
-		if stream.Type == "Subtitle" && stream.IsExternal {
-			before = append(before, stream.Path)
-		}
-	}
-	beforeJSON, _ := json.Marshal(before)
-
-	uploadErr := client.UploadSubtitle(r.Context(), item.ID, query.Language.Code3, "srt", []byte(text), candidate.Forced, candidate.HearingImpaired)
-	record := store.Subtitle{
-		ID: id, ItemID: item.ID, MediaSourceID: source.ID, Language: query.Language.Code, Provider: candidate.Provider,
-		Release: candidate.Release, HearingImpaired: candidate.HearingImpaired, Forced: candidate.Forced,
-		FileName: fileName, PathsBefore: string(beforeJSON), CreatedByID: user.ID, CreatedByName: user.Name,
-	}
-	if uploadErr != nil {
-		s.log.Warn("subtitle upload to Jellyfin failed", "error", uploadErr)
-		record.UploadError = "Jellyfin did not accept the upload; it is still available in Finora"
-	}
-	if err := s.store.SaveSubtitle(r.Context(), record); err != nil {
-		writeError(w, http.StatusInternalServerError, "could not record the subtitle")
 		return
 	}
 	s.log.Info("subtitle added", "provider", candidate.Provider, "by", user.Name)
@@ -617,4 +579,74 @@ func (s *Server) handleProviderHealth(w http.ResponseWriter, r *http.Request) {
 		result = append(result, health)
 	}
 	writeJSON(w, http.StatusOK, result)
+}
+
+// fetchError is a download failure with the HTTP status and message to show.
+type fetchError struct {
+	status  int
+	message string
+	quota   bool
+}
+
+func (e *fetchError) Error() string { return e.message }
+
+// fetchSubtitle downloads a candidate, checks it is a usable subtitle, keeps
+// a copy (so it works before Jellyfin indexes it, decision 0005), uploads it
+// to Jellyfin and records it. Used by the finder and the automatic job.
+func (s *Server) fetchSubtitle(parent context.Context, client *jellyfin.Client, provider subtitles.Provider, item jellyfin.Item, query subtitles.Query, candidate subtitles.Candidate, byID, byName string) (store.Subtitle, error) {
+	ctx, cancel := context.WithTimeout(parent, 90*time.Second)
+	defer cancel()
+	payload, err := provider.Download(ctx, candidate)
+	var quota *subtitles.QuotaError
+	if errors.As(err, &quota) {
+		s.providers.noteQuota(candidate.Provider, quota, s.now())
+		return store.Subtitle{}, &fetchError{status: http.StatusTooManyRequests, message: quota.Message, quota: true}
+	}
+	if err != nil {
+		s.log.Warn("subtitle download failed", "provider", candidate.Provider, "error", err)
+		return store.Subtitle{}, &fetchError{status: http.StatusBadGateway, message: provider.Name() + " did not deliver the file; try another result"}
+	}
+	if candidate.Provider == "opensubtitles" {
+		s.recordOSDownload(parent)
+	}
+	text, err := subtitles.ExtractSubtitle(payload, query, query.Language)
+	if err != nil {
+		return store.Subtitle{}, &fetchError{status: http.StatusUnprocessableEntity, message: "the downloaded file is not a usable subtitle; try another result"}
+	}
+
+	id := randomToken(16)
+	if err := os.MkdirAll(s.subtitlesDir(), 0o700); err != nil {
+		return store.Subtitle{}, err
+	}
+	fileName := id + ".srt"
+	if err := os.WriteFile(filepath.Join(s.subtitlesDir(), fileName), []byte(text), 0o600); err != nil {
+		return store.Subtitle{}, err
+	}
+
+	source := jellyfin.MediaSource{}
+	if len(item.MediaSources) > 0 {
+		source = item.MediaSources[0]
+	}
+	before := []string{}
+	for _, stream := range source.MediaStreams {
+		if stream.Type == "Subtitle" && stream.IsExternal {
+			before = append(before, stream.Path)
+		}
+	}
+	beforeJSON, _ := json.Marshal(before)
+
+	uploadErr := client.UploadSubtitle(parent, item.ID, query.Language.Code3, "srt", []byte(text), candidate.Forced, candidate.HearingImpaired)
+	record := store.Subtitle{
+		ID: id, ItemID: item.ID, MediaSourceID: source.ID, Language: query.Language.Code, Provider: candidate.Provider,
+		Release: candidate.Release, HearingImpaired: candidate.HearingImpaired, Forced: candidate.Forced,
+		FileName: fileName, PathsBefore: string(beforeJSON), CreatedByID: byID, CreatedByName: byName,
+	}
+	if uploadErr != nil {
+		s.log.Warn("subtitle upload to Jellyfin failed", "error", uploadErr)
+		record.UploadError = "Jellyfin did not accept the upload; it is still available in Finora"
+	}
+	if err := s.store.SaveSubtitle(parent, record); err != nil {
+		return store.Subtitle{}, err
+	}
+	return record, nil
 }
