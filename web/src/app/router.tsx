@@ -1,31 +1,27 @@
 import { createBrowserRouter, Navigate } from "react-router";
-import { AdminLayout } from "@/features/admin/AdminLayout";
-import { FinoraAdminPage } from "@/features/admin/FinoraAdminPage";
-import { LibrariesAdminPage } from "@/features/admin/LibrariesAdminPage";
-import { SessionsPage } from "@/features/admin/SessionsPage";
-import { UserEditPage } from "@/features/admin/UserEditPage";
-import { ActivityPage } from "@/features/admin/ActivityPage";
-import { OverviewPage } from "@/features/admin/OverviewPage";
-import { UsersPage } from "@/features/admin/UsersPage";
 import { RedirectIfSignedIn, RequireAuth } from "@/features/auth/guards";
-import { GoogleCallbackPage } from "@/features/auth/GoogleCallbackPage";
 import { LoginPage } from "@/features/auth/LoginPage";
-import { AppShell } from "./AppShell";
 import { HomePage } from "@/features/home/HomePage";
-import { LibrariesPage } from "@/features/library/LibrariesPage";
-import { BrowsePage } from "@/features/library/BrowsePage";
-import { LibraryPage } from "@/features/library/LibraryPage";
-import { ItemPage } from "@/features/item/ItemPage";
-import { PlayerPage } from "@/features/player/PlayerPage";
-import { SearchPage } from "@/features/search/SearchPage";
-import { SettingsPage } from "@/features/settings/SettingsPage";
-import { MePage } from "./MePage";
-import { ServerPage } from "./ServerPage";
-import { SignedInLayout } from "./SignedInLayout";
+import { AppShell } from "./AppShell";
 import { NotFoundPage } from "./NotFoundPage";
+import { SignedInLayout } from "./SignedInLayout";
+
+/**
+ * Sign-in, the shell and home load up front; every other page is its own
+ * chunk, fetched on first visit (the player alone brings hls.js and JASSUB).
+ */
+const page = <T extends Record<string, React.ComponentType>>(
+  load: () => Promise<T>,
+  name: keyof T,
+) => ({
+  lazy: async () => ({ Component: (await load())[name] }),
+});
 
 export const router = createBrowserRouter([
-  { path: "/auth/google", element: <GoogleCallbackPage /> },
+  {
+    path: "/auth/google",
+    ...page(() => import("@/features/auth/GoogleCallbackPage"), "GoogleCallbackPage"),
+  },
   {
     element: <RedirectIfSignedIn />,
     children: [{ path: "/login", element: <LoginPage /> }],
@@ -36,31 +32,76 @@ export const router = createBrowserRouter([
       {
         element: <SignedInLayout />,
         children: [
-          { path: "/play/:itemId", element: <PlayerPage /> },
+          {
+            path: "/play/:itemId",
+            ...page(() => import("@/features/player/PlayerPage"), "PlayerPage"),
+          },
           {
             element: <AppShell />,
             children: [
               { index: true, element: <HomePage /> },
-              { path: "libraries", element: <LibrariesPage /> },
-              { path: "libraries/:libraryId", element: <LibraryPage /> },
-              { path: "items/:itemId", element: <ItemPage /> },
-              { path: "search", element: <SearchPage /> },
-              { path: "browse", element: <BrowsePage /> },
-              { path: "server", element: <ServerPage /> },
-              { path: "me", element: <MePage /> },
-              { path: "settings", element: <SettingsPage /> },
+              {
+                path: "libraries",
+                ...page(() => import("@/features/library/LibrariesPage"), "LibrariesPage"),
+              },
+              {
+                path: "libraries/:libraryId",
+                ...page(() => import("@/features/library/LibraryPage"), "LibraryPage"),
+              },
+              {
+                path: "items/:itemId",
+                ...page(() => import("@/features/item/ItemPage"), "ItemPage"),
+              },
+              {
+                path: "search",
+                ...page(() => import("@/features/search/SearchPage"), "SearchPage"),
+              },
+              {
+                path: "browse",
+                ...page(() => import("@/features/library/BrowsePage"), "BrowsePage"),
+              },
+              { path: "server", ...page(() => import("./ServerPage"), "ServerPage") },
+              { path: "me", ...page(() => import("./MePage"), "MePage") },
+              {
+                path: "settings",
+                ...page(() => import("@/features/settings/SettingsPage"), "SettingsPage"),
+              },
               {
                 path: "admin",
-                element: <AdminLayout />,
+                ...page(() => import("@/features/admin/AdminLayout"), "AdminLayout"),
                 children: [
                   { index: true, element: <Navigate to="overview" replace /> },
-                  { path: "overview", element: <OverviewPage /> },
-                  { path: "activity", element: <ActivityPage /> },
-                  { path: "users", element: <UsersPage /> },
-                  { path: "users/:userId", element: <UserEditPage /> },
-                  { path: "sessions", element: <SessionsPage /> },
-                  { path: "libraries", element: <LibrariesAdminPage /> },
-                  { path: "finora", element: <FinoraAdminPage /> },
+                  {
+                    path: "overview",
+                    ...page(() => import("@/features/admin/OverviewPage"), "OverviewPage"),
+                  },
+                  {
+                    path: "activity",
+                    ...page(() => import("@/features/admin/ActivityPage"), "ActivityPage"),
+                  },
+                  {
+                    path: "users",
+                    ...page(() => import("@/features/admin/UsersPage"), "UsersPage"),
+                  },
+                  {
+                    path: "users/:userId",
+                    ...page(() => import("@/features/admin/UserEditPage"), "UserEditPage"),
+                  },
+                  {
+                    path: "sessions",
+                    ...page(() => import("@/features/admin/SessionsPage"), "SessionsPage"),
+                  },
+                  {
+                    path: "libraries",
+                    ...page(
+                      () => import("@/features/admin/LibrariesAdminPage"),
+                      "LibrariesAdminPage",
+                    ),
+                  },
+                  {
+                    path: "finora",
+                    ...page(() => import("@/features/admin/FinoraAdminPage"), "FinoraAdminPage"),
+                  },
                 ],
               },
             ],

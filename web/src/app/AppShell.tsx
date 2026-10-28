@@ -1,6 +1,6 @@
 import { House, LayoutGrid, Search, Server, Settings, ShieldCheck, UserRound } from "lucide-react";
 import { useEffect, type ComponentType, type SVGProps } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router";
+import { NavLink, Outlet, useNavigate, useNavigation } from "react-router";
 import { Logo } from "@/components/Logo";
 import { AnnouncementBanner } from "@/features/announcements/AnnouncementBanner";
 import { useSession } from "@/features/auth/context";
@@ -101,9 +101,18 @@ export function AppShell() {
   const isAdmin = Boolean(user.Policy?.IsAdministrator);
   const musicLoaded = useQueue((state) => currentEntry(state) !== null);
   useSearchShortcut();
+  // Pages load as separate chunks; show that something is happening.
+  const loading = useNavigation().state === "loading";
 
   return (
     <div className="min-h-dvh bg-background md:grid md:grid-cols-[var(--spacing-sidebar)_1fr]">
+      {loading && (
+        <div
+          role="progressbar"
+          aria-label={t("Loading")}
+          className="fixed inset-x-0 top-0 z-50 h-0.5 animate-pulse bg-primary motion-reduce:animate-none"
+        />
+      )}
       <aside className="sticky top-0 hidden h-dvh flex-col border-r border-border bg-surface px-4 py-6 md:flex">
         <Logo className="px-2" />
         <nav
