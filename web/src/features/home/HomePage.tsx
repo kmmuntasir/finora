@@ -119,7 +119,9 @@ function SpotlightHome() {
       {(loading || featured.length > 0) && <Hero items={featured} />}
       <Rows>
         <OrderedSections
-          first={(row) => <div className={featured.length ? "relative -mt-20" : "pt-16"}>{row}</div>}
+          first={(row) => (
+            <div className={featured.length ? "relative -mt-20" : "pt-16"}>{row}</div>
+          )}
           resume={
             resume.isPending ? (
               <RowSkeleton shape="landscape" />

@@ -1,10 +1,11 @@
 import type { UserDto } from "@jellyfin/sdk/lib/generated-client/models";
-import { Plus, Search } from "lucide-react";
+import { Captions, Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { Spinner } from "@/components/Spinner";
 import { useRuntimeConfig } from "@/config/context";
 import { relativeTime } from "@/lib/format";
+import { BulkSubtitleDialog } from "./BulkSubtitleDialog";
 import { useSessions, useUsers } from "./queries";
 
 function Avatar({ user }: { user: UserDto }) {
@@ -56,6 +57,17 @@ export function UsersPage() {
       );
   }, [users, query]);
 
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [bulk, setBulk] = useState(false);
+  const toggle = (id: string, on: boolean) =>
+    setSelected((current) => {
+      const next = new Set(current);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  const allShown = filtered.length > 0 && filtered.every((user) => selected.has(user.Id!));
+
   if (isPending) return <Spinner />;
   if (isError)
     return (
@@ -81,6 +93,16 @@ export function UsersPage() {
             className="h-10 w-full rounded-full border border-border-strong bg-surface pr-4 pl-9 text-body-sm placeholder:text-on-surface-subtle"
           />
         </div>
+        {selected.size > 0 && (
+          <button
+            type="button"
+            onClick={() => setBulk(true)}
+            className="inline-flex h-10 items-center gap-2 rounded-full bg-surface-raised px-4 text-label-md hover:bg-surface-overlay"
+          >
+            <Captions aria-hidden className="size-4" />
+            Subtitle settings for {selected.size}
+          </button>
+        )}
         <Link
           to="/admin/users/new"
           className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-label-md text-on-primary hover:bg-primary-hover"
@@ -94,6 +116,19 @@ export function UsersPage() {
         <table className="w-full min-w-[40rem] text-left text-body-sm">
           <thead className="text-label-sm text-on-surface-subtle">
             <tr className="border-b border-border">
+              <th scope="col" className="w-10 py-3 pl-4">
+                <input
+                  type="checkbox"
+                  aria-label="Select all shown users"
+                  checked={allShown}
+                  onChange={(event) =>
+                    setSelected(
+                      event.target.checked ? new Set(filtered.map((user) => user.Id!)) : new Set(),
+                    )
+                  }
+                  className="size-4 accent-primary"
+                />
+              </th>
               <th scope="col" className="px-4 py-3 font-bold">
                 User
               </th>
@@ -102,6 +137,9 @@ export function UsersPage() {
               </th>
               <th scope="col" className="px-4 py-3 font-bold">
                 Last active
+              </th>
+              <th scope="col" className="px-4 py-3 font-bold">
+                Subtitles
               </th>
               <th scope="col" className="px-4 py-3 font-bold">
                 Status
@@ -113,6 +151,15 @@ export function UsersPage() {
               const policy = user.Policy;
               return (
                 <tr key={user.Id} className="hover:bg-surface-raised">
+                  <td className="py-2.5 pl-4">
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${user.Name}`}
+                      checked={selected.has(user.Id!)}
+                      onChange={(event) => toggle(user.Id!, event.target.checked)}
+                      className="size-4 accent-primary"
+                    />
+                  </td>
                   <td className="px-4 py-2.5">
                     <Link
                       to={`/admin/users/${user.Id}`}
@@ -129,6 +176,14 @@ export function UsersPage() {
                   </td>
                   <td className="px-4 py-2.5 text-on-surface-muted">
                     {relativeTime(user.LastActivityDate)}
+                  </td>
+                  <td className="px-4 py-2.5 text-on-surface-muted">
+                    {[
+                      user.Configuration?.SubtitleMode ?? "Default",
+                      user.Configuration?.SubtitleLanguagePreference || null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </td>
                   <td className="px-4 py-2.5">
                     <span className="flex flex-wrap gap-1.5">
@@ -148,6 +203,15 @@ export function UsersPage() {
           </p>
         )}
       </div>
+      {bulk && (
+        <BulkSubtitleDialog
+          users={(users ?? []).filter((user) => selected.has(user.Id!))}
+          onClose={() => {
+            setBulk(false);
+            setSelected(new Set());
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -32,6 +32,7 @@ import {
   type HomeSection,
 } from "@/features/home/sections";
 import { cn } from "@/lib/cn";
+import { languageOptions, SUBTITLE_MODES } from "./subtitle-options";
 import {
   useChangePassword,
   useCultures,
@@ -111,14 +112,6 @@ function Toggle({
     </Switch.Root>
   );
 }
-
-const SUBTITLE_MODES: { value: SubtitlePlaybackMode; label: string; hint: string }[] = [
-  { value: "Default", label: "Default", hint: "Show subtitles marked default or forced" },
-  { value: "Smart", label: "Smart", hint: "Show subtitles when the audio is in another language" },
-  { value: "OnlyForced", label: "Only forced", hint: "Only subtitles for foreign-language parts" },
-  { value: "Always", label: "Always", hint: "Always show subtitles when available" },
-  { value: "None", label: "Off", hint: "Never show subtitles automatically" },
-];
 
 const HOME_LAYOUTS: { value: HomeLayout; label: string }[] = [
   { value: "spotlight", label: "Spotlight" },
@@ -450,21 +443,7 @@ function LanguageSelect({
   onChange: (value: string) => void;
 }) {
   const { data: cultures } = useCultures();
-  // Several cultures share a three-letter code (e.g. Chinese variants); keep the first.
-  const languages = [
-    ...new Map(
-      (cultures ?? [])
-        .filter((culture) => culture.ThreeLetterISOLanguageName)
-        .map(
-          (culture) =>
-            [
-              culture.ThreeLetterISOLanguageName!,
-              culture.DisplayName ?? culture.Name ?? "",
-            ] as const,
-        )
-        .reverse(),
-    ),
-  ].sort((a, b) => a[1].localeCompare(b[1]));
+  const languages = languageOptions(cultures);
   return (
     <select
       id={id}
