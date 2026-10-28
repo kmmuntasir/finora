@@ -151,6 +151,11 @@ export async function mockJellyfin(
         { Name: "R", Value: 17, RatingScore: { score: 17, subScore: 0 } },
       ]);
     if (path === "/Devices") return json(route, { Items: [] });
+    if (path === "/Localization/Cultures")
+      return json(route, [
+        { Name: "English", DisplayName: "English", ThreeLetterISOLanguageName: "eng" },
+        { Name: "Bengali", DisplayName: "Bangla", ThreeLetterISOLanguageName: "ben" },
+      ]);
     if (path === "/Sessions") return json(route, []);
     if (path === "/Sessions/Logout") return route.fulfill({ status: 204 });
     if (path.startsWith("/DisplayPreferences/")) return json(route, { CustomPrefs: {} });

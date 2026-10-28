@@ -106,6 +106,12 @@ export function AppShell() {
 
   return (
     <div className="min-h-dvh bg-background md:grid md:grid-cols-[var(--spacing-sidebar)_1fr]">
+      <a
+        href="#main"
+        className="sr-only z-50 rounded-md bg-primary px-4 py-2 text-label-md text-on-primary focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+      >
+        {t("Skip to content")}
+      </a>
       {loading && (
         <div
           role="progressbar"
@@ -143,7 +149,10 @@ export function AppShell() {
       </aside>
 
       <main
+        id="main"
+        tabIndex={-1}
         className={cn(
+          "outline-none",
           "min-w-0 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0",
           musicLoaded &&
             "pb-[calc(4rem+var(--spacing-player-bar)+env(safe-area-inset-bottom))] md:pb-[var(--spacing-player-bar)]",

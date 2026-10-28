@@ -95,5 +95,11 @@
   "Searching": "সার্চ হচ্ছে",
   "Search failed. Check your connection and try again.": "সার্চ করা যায়নি। আপনার কানেকশন দেখে আবার চেষ্টা করুন।",
   "Nothing found for “{term}”.": "“{term}”-এর জন্য কিছু পাওয়া যায়নি।",
-  "{group} ({count})": "{group} ({count})"
+  "{group} ({count})": "{group} ({count})",
+  "This page doesn't exist": "এই পেজটি নেই",
+  "Something went wrong": "কিছু একটা সমস্যা হয়েছে",
+  "The link may be old, or the item was removed.": "লিংকটি হয়তো পুরোনো, অথবা আইটেমটি সরিয়ে ফেলা হয়েছে।",
+  "This page ran into a problem. Reloading usually helps.": "এই পেজে একটি সমস্যা হয়েছে। রিলোড করলে সাধারণত ঠিক হয়ে যায়।",
+  "Reload": "রিলোড করুন",
+  "Skip to content": "মূল অংশে যান"
 }

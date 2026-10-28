@@ -4,6 +4,7 @@ import { LoginPage } from "@/features/auth/LoginPage";
 import { HomePage } from "@/features/home/HomePage";
 import { AppShell } from "./AppShell";
 import { NotFoundPage } from "./NotFoundPage";
+import { RouteError } from "./RouteError";
 import { SignedInLayout } from "./SignedInLayout";
 
 /**
@@ -20,10 +21,12 @@ const page = <T extends Record<string, React.ComponentType>>(
 export const router = createBrowserRouter([
   {
     path: "/auth/google",
+    errorElement: <RouteError />,
     ...page(() => import("@/features/auth/GoogleCallbackPage"), "GoogleCallbackPage"),
   },
   {
     element: <RedirectIfSignedIn />,
+    errorElement: <RouteError />,
     children: [{ path: "/login", element: <LoginPage /> }],
   },
   {
@@ -31,6 +34,7 @@ export const router = createBrowserRouter([
     children: [
       {
         element: <SignedInLayout />,
+        errorElement: <RouteError />,
         children: [
           {
             path: "/play/:itemId",
@@ -39,68 +43,77 @@ export const router = createBrowserRouter([
           {
             element: <AppShell />,
             children: [
-              { index: true, element: <HomePage /> },
               {
-                path: "libraries",
-                ...page(() => import("@/features/library/LibrariesPage"), "LibrariesPage"),
-              },
-              {
-                path: "libraries/:libraryId",
-                ...page(() => import("@/features/library/LibraryPage"), "LibraryPage"),
-              },
-              {
-                path: "items/:itemId",
-                ...page(() => import("@/features/item/ItemPage"), "ItemPage"),
-              },
-              {
-                path: "search",
-                ...page(() => import("@/features/search/SearchPage"), "SearchPage"),
-              },
-              {
-                path: "browse",
-                ...page(() => import("@/features/library/BrowsePage"), "BrowsePage"),
-              },
-              { path: "server", ...page(() => import("./ServerPage"), "ServerPage") },
-              { path: "me", ...page(() => import("./MePage"), "MePage") },
-              {
-                path: "settings",
-                ...page(() => import("@/features/settings/SettingsPage"), "SettingsPage"),
-              },
-              {
-                path: "admin",
-                ...page(() => import("@/features/admin/AdminLayout"), "AdminLayout"),
+                // A crashing page keeps the shell (sidebar, music) around it.
+                errorElement: <RouteError />,
                 children: [
-                  { index: true, element: <Navigate to="overview" replace /> },
-                  {
-                    path: "overview",
-                    ...page(() => import("@/features/admin/OverviewPage"), "OverviewPage"),
-                  },
-                  {
-                    path: "activity",
-                    ...page(() => import("@/features/admin/ActivityPage"), "ActivityPage"),
-                  },
-                  {
-                    path: "users",
-                    ...page(() => import("@/features/admin/UsersPage"), "UsersPage"),
-                  },
-                  {
-                    path: "users/:userId",
-                    ...page(() => import("@/features/admin/UserEditPage"), "UserEditPage"),
-                  },
-                  {
-                    path: "sessions",
-                    ...page(() => import("@/features/admin/SessionsPage"), "SessionsPage"),
-                  },
+                  { index: true, element: <HomePage /> },
                   {
                     path: "libraries",
-                    ...page(
-                      () => import("@/features/admin/LibrariesAdminPage"),
-                      "LibrariesAdminPage",
-                    ),
+                    ...page(() => import("@/features/library/LibrariesPage"), "LibrariesPage"),
                   },
                   {
-                    path: "finora",
-                    ...page(() => import("@/features/admin/FinoraAdminPage"), "FinoraAdminPage"),
+                    path: "libraries/:libraryId",
+                    ...page(() => import("@/features/library/LibraryPage"), "LibraryPage"),
+                  },
+                  {
+                    path: "items/:itemId",
+                    ...page(() => import("@/features/item/ItemPage"), "ItemPage"),
+                  },
+                  {
+                    path: "search",
+                    ...page(() => import("@/features/search/SearchPage"), "SearchPage"),
+                  },
+                  {
+                    path: "browse",
+                    ...page(() => import("@/features/library/BrowsePage"), "BrowsePage"),
+                  },
+                  { path: "server", ...page(() => import("./ServerPage"), "ServerPage") },
+                  { path: "me", ...page(() => import("./MePage"), "MePage") },
+                  {
+                    path: "settings",
+                    ...page(() => import("@/features/settings/SettingsPage"), "SettingsPage"),
+                  },
+                  {
+                    path: "admin",
+                    ...page(() => import("@/features/admin/AdminLayout"), "AdminLayout"),
+                    children: [
+                      { index: true, element: <Navigate to="overview" replace /> },
+                      {
+                        path: "overview",
+                        ...page(() => import("@/features/admin/OverviewPage"), "OverviewPage"),
+                      },
+                      {
+                        path: "activity",
+                        ...page(() => import("@/features/admin/ActivityPage"), "ActivityPage"),
+                      },
+                      {
+                        path: "users",
+                        ...page(() => import("@/features/admin/UsersPage"), "UsersPage"),
+                      },
+                      {
+                        path: "users/:userId",
+                        ...page(() => import("@/features/admin/UserEditPage"), "UserEditPage"),
+                      },
+                      {
+                        path: "sessions",
+                        ...page(() => import("@/features/admin/SessionsPage"), "SessionsPage"),
+                      },
+                      {
+                        path: "libraries",
+                        ...page(
+                          () => import("@/features/admin/LibrariesAdminPage"),
+                          "LibrariesAdminPage",
+                        ),
+                      },
+                      {
+                        path: "finora",
+                        ...page(
+                          () => import("@/features/admin/FinoraAdminPage"),
+                          "FinoraAdminPage",
+                        ),
+                      },
+                    ],
                   },
                 ],
               },

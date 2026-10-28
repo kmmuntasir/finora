@@ -24,7 +24,7 @@ export const SUBTITLE_MODES: { value: SubtitlePlaybackMode; label: string; hint:
 export function languageOptions(cultures: CultureDto[] | undefined): [string, string][] {
   return [
     ...new Map(
-      (cultures ?? [])
+      (Array.isArray(cultures) ? cultures : [])
         .filter((culture) => culture.ThreeLetterISOLanguageName)
         .map(
           (culture) =>

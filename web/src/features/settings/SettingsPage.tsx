@@ -168,6 +168,7 @@ function ProfileSection() {
               accept="image/png,image/jpeg,image/webp"
               className="sr-only"
               tabIndex={-1}
+              aria-label={t("Choose a profile picture")}
               onChange={(event) => {
                 const file = event.target.files?.[0];
                 event.target.value = "";
