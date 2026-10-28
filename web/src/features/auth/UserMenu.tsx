@@ -2,6 +2,7 @@ import { LogOut } from "lucide-react";
 import { useState } from "react";
 import { useRuntimeConfig } from "@/config/context";
 import { useAuth, useSession } from "./context";
+import { t } from "@/i18n";
 
 /** Signed-in user with a sign-out action. Replaced by a full profile menu later. */
 export function UserMenu() {
@@ -9,7 +10,7 @@ export function UserMenu() {
   const { signOut } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
   const { config } = useRuntimeConfig();
-  const name = user.Name ?? "User";
+  const name = user.Name ?? t("User");
   const avatar = user.PrimaryImageTag
     ? `${config.jellyfinUrl}/Users/${user.Id}/Images/Primary?tag=${user.PrimaryImageTag}&maxWidth=72`
     : null;
@@ -25,7 +26,7 @@ export function UserMenu() {
       <span className="min-w-0 flex-1">
         <span className="block truncate text-label-md">{name}</span>
         {user.Policy?.IsAdministrator && (
-          <span className="block text-caption text-on-surface-subtle">Administrator</span>
+          <span className="block text-caption text-on-surface-subtle">{t("Administrator")}</span>
         )}
       </span>
       <button
@@ -36,8 +37,8 @@ export function UserMenu() {
         }}
         disabled={signingOut}
         className="grid size-9 shrink-0 place-items-center rounded-full text-on-surface-muted transition-colors duration-[120ms] hover:bg-surface-overlay hover:text-on-surface disabled:opacity-50"
-        aria-label="Sign out"
-        title="Sign out"
+        aria-label={t("Sign out")}
+        title={t("Sign out")}
       >
         <LogOut aria-hidden className="size-5" />
       </button>

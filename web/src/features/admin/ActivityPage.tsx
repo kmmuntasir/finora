@@ -4,11 +4,12 @@ import { useSearchParams } from "react-router";
 import { cn } from "@/lib/cn";
 import { ActivityList } from "./ActivityList";
 import { ACTIVITY_PAGE, useActivityLog } from "./queries";
+import { msg, t } from "@/i18n";
 
 const FILTERS = [
-  { value: "all", label: "Everything", users: null },
-  { value: "users", label: "User activity", users: true },
-  { value: "system", label: "Server", users: false },
+  { value: "all", label: msg("Everything"), users: null },
+  { value: "users", label: msg("User activity"), users: true },
+  { value: "system", label: msg("Server"), users: false },
 ] as const;
 
 export function ActivityPage() {
@@ -23,7 +24,7 @@ export function ActivityPage() {
 
   return (
     <div className="space-y-4 pb-16">
-      <div role="radiogroup" aria-label="Show" className="flex flex-wrap gap-2">
+      <div role="radiogroup" aria-label={t("Show")} className="flex flex-wrap gap-2">
         {FILTERS.map((entry) => (
           <button
             key={entry.value}
@@ -38,7 +39,7 @@ export function ActivityPage() {
                 : "bg-surface-raised text-on-surface-muted hover:text-on-surface",
             )}
           >
-            {entry.label}
+            {t(entry.label)}
           </button>
         ))}
       </div>
@@ -46,23 +47,23 @@ export function ActivityPage() {
         <Spinner />
       ) : log.isError ? (
         <p role="alert" className="text-body-md text-error">
-          Couldn't load the activity log.
+          {t("Couldn't load the activity log.")}
         </p>
       ) : (
         <ActivityList entries={log.data.Items ?? []} />
       )}
       {pages > 1 && (
-        <nav aria-label="Pages" className="flex items-center justify-between">
+        <nav aria-label={t("Pages")} className="flex items-center justify-between">
           <Button
             variant="secondary"
             size="sm"
             disabled={page === 0}
             onClick={() => go({ page: String(page - 1) })}
           >
-            Newer
+            {t("Newer")}
           </Button>
           <span className="text-body-sm text-on-surface-muted tabular-nums">
-            Page {page + 1} of {pages}
+            {t("Page {page} of {pages}", { page: page + 1, pages })}
           </span>
           <Button
             variant="secondary"
@@ -70,7 +71,7 @@ export function ActivityPage() {
             disabled={page + 1 >= pages}
             onClick={() => go({ page: String(page + 1) })}
           >
-            Older
+            {t("Older")}
           </Button>
         </nav>
       )}

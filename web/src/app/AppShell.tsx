@@ -12,6 +12,7 @@ import { NowPlayingView } from "@/features/music/NowPlayingView";
 import { currentEntry, useQueue } from "@/features/music/queue-store";
 import { cn } from "@/lib/cn";
 import { libraryHref } from "@/lib/routes";
+import { t } from "@/i18n";
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -105,10 +106,13 @@ export function AppShell() {
     <div className="min-h-dvh bg-background md:grid md:grid-cols-[var(--spacing-sidebar)_1fr]">
       <aside className="sticky top-0 hidden h-dvh flex-col border-r border-border bg-surface px-4 py-6 md:flex">
         <Logo className="px-2" />
-        <nav aria-label="Main" className="mt-8 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
-          <SidebarLink to="/" end icon={House} label="Home" />
-          <SidebarLink to="/search" icon={Search} label="Search" />
-          <p className="mt-6 mb-1 px-3 text-label-sm text-on-surface-subtle">Libraries</p>
+        <nav
+          aria-label={t("Main")}
+          className="mt-8 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto"
+        >
+          <SidebarLink to="/" end icon={House} label={t("Home")} />
+          <SidebarLink to="/search" icon={Search} label={t("Search")} />
+          <p className="mt-6 mb-1 px-3 text-label-sm text-on-surface-subtle">{t("Libraries")}</p>
           {views?.map((view) => (
             <SidebarLink
               key={view.Id}
@@ -118,9 +122,9 @@ export function AppShell() {
             />
           ))}
           <div className="mt-auto pt-6">
-            {isAdmin && <SidebarLink to="/admin" icon={ShieldCheck} label="Admin" />}
-            <SidebarLink to="/settings" icon={Settings} label="Settings" />
-            <SidebarLink to="/server" icon={Server} label="Server" />
+            {isAdmin && <SidebarLink to="/admin" icon={ShieldCheck} label={t("Admin")} />}
+            <SidebarLink to="/settings" icon={Settings} label={t("Settings")} />
+            <SidebarLink to="/server" icon={Server} label={t("Server")} />
           </div>
         </nav>
         <div className="mt-3 border-t border-border pt-3">
@@ -144,13 +148,13 @@ export function AppShell() {
       <NowPlayingView />
 
       <nav
-        aria-label="Main"
+        aria-label={t("Main")}
         className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
       >
-        <TabLink to="/" end icon={House} label="Home" />
-        <TabLink to="/search" icon={Search} label="Search" />
-        <TabLink to="/libraries" icon={LayoutGrid} label="Libraries" />
-        <TabLink to="/me" icon={UserRound} label="Me" />
+        <TabLink to="/" end icon={House} label={t("Home")} />
+        <TabLink to="/search" icon={Search} label={t("Search")} />
+        <TabLink to="/libraries" icon={LayoutGrid} label={t("Libraries")} />
+        <TabLink to="/me" icon={UserRound} label={t("Me")} />
       </nav>
     </div>
   );

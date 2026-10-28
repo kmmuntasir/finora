@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { cn } from "@/lib/cn";
+import { t } from "@/i18n";
 
 interface MediaRowProps {
   title: string;
@@ -55,7 +56,7 @@ export function MediaRow({ title, seeAllHref, children, itemClassName, className
               to={seeAllHref}
               className="mr-2 text-label-md text-on-surface-muted hover:text-on-surface"
             >
-              See all
+              {t("See all")}
             </Link>
           )}
           {(["prev", "next"] as const).map((dir) => (
@@ -64,7 +65,11 @@ export function MediaRow({ title, seeAllHref, children, itemClassName, className
               type="button"
               onClick={() => scrollBy(dir === "prev" ? -1 : 1)}
               disabled={dir === "prev" ? edges.start : edges.end}
-              aria-label={dir === "prev" ? `Scroll ${title} back` : `Scroll ${title} forward`}
+              aria-label={
+                dir === "prev"
+                  ? t("Scroll {title} back", { title })
+                  : t("Scroll {title} forward", { title })
+              }
               className="hidden size-8 place-items-center rounded-full bg-surface-overlay text-on-surface transition-opacity duration-[120ms] hover:bg-border disabled:opacity-30 [@media(pointer:fine)]:grid"
             >
               {dir === "prev" ? (

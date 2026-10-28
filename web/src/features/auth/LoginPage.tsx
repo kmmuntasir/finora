@@ -13,7 +13,7 @@ import { startGoogleSignIn } from "./google-signin";
 import { ForgotPasswordPanel } from "./ForgotPasswordPanel";
 import { useLoginInfo, usePublicUsers } from "./useLoginInfo";
 import { useFinoraConfig } from "@/api/finora";
-import { currentLanguage, LANGUAGES, setLanguage, type Language } from "@/i18n";
+import { currentLanguage, LANGUAGES, setLanguage, t, type Language } from "@/i18n";
 import { useQuickConnect } from "./useQuickConnect";
 
 export function LoginPage() {
@@ -92,9 +92,11 @@ export function LoginPage() {
             />
           ) : quickConnect.state.phase === "idle" ? (
             <>
-              <h1 className="text-headline-md">Sign in</h1>
+              <h1 className="text-headline-md">{t("Sign in")}</h1>
               <p className="mt-1 text-body-sm text-on-surface-muted">
-                {serverName ? `to ${serverName}` : "with your Jellyfin account"}
+                {serverName
+                  ? t("to {server}", { server: serverName })
+                  : t("with your Jellyfin account")}
               </p>
 
               {expired && (
@@ -102,7 +104,7 @@ export function LoginPage() {
                   role="status"
                   className="mt-4 rounded-md bg-surface-overlay px-3 py-2 text-body-sm"
                 >
-                  Your session ended. Please sign in again.
+                  {t("Your session ended. Please sign in again.")}
                 </p>
               )}
 
@@ -129,12 +131,12 @@ export function LoginPage() {
                         }}
                         className="text-label-md text-primary hover:underline"
                       >
-                        Not you?
+                        {t("Not you?")}
                       </button>
                     </div>
                   ) : (
                     <TextField
-                      label="Username"
+                      label={t("Username")}
                       name="username"
                       autoComplete="username"
                       autoCapitalize="none"
@@ -146,7 +148,7 @@ export function LoginPage() {
                     />
                   )}
                   <TextField
-                    label="Password"
+                    label={t("Password")}
                     autoFocus={Boolean(chosen)}
                     name="password"
                     type={showPassword ? "text" : "password"}
@@ -158,7 +160,7 @@ export function LoginPage() {
                         type="button"
                         onClick={() => setShowPassword((shown) => !shown)}
                         className="grid size-10 place-items-center rounded-full text-on-surface-muted hover:text-on-surface"
-                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        aria-label={showPassword ? t("Hide password") : t("Show password")}
                         aria-pressed={showPassword}
                       >
                         {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
@@ -173,7 +175,7 @@ export function LoginPage() {
                       onChange={(event) => setRemember(event.target.checked)}
                       className="size-4 accent-primary"
                     />
-                    Keep me signed in on this device
+                    {t("Keep me signed in on this device")}
                   </label>
 
                   {error && (
@@ -183,7 +185,7 @@ export function LoginPage() {
                   )}
 
                   <Button type="submit" className="w-full" disabled={pending || !username.trim()}>
-                    {pending ? "Signing in…" : "Sign in"}
+                    {pending ? t("Signing in…") : t("Sign in")}
                   </Button>
                   <div className="flex justify-between gap-3 text-label-md">
                     <button
@@ -191,7 +193,7 @@ export function LoginPage() {
                       onClick={() => setForgot(true)}
                       className="text-on-surface-muted hover:text-on-surface"
                     >
-                      Forgot password?
+                      {t("Forgot password?")}
                     </button>
                     {publicUsers.length > 0 && !chosen && (
                       <button
@@ -199,7 +201,7 @@ export function LoginPage() {
                         onClick={() => setManual(false)}
                         className="text-on-surface-muted hover:text-on-surface"
                       >
-                        Choose a user
+                        {t("Choose a user")}
                       </button>
                     )}
                   </div>
@@ -214,11 +216,13 @@ export function LoginPage() {
                     onClick={() => {
                       setGoogleError(null);
                       startGoogleSignIn(config.jellyfinUrl, config.apiUrl!, remember).catch(() =>
-                        setGoogleError("Couldn't start Google sign-in. Is Quick Connect enabled?"),
+                        setGoogleError(
+                          t("Couldn't start Google sign-in. Is Quick Connect enabled?"),
+                        ),
                       );
                     }}
                   >
-                    Administrator? Sign in with Google
+                    {t("Administrator? Sign in with Google")}
                   </Button>
                   {googleError && (
                     <p role="alert" className="mt-2 text-body-sm text-error">
@@ -231,7 +235,7 @@ export function LoginPage() {
                 <>
                   <div className="my-6 flex items-center gap-3 text-caption text-on-surface-subtle">
                     <span className="h-px flex-1 bg-border" />
-                    or
+                    {t("or")}
                     <span className="h-px flex-1 bg-border" />
                   </div>
                   <Button
@@ -239,7 +243,7 @@ export function LoginPage() {
                     className="w-full"
                     onClick={() => void quickConnect.start()}
                   >
-                    Use Quick Connect
+                    {t("Use Quick Connect")}
                   </Button>
                 </>
               )}
@@ -255,7 +259,7 @@ export function LoginPage() {
 
         <label className="mt-6 flex items-center justify-center gap-2 text-caption text-on-surface-subtle">
           <Languages aria-hidden className="size-4" />
-          <span className="sr-only">Language</span>
+          <span className="sr-only">{t("Language")}</span>
           <select
             value={currentLanguage()}
             onChange={(event) => void setLanguage(event.target.value as Language)}
@@ -320,7 +324,7 @@ function UserPicker({
   disabled: boolean;
 }) {
   return (
-    <ul className="mt-6 grid grid-cols-3 gap-x-3 gap-y-5" aria-label="Who's watching?">
+    <ul className="mt-6 grid grid-cols-3 gap-x-3 gap-y-5" aria-label={t("Who's watching?")}>
       {users.map((user) => (
         <li key={user.Id}>
           <button
@@ -345,7 +349,7 @@ function UserPicker({
           <span className="grid size-20 place-items-center rounded-full bg-surface-raised text-on-surface-muted ring-2 ring-transparent ring-offset-2 ring-offset-surface group-hover:ring-primary group-focus-visible:ring-primary">
             <UserRound aria-hidden className="size-8" />
           </span>
-          <span className="text-label-md text-on-surface-muted">Other user</span>
+          <span className="text-label-md text-on-surface-muted">{t("Other user")}</span>
         </button>
       </li>
     </ul>

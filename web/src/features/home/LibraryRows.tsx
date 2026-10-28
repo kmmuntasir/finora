@@ -4,6 +4,7 @@ import { MediaRow } from "@/components/media/MediaRow";
 import { RowSkeleton } from "./RowSkeleton";
 import { useSession } from "@/features/auth/context";
 import { useLatest, useNextUp, useRecentAlbums, useResumeItems, useUserViews } from "./queries";
+import { t } from "@/i18n";
 
 const LATEST_TYPES = new Set(["movies", "tvshows", "homevideos", "music"]);
 
@@ -24,7 +25,7 @@ function LatestRow({ view }: { view: BaseItemDto }) {
   if (!data?.length) return null;
   return (
     <MediaRow
-      title={`Recently added in ${view.Name}`}
+      title={t("Recently added in {library}", { library: view.Name ?? "" })}
       seeAllHref={`/libraries/${view.Id}`}
       itemClassName={itemClassName}
     >
@@ -39,7 +40,7 @@ function LatestRow({ view }: { view: BaseItemDto }) {
   );
 }
 
-export function NextUpRow({ title = "Next up" }: { title?: string }) {
+export function NextUpRow({ title }: { title?: string }) {
   const { data, isPending } = useNextUp();
   const resume = useResumeItems();
   if (isPending) return <RowSkeleton shape="landscape" />;
@@ -48,7 +49,7 @@ export function NextUpRow({ title = "Next up" }: { title?: string }) {
   const items = data?.filter((item) => !inProgress.has(item.Id)) ?? [];
   if (!items.length) return null;
   return (
-    <MediaRow title={title} itemClassName="w-64 md:w-80">
+    <MediaRow title={title ?? t("Next up")} itemClassName="w-64 md:w-80">
       {items.map((item) => (
         <LandscapeCard key={item.Id} item={item} />
       ))}
@@ -61,7 +62,7 @@ export function ContinueListeningRow() {
   if (isPending) return <RowSkeleton shape="square" />;
   if (!data?.length) return null;
   return (
-    <MediaRow title="Continue listening" itemClassName="w-36 md:w-44">
+    <MediaRow title={t("Continue listening")} itemClassName="w-36 md:w-44">
       {data.map((album) => (
         <PosterCard key={album.Id} item={album} />
       ))}

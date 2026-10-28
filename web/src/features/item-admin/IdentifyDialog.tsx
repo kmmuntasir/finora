@@ -6,6 +6,7 @@ import { Sheet } from "@/components/Sheet";
 import { Spinner } from "@/components/Spinner";
 import { TextField } from "@/components/TextField";
 import { useApplyIdentification, useRemoteSearch } from "./api";
+import { t } from "@/i18n";
 
 /** Finds the item on metadata providers (TMDb, MusicBrainz, …) and applies the chosen match. */
 export function IdentifyDialog({ item, onClose }: { item: BaseItemDto; onClose: () => void }) {
@@ -24,7 +25,7 @@ export function IdentifyDialog({ item, onClose }: { item: BaseItemDto; onClose: 
     if (tmdb.trim()) providerIds.Tmdb = tmdb.trim();
     search.mutate(
       { Name: name.trim(), Year: year ? Number(year) : undefined, ProviderIds: providerIds },
-      { onError: () => toast.error("The search failed.") },
+      { onError: () => toast.error(t("The search failed.")) },
     );
   };
 
@@ -33,10 +34,12 @@ export function IdentifyDialog({ item, onClose }: { item: BaseItemDto; onClose: 
       { result, replaceImages },
       {
         onSuccess: () => {
-          toast.success(`Identified as “${result.Name}”. Metadata is updating.`);
+          toast.success(
+            t("Identified as “{name}”. Metadata is updating.", { name: result.Name ?? "" }),
+          );
           onClose();
         },
-        onError: () => toast.error("Couldn't apply this match."),
+        onError: () => toast.error(t("Couldn't apply this match.")),
       },
     );
 
@@ -44,7 +47,7 @@ export function IdentifyDialog({ item, onClose }: { item: BaseItemDto; onClose: 
     <Sheet
       open
       onOpenChange={(open) => !open && onClose()}
-      title="Identify"
+      title={t("Identify")}
       description={item.Name ?? undefined}
       className="md:w-[min(44rem,calc(100%-2rem))]"
     >
@@ -55,9 +58,13 @@ export function IdentifyDialog({ item, onClose }: { item: BaseItemDto; onClose: 
           run();
         }}
       >
-        <TextField label="Name" value={name} onChange={(event) => setName(event.target.value)} />
         <TextField
-          label="Year"
+          label={t("Name")}
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+        />
+        <TextField
+          label={t("Year")}
           type="number"
           value={year}
           onChange={(event) => setYear(event.target.value)}
@@ -65,13 +72,13 @@ export function IdentifyDialog({ item, onClose }: { item: BaseItemDto; onClose: 
         {video && (
           <>
             <TextField
-              label="IMDb ID"
+              label={t("IMDb ID")}
               value={imdb}
               onChange={(event) => setImdb(event.target.value)}
               placeholder="tt0133093"
             />
             <TextField
-              label="TMDb ID"
+              label={t("TMDb ID")}
               value={tmdb}
               onChange={(event) => setTmdb(event.target.value)}
             />
@@ -84,10 +91,10 @@ export function IdentifyDialog({ item, onClose }: { item: BaseItemDto; onClose: 
             onChange={(event) => setReplaceImages(event.target.checked)}
             className="size-4 accent-primary"
           />
-          Replace existing images
+          {t("Replace existing images")}
         </label>
         <Button type="submit" className="justify-self-start" disabled={search.isPending}>
-          {search.isPending ? "Searching…" : "Search"}
+          {search.isPending ? t("Searching…") : t("Search")}
         </Button>
       </form>
 
@@ -96,7 +103,7 @@ export function IdentifyDialog({ item, onClose }: { item: BaseItemDto; onClose: 
           <Spinner className="flex justify-center py-6" />
         ) : search.data?.length === 0 ? (
           <p className="text-body-md text-on-surface-muted">
-            No matches. Try another name or an ID.
+            {t("No matches. Try another name or an ID.")}
           </p>
         ) : (
           <ul className="space-y-2">

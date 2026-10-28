@@ -9,14 +9,15 @@ import { useRuntimeConfig } from "@/config/context";
 import { markGoogleAdminSession } from "@/features/admin/access";
 import { useAuth } from "./context";
 import { clearPendingGoogleSignIn, readPendingGoogleSignIn } from "./google-signin";
+import { msg, t } from "@/i18n";
 
 const REASONS: Record<string, string> = {
-  cancelled: "Google sign-in was cancelled.",
-  "not-allowed": "This Google account is not linked to a Finora administrator.",
-  "code-expired": "The sign-in took too long. Please try again.",
-  google: "Google could not confirm the sign-in. Please try again.",
-  unavailable: "Google sign-in is not available right now.",
-  "bad-request": "The sign-in request was invalid. Please try again.",
+  cancelled: msg("Google sign-in was cancelled."),
+  "not-allowed": msg("This Google account is not linked to a Finora administrator."),
+  "code-expired": msg("The sign-in took too long. Please try again."),
+  google: msg("Google could not confirm the sign-in. Please try again."),
+  unavailable: msg("Google sign-in is not available right now."),
+  "bad-request": msg("The sign-in request was invalid. Please try again."),
 };
 
 /** Finishes Google admin sign-in after the Finora API redirects back. */
@@ -30,15 +31,16 @@ export function GoogleCallbackPage() {
     const pending = readPendingGoogleSignIn();
     clearPendingGoogleSignIn();
     if (params.get("google") !== "ok") {
+      const reason = REASONS[params.get("reason") ?? ""];
       return {
         pending: null,
-        error: REASONS[params.get("reason") ?? ""] ?? "Google sign-in failed.",
+        error: reason ? t(reason) : t("Google sign-in failed."),
       };
     }
     if (!pending || !config.apiUrl) {
       return {
         pending: null,
-        error: "This sign-in was started in another tab or has expired. Please try again.",
+        error: t("This sign-in was started in another tab or has expired. Please try again."),
       };
     }
     return { pending, error: null };
@@ -66,7 +68,7 @@ export function GoogleCallbackPage() {
         completeSignIn(result, pending.remember, pending.deviceId);
         void navigate("/admin", { replace: true });
       } catch {
-        setError("The sign-in could not be completed. Please try again.");
+        setError(t("The sign-in could not be completed. Please try again."));
       }
     })();
   }, [initial, config, completeSignIn, navigate]);
@@ -74,13 +76,13 @@ export function GoogleCallbackPage() {
   if (error) {
     return (
       <MessageScreen
-        title="Couldn't sign in with Google"
+        title={t("Couldn't sign in with Google")}
         actions={
           <Link
             to="/login"
             className="inline-flex h-10 items-center rounded-full bg-primary px-5 text-label-md text-on-primary hover:bg-primary-hover"
           >
-            Back to sign in
+            {t("Back to sign in")}
           </Link>
         }
       >
@@ -90,7 +92,7 @@ export function GoogleCallbackPage() {
   }
   return (
     <div className="grid min-h-dvh place-items-center">
-      <Spinner label="Finishing Google sign-in" />
+      <Spinner label={t("Finishing Google sign-in")} />
     </div>
   );
 }

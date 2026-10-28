@@ -1,3 +1,5 @@
+import { t } from "@/i18n";
+
 /** The minimal cue shape we touch; VTTCue in browsers. */
 interface AdjustableCue {
   startTime: number;
@@ -45,9 +47,11 @@ export function adjustCues(
 
 /** -0.5 → "−0.5 s (earlier)"; 0 → "In sync". */
 export function offsetLabel(offset: number): string {
-  if (offset === 0) return "In sync";
-  const value = `${Math.abs(offset)} s`;
-  return offset > 0 ? `+${value} (later)` : `−${value} (earlier)`;
+  if (offset === 0) return t("In sync");
+  const seconds = Math.abs(offset);
+  return offset > 0
+    ? t("+{seconds} s (later)", { seconds })
+    : t("−{seconds} s (earlier)", { seconds });
 }
 
 export const SUBTITLE_OFFSETS = [-5, -3, -2, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 2, 3, 5];

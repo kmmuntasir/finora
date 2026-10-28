@@ -12,6 +12,7 @@ import {
   detectSupport,
   type MediaSupport,
 } from "./device-profile";
+import { t } from "@/i18n";
 
 export type PlayMethod = "DirectPlay" | "DirectStream" | "Transcode";
 
@@ -79,7 +80,12 @@ export function absoluteUrl(baseUrl: string, path: string): string {
 }
 
 function streamLabel(stream: MediaStream): string {
-  return stream.DisplayTitle ?? stream.Title ?? stream.Language ?? `Track ${stream.Index}`;
+  return (
+    stream.DisplayTitle ??
+    stream.Title ??
+    stream.Language ??
+    t("Track {number}", { number: stream.Index ?? "" })
+  );
 }
 
 /** Interprets a PlaybackInfo response into something the <video> element can play. */
@@ -91,7 +97,7 @@ export function resolveSource(
 ): PlaybackSource {
   const sources = response.MediaSources ?? [];
   const mediaSource = sources.find((source) => source.Id === request.mediaSourceId) ?? sources[0];
-  if (!mediaSource?.Id) throw new Error("The server returned no playable version of this item.");
+  if (!mediaSource?.Id) throw new Error(t("The server returned no playable version of this item."));
   const playSessionId = response.PlaySessionId ?? "";
   const streams = mediaSource.MediaStreams ?? [];
 
@@ -125,8 +131,8 @@ export function resolveSource(
   } else {
     throw new Error(
       mediaSource.SupportsDirectPlay
-        ? "This browser could not play the original file, and the server offered no alternative."
-        : "This file can't be played in this browser.",
+        ? t("This browser could not play the original file, and the server offered no alternative.")
+        : t("This file can't be played in this browser."),
     );
   }
 
@@ -217,10 +223,10 @@ export async function requestPlayback(
   if (data.ErrorCode) {
     throw new Error(
       data.ErrorCode === "NotAllowed"
-        ? "Your account is not allowed to play this item."
+        ? t("Your account is not allowed to play this item.")
         : data.ErrorCode === "NoCompatibleStream"
-          ? "No compatible stream is available for this item."
-          : `The server refused playback (${data.ErrorCode}).`,
+          ? t("No compatible stream is available for this item.")
+          : t("The server refused playback ({code}).", { code: data.ErrorCode }),
     );
   }
   return resolveSource(data, request, api.basePath, api.accessToken);

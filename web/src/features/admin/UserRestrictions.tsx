@@ -8,30 +8,31 @@ import { useId, useState } from "react";
 import { Button } from "@/components/Button";
 import { useParentalRatingLevels } from "./queries";
 import type { RestrictionDraft } from "./restrictions";
+import { msg, t } from "@/i18n";
 
 const UNRATED: { value: UnratedItem; label: string }[] = [
-  { value: "Movie", label: "Movies" },
-  { value: "Series", label: "TV shows" },
-  { value: "Music", label: "Music" },
-  { value: "Book", label: "Books" },
-  { value: "Trailer", label: "Trailers" },
-  { value: "LiveTvChannel", label: "Live TV channels" },
-  { value: "LiveTvProgram", label: "Live TV programmes" },
-  { value: "ChannelContent", label: "Channel content" },
-  { value: "Other", label: "Other" },
+  { value: "Movie", label: msg("Movies") },
+  { value: "Series", label: msg("TV shows") },
+  { value: "Music", label: msg("Music") },
+  { value: "Book", label: msg("Books") },
+  { value: "Trailer", label: msg("Trailers") },
+  { value: "LiveTvChannel", label: msg("Live TV channels") },
+  { value: "LiveTvProgram", label: msg("Live TV programmes") },
+  { value: "ChannelContent", label: msg("Channel content") },
+  { value: "Other", label: msg("Other") },
 ];
 
 const DAYS: { value: DynamicDayOfWeek; label: string }[] = [
-  { value: "Everyday", label: "Every day" },
-  { value: "Weekday", label: "Weekdays" },
-  { value: "Weekend", label: "Weekends" },
-  { value: "Monday", label: "Monday" },
-  { value: "Tuesday", label: "Tuesday" },
-  { value: "Wednesday", label: "Wednesday" },
-  { value: "Thursday", label: "Thursday" },
-  { value: "Friday", label: "Friday" },
-  { value: "Saturday", label: "Saturday" },
-  { value: "Sunday", label: "Sunday" },
+  { value: "Everyday", label: msg("Every day") },
+  { value: "Weekday", label: msg("Weekdays") },
+  { value: "Weekend", label: msg("Weekends") },
+  { value: "Monday", label: msg("Monday") },
+  { value: "Tuesday", label: msg("Tuesday") },
+  { value: "Wednesday", label: msg("Wednesday") },
+  { value: "Thursday", label: msg("Thursday") },
+  { value: "Friday", label: msg("Friday") },
+  { value: "Saturday", label: msg("Saturday") },
+  { value: "Sunday", label: msg("Sunday") },
 ];
 
 /** Bitrate presets in bits per second; 0 is "no limit". */
@@ -46,7 +47,7 @@ function hourLabel(hour: number): string {
 }
 
 function bitrateLabel(bps: number): string {
-  if (!bps) return "No limit";
+  if (!bps) return t("No limit");
   return bps >= 1e6 ? `${bps / 1e6} Mbps` : `${bps / 1e3} kbps`;
 }
 
@@ -67,7 +68,7 @@ export function ParentalControls({ draft, set }: Props) {
     <div className="space-y-6">
       <div className="sm:max-w-sm">
         <label htmlFor={ratingId} className="mb-1.5 block text-label-md">
-          Highest allowed age rating
+          {t("Highest allowed age rating")}
         </label>
         <select
           id={ratingId}
@@ -79,7 +80,7 @@ export function ParentalControls({ draft, set }: Props) {
             set("MaxParentalSubRating", sub ? Number(sub) : null);
           }}
         >
-          <option value="">No limit</option>
+          <option value="">{t("No limit")}</option>
           {levels.data?.map((level) => (
             <option
               key={`${level.score}:${level.subScore ?? ""}`}
@@ -91,12 +92,12 @@ export function ParentalControls({ draft, set }: Props) {
           ))}
         </select>
         <p className="mt-1.5 text-body-sm text-on-surface-muted">
-          Items rated higher are hidden from this user.
+          {t("Items rated higher are hidden from this user.")}
         </p>
       </div>
 
       <fieldset>
-        <legend className="text-label-md">Hide items with no rating</legend>
+        <legend className="text-label-md">{t("Hide items with no rating")}</legend>
         <div className="mt-2 grid gap-1 sm:grid-cols-3">
           {UNRATED.map((option) => {
             const checked = draft.BlockUnratedItems?.includes(option.value) ?? false;
@@ -118,7 +119,7 @@ export function ParentalControls({ draft, set }: Props) {
                   }
                   className="size-4 accent-primary"
                 />
-                <span className="text-body-md">{option.label}</span>
+                <span className="text-body-md">{t(option.label)}</span>
               </label>
             );
           })}
@@ -126,13 +127,13 @@ export function ParentalControls({ draft, set }: Props) {
       </fieldset>
 
       <TagList
-        label="Allow only items with these tags"
-        hint="When set, items without one of these tags are hidden."
+        label={t("Allow only items with these tags")}
+        hint={t("When set, items without one of these tags are hidden.")}
         tags={draft.AllowedTags ?? []}
         onChange={(tags) => set("AllowedTags", tags)}
       />
       <TagList
-        label="Block items with these tags"
+        label={t("Block items with these tags")}
         tags={draft.BlockedTags ?? []}
         onChange={(tags) => set("BlockedTags", tags)}
       />
@@ -179,7 +180,7 @@ function TagList({
               {tag}
               <button
                 type="button"
-                aria-label={`Remove tag ${tag}`}
+                aria-label={t("Remove tag {tag}", { tag })}
                 onClick={() => onChange(tags.filter((other) => other !== tag))}
                 className="grid size-6 place-items-center rounded-full hover:bg-surface-overlay"
               >
@@ -200,11 +201,11 @@ function TagList({
               add();
             }
           }}
-          placeholder="Tag name"
+          placeholder={t("Tag name")}
           className="h-10 min-w-0 flex-1 rounded-md border border-border-strong bg-background px-3 text-body-sm"
         />
         <Button type="button" size="sm" variant="secondary" onClick={add} disabled={!value.trim()}>
-          Add
+          {t("Add")}
         </Button>
       </div>
     </div>
@@ -225,17 +226,17 @@ function Schedules({
     );
   return (
     <div>
-      <p className="text-label-md">Allowed viewing times</p>
+      <p className="text-label-md">{t("Allowed viewing times")}</p>
       <p className="text-body-sm text-on-surface-muted">
         {schedules.length
-          ? "The user can only sign in and watch during these times (server time)."
-          : "No schedule: the user can watch at any time."}
+          ? t("The user can only sign in and watch during these times (server time).")
+          : t("No schedule: the user can watch at any time.")}
       </p>
       <ul className="mt-2 space-y-2">
         {schedules.map((schedule, index) => (
           <li key={index} className="flex flex-wrap items-center gap-2">
             <select
-              aria-label="Days"
+              aria-label={t("Days")}
               className="h-10 rounded-md border border-border-strong bg-background px-2 text-body-sm"
               value={schedule.DayOfWeek ?? "Everyday"}
               onChange={(event) =>
@@ -244,13 +245,13 @@ function Schedules({
             >
               {DAYS.map((day) => (
                 <option key={day.value} value={day.value}>
-                  {day.label}
+                  {t(day.label)}
                 </option>
               ))}
             </select>
-            <span className="text-body-sm text-on-surface-muted">from</span>
+            <span className="text-body-sm text-on-surface-muted">{t("from")}</span>
             <select
-              aria-label="Start time"
+              aria-label={t("Start time")}
               className="h-10 rounded-md border border-border-strong bg-background px-2 text-body-sm"
               value={schedule.StartHour ?? 0}
               onChange={(event) => update(index, { StartHour: Number(event.target.value) })}
@@ -261,9 +262,9 @@ function Schedules({
                 </option>
               ))}
             </select>
-            <span className="text-body-sm text-on-surface-muted">to</span>
+            <span className="text-body-sm text-on-surface-muted">{t("to")}</span>
             <select
-              aria-label="End time"
+              aria-label={t("End time")}
               className="h-10 rounded-md border border-border-strong bg-background px-2 text-body-sm"
               value={schedule.EndHour ?? 24}
               onChange={(event) => update(index, { EndHour: Number(event.target.value) })}
@@ -276,7 +277,7 @@ function Schedules({
             </select>
             <button
               type="button"
-              aria-label="Remove time slot"
+              aria-label={t("Remove time slot")}
               onClick={() => onChange(schedules.filter((_, i) => i !== index))}
               className="grid size-9 place-items-center rounded-full text-on-surface-muted hover:bg-surface-raised hover:text-error"
             >
@@ -295,7 +296,7 @@ function Schedules({
         }
       >
         <Plus aria-hidden className="size-4" />
-        Add time slot
+        {t("Add time slot")}
       </Button>
     </div>
   );
@@ -310,7 +311,7 @@ export function Limits({ draft, set }: Props) {
     <div className="grid gap-4 sm:grid-cols-2">
       <div>
         <label htmlFor={sessionsId} className="mb-1.5 block text-label-md">
-          Simultaneous streams
+          {t("Simultaneous streams")}
         </label>
         <select
           id={sessionsId}
@@ -318,7 +319,7 @@ export function Limits({ draft, set }: Props) {
           value={draft.MaxActiveSessions ?? 0}
           onChange={(event) => set("MaxActiveSessions", Number(event.target.value))}
         >
-          <option value={0}>No limit</option>
+          <option value={0}>{t("No limit")}</option>
           {[1, 2, 3, 4, 5, 6, 8, 10].map((count) => (
             <option key={count} value={count}>
               {count}
@@ -326,12 +327,12 @@ export function Limits({ draft, set }: Props) {
           ))}
         </select>
         <p className="mt-1.5 text-body-sm text-on-surface-muted">
-          Devices signed in at the same time.
+          {t("Devices signed in at the same time.")}
         </p>
       </div>
       <div>
         <label htmlFor={bitrateId} className="mb-1.5 block text-label-md">
-          Internet streaming quality limit
+          {t("Internet streaming quality limit")}
         </label>
         <select
           id={bitrateId}
@@ -346,7 +347,7 @@ export function Limits({ draft, set }: Props) {
           ))}
         </select>
         <p className="mt-1.5 text-body-sm text-on-surface-muted">
-          Applies outside the home network; higher-bitrate files are transcoded.
+          {t("Applies outside the home network; higher-bitrate files are transcoded.")}
         </p>
       </div>
     </div>

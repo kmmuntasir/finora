@@ -17,6 +17,7 @@ import {
   useSubtitlesEnabled,
   type SubtitleResult,
 } from "./api";
+import { t, tn } from "@/i18n";
 
 const SUPPORTED_TYPES = new Set(["Movie", "Episode", "Video"]);
 
@@ -51,7 +52,7 @@ export function SubtitleFinder({ item }: { item: BaseItemDto }) {
       <Dialog.Trigger asChild>
         <Button variant="secondary" size="sm">
           <Captions aria-hidden className="size-4" />
-          Find subtitles
+          {t("Find subtitles")}
         </Button>
       </Dialog.Trigger>
       <Dialog.Portal>
@@ -87,13 +88,13 @@ function FinderBody({ item }: { item: BaseItemDto }) {
         onSuccess: (subtitle) => {
           toast.success(
             subtitle.uploadError
-              ? "Subtitle added in Finora (Jellyfin didn't accept it)."
-              : "Subtitle added for everyone.",
+              ? t("Subtitle added in Finora (Jellyfin didn't accept it).")
+              : t("Subtitle added for everyone."),
           );
         },
         onError: (error) =>
           toast.error(
-            error instanceof FinoraApiError ? error.message : "Couldn't add the subtitle.",
+            error instanceof FinoraApiError ? error.message : t("Couldn't add the subtitle."),
           ),
         onSettled: () => setChosen(null),
       },
@@ -106,13 +107,13 @@ function FinderBody({ item }: { item: BaseItemDto }) {
     <>
       <div className="flex items-start justify-between gap-4 border-b border-border p-5">
         <div className="min-w-0">
-          <Dialog.Title className="text-title">Find subtitles</Dialog.Title>
+          <Dialog.Title className="text-title">{t("Find subtitles")}</Dialog.Title>
           <Dialog.Description className="truncate text-body-sm text-on-surface-muted">
             {title}
           </Dialog.Description>
         </div>
         <Dialog.Close
-          aria-label="Close"
+          aria-label={t("Close")}
           className="grid size-9 shrink-0 place-items-center rounded-full hover:bg-surface-raised"
         >
           <X aria-hidden className="size-5" />
@@ -123,7 +124,7 @@ function FinderBody({ item }: { item: BaseItemDto }) {
         <div className="flex flex-wrap items-end gap-3">
           <div>
             <label htmlFor={selectId} className="mb-1.5 block text-label-md">
-              Language
+              {t("Language")}
             </label>
             <select
               id={selectId}
@@ -151,7 +152,7 @@ function FinderBody({ item }: { item: BaseItemDto }) {
           {search.data?.providers.some((provider) => provider.id === "opensubtitles") && (
             // Required by the OpenSubtitles terms for free API keys.
             <p className="pb-2 text-body-sm text-on-surface-muted">
-              Subtitles provided by{" "}
+              {t("Subtitles provided by")}{" "}
               <a
                 href="https://opensubtitles.com"
                 target="_blank"
@@ -166,7 +167,7 @@ function FinderBody({ item }: { item: BaseItemDto }) {
 
         {existing.data && existing.data.length > 0 && (
           <section className="mt-5">
-            <h3 className="mb-2 text-label-md">Added through Finora</h3>
+            <h3 className="mb-2 text-label-md">{t("Added through Finora")}</h3>
             <ul className="space-y-2">
               {existing.data.map((subtitle) => (
                 <li
@@ -178,7 +179,9 @@ function FinderBody({ item }: { item: BaseItemDto }) {
                     <span className="text-caption text-on-surface-muted">
                       {subtitle.language.toUpperCase()} · {subtitle.createdByName} ·{" "}
                       {relativeTime(subtitle.createdAt).toLowerCase()}
-                      {subtitle.jellyfinStreamIndex === null ? " · being indexed by Jellyfin" : ""}
+                      {subtitle.jellyfinStreamIndex === null
+                        ? ` · ${t("being indexed by Jellyfin")}`
+                        : ""}
                     </span>
                   </span>
                   {(subtitle.createdById === user.Id || user.Policy?.IsAdministrator) && (
@@ -186,10 +189,10 @@ function FinderBody({ item }: { item: BaseItemDto }) {
                       type="button"
                       onClick={() =>
                         remove.mutate(subtitle.id, {
-                          onSuccess: () => toast.success("Subtitle removed."),
+                          onSuccess: () => toast.success(t("Subtitle removed.")),
                         })
                       }
-                      aria-label="Remove subtitle"
+                      aria-label={t("Remove subtitle")}
                       className="grid size-8 shrink-0 place-items-center rounded-full text-on-surface-muted hover:bg-surface-raised hover:text-error"
                     >
                       <Trash2 aria-hidden className="size-4" />
@@ -205,15 +208,17 @@ function FinderBody({ item }: { item: BaseItemDto }) {
           {search.isPending ? (
             <div className="flex items-center gap-3 py-8 text-body-sm text-on-surface-muted">
               <Spinner />
-              Searching subtitle sites… this can take up to half a minute.
+              {t("Searching subtitle sites… this can take up to half a minute.")}
             </div>
           ) : search.isError ? (
             <p role="alert" className="py-6 text-body-md text-error">
-              {search.error instanceof FinoraApiError ? search.error.message : "The search failed."}
+              {search.error instanceof FinoraApiError
+                ? search.error.message
+                : t("The search failed.")}
             </p>
           ) : !search.data?.results.length ? (
             <p className="py-6 text-body-md text-on-surface-muted">
-              No subtitles found in this language.
+              {t("No subtitles found in this language.")}
             </p>
           ) : (
             <ul className="divide-y divide-border">
@@ -221,33 +226,38 @@ function FinderBody({ item }: { item: BaseItemDto }) {
                 <li key={result.id} className="flex items-center gap-3 py-3">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-body-sm" title={result.release}>
-                      {result.release || "Unnamed release"}
+                      {result.release || t("Unnamed release")}
                     </p>
                     <div className="mt-1 flex flex-wrap items-center gap-1.5">
                       <span className="text-caption text-on-surface-subtle">
                         {result.providerName}
                       </span>
-                      {result.hashMatch && <Badge tone="good">Exact sync</Badge>}
-                      {result.releaseMatch && <Badge tone="good">Matches your file</Badge>}
-                      {result.hearingImpaired && <Badge>Hearing impaired</Badge>}
-                      {result.forced && <Badge>Forced</Badge>}
-                      {result.aiTranslated && <Badge tone="muted">Machine translated</Badge>}
+                      {result.hashMatch && <Badge tone="good">{t("Exact sync")}</Badge>}
+                      {result.releaseMatch && <Badge tone="good">{t("Matches your file")}</Badge>}
+                      {result.hearingImpaired && <Badge>{t("Hearing impaired")}</Badge>}
+                      {result.forced && <Badge>{t("Forced")}</Badge>}
+                      {result.aiTranslated && <Badge tone="muted">{t("Machine translated")}</Badge>}
                       {result.downloads > 0 && (
                         <span className="text-caption text-on-surface-subtle">
-                          {formatNumber(result.downloads)} downloads
+                          {tn(result.downloads, "{count} download", "{count} downloads", {
+                            count: formatNumber(result.downloads),
+                          })}
                         </span>
                       )}
                     </div>
                   </div>
                   <Button size="sm" onClick={() => choose(result)} disabled={download.isPending}>
                     {chosen === result.id ? (
-                      <Spinner label="Adding" className="[&_svg]:size-4 [&_svg]:text-on-primary" />
+                      <Spinner
+                        label={t("Adding")}
+                        className="[&_svg]:size-4 [&_svg]:text-on-primary"
+                      />
                     ) : download.isSuccess && download.variables?.candidate === result.id ? (
                       <Check aria-hidden className="size-4" />
                     ) : (
                       <Download aria-hidden className="size-4" />
                     )}
-                    Use
+                    {t("Use")}
                   </Button>
                 </li>
               ))}

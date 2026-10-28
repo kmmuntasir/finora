@@ -12,11 +12,16 @@ import { useSearchParams } from "react-router";
 import { Spinner } from "@/components/Spinner";
 import { useSession } from "@/features/auth/context";
 import { ItemGrid } from "./ItemGrid";
+import { msg, t, tn } from "@/i18n";
 
 const PAGE_SIZE = 120;
 type Facet = "genre" | "studio" | "tag";
 const FACETS: Facet[] = ["genre", "studio", "tag"];
-const FACET_LABEL: Record<Facet, string> = { genre: "Genre", studio: "Studio", tag: "Tag" };
+const FACET_LABEL: Record<Facet, string> = {
+  genre: msg("Genre"),
+  studio: msg("Studio"),
+  tag: msg("Tag"),
+};
 
 /** Films and shows across all libraries sharing a genre, studio or tag. */
 export function BrowsePage() {
@@ -63,10 +68,14 @@ export function BrowsePage() {
 
   return (
     <div className="px-page-x-mobile pt-8 pb-24 md:px-page-x md:pt-10">
-      <p className="text-label-md text-on-surface-muted">{facet ? FACET_LABEL[facet] : "Browse"}</p>
-      <h1 className="text-headline-lg">{value ?? "Nothing selected"}</h1>
+      <p className="text-label-md text-on-surface-muted">
+        {facet ? t(FACET_LABEL[facet]) : t("Browse")}
+      </p>
+      <h1 className="text-headline-lg">{value ?? t("Nothing selected")}</h1>
       {query.data && (
-        <p className="mt-1 text-body-sm text-on-surface-muted">{formatNumber(total)} titles</p>
+        <p className="mt-1 text-body-sm text-on-surface-muted">
+          {tn(total, "{count} title", "{count} titles", { count: formatNumber(total) })}
+        </p>
       )}
       <div className="mt-6">
         {query.isPending && facet ? (

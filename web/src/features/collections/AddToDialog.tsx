@@ -7,6 +7,7 @@ import { Sheet } from "@/components/Sheet";
 import { Spinner } from "@/components/Spinner";
 import { TextField } from "@/components/TextField";
 import { useAddToContainer, useContainers, useCreateContainer, type Container } from "./api";
+import { msg, t, tn } from "@/i18n";
 
 interface AddToDialogProps {
   kind: Container;
@@ -16,10 +17,31 @@ interface AddToDialogProps {
   onDone?: () => void;
 }
 
-const NOUN = { playlist: "playlist", collection: "collection" } as const;
+const TEXT = {
+  playlist: {
+    title: msg("Add to playlist"),
+    created: msg("Added to the new playlist “{name}”."),
+    createFailed: msg("Couldn't create the playlist."),
+    nameLabel: msg("New playlist name"),
+    create: msg("New playlist"),
+    loadFailed: msg("Couldn't load your playlists."),
+    empty: msg("You have no playlists yet."),
+  },
+  collection: {
+    title: msg("Add to collection"),
+    created: msg("Added to the new collection “{name}”."),
+    createFailed: msg("Couldn't create the collection."),
+    nameLabel: msg("New collection name"),
+    create: msg("New collection"),
+    loadFailed: msg("Couldn't load your collections."),
+    empty: msg("You have no collections yet."),
+  },
+} as const;
 
 function describe(items: BaseItemDto[]): string {
-  return items.length === 1 ? (items[0]?.Name ?? "1 item") : `${items.length} items`;
+  return items.length === 1
+    ? (items[0]?.Name ?? tn(1, "{count} item", "{count} items"))
+    : tn(items.length, "{count} item", "{count} items");
 }
 
 /** Pick an existing playlist or collection, or create a new one, for one or more items. */
@@ -30,7 +52,7 @@ export function AddToDialog({ kind, items, open, onOpenChange, onDone }: AddToDi
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
   const ids = items.map((item) => item.Id!).filter(Boolean);
-  const noun = NOUN[kind];
+  const text = TEXT[kind];
 
   const finish = (message: string) => {
     toast.success(message);
@@ -47,7 +69,7 @@ export function AddToDialog({ kind, items, open, onOpenChange, onDone }: AddToDi
         if (!value) setCreating(false);
         onOpenChange(value);
       }}
-      title={`Add to ${noun}`}
+      title={t(text.title)}
       description={describe(items)}
     >
       {creating ? (
@@ -60,14 +82,14 @@ export function AddToDialog({ kind, items, open, onOpenChange, onDone }: AddToDi
             create.mutate(
               { name: trimmed, ids },
               {
-                onSuccess: () => finish(`Added to the new ${noun} “${trimmed}”.`),
-                onError: () => toast.error(`Couldn't create the ${noun}.`),
+                onSuccess: () => finish(t(text.created, { name: trimmed })),
+                onError: () => toast.error(t(text.createFailed)),
               },
             );
           }}
         >
           <TextField
-            label={`New ${noun} name`}
+            label={t(text.nameLabel)}
             value={name}
             onChange={(event) => setName(event.target.value)}
             autoFocus
@@ -75,10 +97,10 @@ export function AddToDialog({ kind, items, open, onOpenChange, onDone }: AddToDi
           />
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => setCreating(false)}>
-              Back
+              {t("Back")}
             </Button>
             <Button type="submit" disabled={!name.trim() || create.isPending}>
-              {create.isPending ? "Creating…" : "Create and add"}
+              {create.isPending ? t("Creating…") : t("Create and add")}
             </Button>
           </div>
         </form>
@@ -90,16 +112,16 @@ export function AddToDialog({ kind, items, open, onOpenChange, onDone }: AddToDi
             className="flex w-full items-center gap-3 rounded-md px-3 py-3 text-left text-label-md text-primary hover:bg-surface-raised"
           >
             <Plus aria-hidden className="size-5" />
-            New {noun}
+            {t(text.create)}
           </button>
           {containers.isPending ? (
             <Spinner className="flex justify-center py-6" />
           ) : containers.isError ? (
             <p role="alert" className="px-3 py-4 text-body-sm text-error">
-              Couldn't load your {noun}s.
+              {t(text.loadFailed)}
             </p>
           ) : containers.data.length === 0 ? (
-            <p className="px-3 py-4 text-body-sm text-on-surface-muted">You have no {noun}s yet.</p>
+            <p className="px-3 py-4 text-body-sm text-on-surface-muted">{t(text.empty)}</p>
           ) : (
             <ul>
               {containers.data.map((container) => (
@@ -111,8 +133,12 @@ export function AddToDialog({ kind, items, open, onOpenChange, onDone }: AddToDi
                       add.mutate(
                         { containerId: container.Id!, ids },
                         {
-                          onSuccess: () => finish(`Added to “${container.Name}”.`),
-                          onError: () => toast.error(`Couldn't add to “${container.Name}”.`),
+                          onSuccess: () =>
+                            finish(t("Added to “{name}”.", { name: container.Name ?? "" })),
+                          onError: () =>
+                            toast.error(
+                              t("Couldn't add to “{name}”.", { name: container.Name ?? "" }),
+                            ),
                         },
                       )
                     }

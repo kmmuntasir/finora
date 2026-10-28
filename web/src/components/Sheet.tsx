@@ -2,6 +2,7 @@ import { Dialog } from "radix-ui";
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { t } from "@/i18n";
 
 interface SheetProps {
   open: boolean;
@@ -45,7 +46,7 @@ export function Sheet({
               )}
             </div>
             <Dialog.Close
-              aria-label="Close"
+              aria-label={t("Close")}
               className="grid size-9 shrink-0 place-items-center rounded-full text-on-surface-muted hover:bg-surface-raised hover:text-on-surface"
             >
               <X aria-hidden className="size-5" />

@@ -37,6 +37,7 @@ import { Button } from "@/components/Button";
 import { Sheet } from "@/components/Sheet";
 import { TextField } from "@/components/TextField";
 import { canAddToCollection, canAddToPlaylist } from "@/features/collections/eligibility";
+import { t } from "@/i18n";
 
 interface ItemMenuProps {
   item: BaseItemDto;
@@ -75,7 +76,11 @@ export function ItemMenu({ item, className }: ItemMenuProps) {
   return (
     <>
       <DropdownMenu.Root>
-        <DropdownMenu.Trigger aria-label="More actions" title="More" className={className}>
+        <DropdownMenu.Trigger
+          aria-label={t("More actions")}
+          title={t("More")}
+          className={className}
+        >
           <MoreHorizontal aria-hidden className="size-5" />
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
@@ -83,19 +88,19 @@ export function ItemMenu({ item, className }: ItemMenuProps) {
             {playlist && (
               <DropdownMenu.Item className={MENU_ITEM} onSelect={() => setDialog("playlist")}>
                 <ListPlus aria-hidden className="size-4" />
-                Add to playlist…
+                {t("Add to playlist…")}
               </DropdownMenu.Item>
             )}
             {collection && (
               <DropdownMenu.Item className={MENU_ITEM} onSelect={() => setDialog("collection")}>
                 <FolderPlus aria-hidden className="size-4" />
-                Add to collection…
+                {t("Add to collection…")}
               </DropdownMenu.Item>
             )}
             {renamable && (
               <DropdownMenu.Item className={MENU_ITEM} onSelect={() => setDialog("rename")}>
                 <Pencil aria-hidden className="size-4" />
-                Rename…
+                {t("Rename…")}
               </DropdownMenu.Item>
             )}
             {streamable && (
@@ -104,16 +109,17 @@ export function ItemMenu({ item, className }: ItemMenuProps) {
                 onSelect={() =>
                   void navigator.clipboard.writeText(streamUrl).then(
                     () =>
-                      toast.success("Stream link copied.", {
-                        description:
+                      toast.success(t("Stream link copied."), {
+                        description: t(
                           "It contains your sign-in, so share it only with people you trust. Signing out of this device ends it.",
+                        ),
                       }),
-                    () => toast.error("Couldn't copy the link."),
+                    () => toast.error(t("Couldn't copy the link.")),
                   )
                 }
               >
                 <Link2 aria-hidden className="size-4" />
-                Copy stream link
+                {t("Copy stream link")}
               </DropdownMenu.Item>
             )}
             {download && (
@@ -121,7 +127,7 @@ export function ItemMenu({ item, className }: ItemMenuProps) {
                 {/* Jellyfin answers with Content-Disposition: attachment, so the page stays put. */}
                 <a href={downloadUrl} rel="noreferrer">
                   <Download aria-hidden className="size-4" />
-                  Download
+                  {t("Download")}
                 </a>
               </DropdownMenu.Item>
             )}
@@ -130,20 +136,20 @@ export function ItemMenu({ item, className }: ItemMenuProps) {
                 <DropdownMenu.Separator className={MENU_SEPARATOR} />
                 <DropdownMenu.Item className={MENU_ITEM} onSelect={() => setDialog("refresh")}>
                   <RefreshCw aria-hidden className="size-4" />
-                  Refresh metadata…
+                  {t("Refresh metadata…")}
                 </DropdownMenu.Item>
                 <DropdownMenu.Item className={MENU_ITEM} onSelect={() => setDialog("metadata")}>
                   <SquarePen aria-hidden className="size-4" />
-                  Edit metadata…
+                  {t("Edit metadata…")}
                 </DropdownMenu.Item>
                 <DropdownMenu.Item className={MENU_ITEM} onSelect={() => setDialog("images")}>
                   <ImageIcon aria-hidden className="size-4" />
-                  Edit images…
+                  {t("Edit images…")}
                 </DropdownMenu.Item>
                 {IDENTIFIABLE[item.Type ?? ""] && (
                   <DropdownMenu.Item className={MENU_ITEM} onSelect={() => setDialog("identify")}>
                     <FileSearch aria-hidden className="size-4" />
-                    Identify…
+                    {t("Identify…")}
                   </DropdownMenu.Item>
                 )}
               </>
@@ -157,8 +163,10 @@ export function ItemMenu({ item, className }: ItemMenuProps) {
                 >
                   <Trash2 aria-hidden className="size-4" />
                   {isContainer
-                    ? `Delete ${item.Type === "Playlist" ? "playlist" : "collection"}…`
-                    : "Delete from server…"}
+                    ? item.Type === "Playlist"
+                      ? t("Delete playlist…")
+                      : t("Delete collection…")
+                    : t("Delete from server…")}
                 </DropdownMenu.Item>
               </>
             )}
@@ -182,24 +190,26 @@ export function ItemMenu({ item, className }: ItemMenuProps) {
       <ConfirmDialog
         open={dialog === "delete"}
         onOpenChange={(open) => !open && setDialog(null)}
-        title={`Delete “${item.Name}”?`}
-        confirmLabel="Delete"
+        title={t("Delete “{name}”?", { name: item.Name ?? "" })}
+        confirmLabel={t("Delete")}
         destructive
         busy={remove.isPending}
         onConfirm={() =>
           remove.mutate(item.Id!, {
             onSuccess: () => {
               setDialog(null);
-              toast.success(`Deleted “${item.Name}”.`);
+              toast.success(t("Deleted “{name}”.", { name: item.Name ?? "" }));
               void navigate(-1);
             },
-            onError: () => toast.error("Couldn't delete it."),
+            onError: () => toast.error(t("Couldn't delete it.")),
           })
         }
       >
         {isContainer
-          ? "Its items stay in your library."
-          : "The media files are deleted from the server's disk for everyone. This can't be undone."}
+          ? t("Its items stay in your library.")
+          : t(
+              "The media files are deleted from the server's disk for everyone. This can't be undone.",
+            )}
       </ConfirmDialog>
     </>
   );
@@ -209,7 +219,7 @@ function RenameDialog({ playlist, onClose }: { playlist: BaseItemDto; onClose: (
   const rename = useRenamePlaylist(playlist);
   const [name, setName] = useState(playlist.Name ?? "");
   return (
-    <Sheet open onOpenChange={(open) => !open && onClose()} title="Rename playlist">
+    <Sheet open onOpenChange={(open) => !open && onClose()} title={t("Rename playlist")}>
       <form
         className="space-y-4"
         onSubmit={(event) => {
@@ -217,15 +227,15 @@ function RenameDialog({ playlist, onClose }: { playlist: BaseItemDto; onClose: (
           if (!name.trim()) return;
           rename.mutate(name.trim(), {
             onSuccess: () => {
-              toast.success("Playlist renamed.");
+              toast.success(t("Playlist renamed."));
               onClose();
             },
-            onError: () => toast.error("Couldn't rename the playlist."),
+            onError: () => toast.error(t("Couldn't rename the playlist.")),
           });
         }}
       >
         <TextField
-          label="Name"
+          label={t("Name")}
           value={name}
           onChange={(event) => setName(event.target.value)}
           autoFocus
@@ -233,10 +243,10 @@ function RenameDialog({ playlist, onClose }: { playlist: BaseItemDto; onClose: (
         />
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="submit" disabled={!name.trim() || rename.isPending}>
-            Save
+            {t("Save")}
           </Button>
         </div>
       </form>

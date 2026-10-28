@@ -12,6 +12,7 @@ import { getSystemApi } from "@jellyfin/sdk/lib/utils/api/system-api";
 import { getUserApi } from "@jellyfin/sdk/lib/utils/api/user-api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "@/features/auth/context";
+import { t } from "@/i18n";
 
 export function useUsers() {
   const { api } = useSession();
@@ -145,7 +146,7 @@ export function useAdminMutations() {
       mutationFn: async ({ sessionId, text }: { sessionId: string; text: string }) => {
         await getSessionApi(api).sendMessageCommand({
           sessionId,
-          messageCommand: { Header: "Message from the server", Text: text, TimeoutMs: 10000 },
+          messageCommand: { Header: t("Message from the server"), Text: text, TimeoutMs: 10000 },
         });
       },
     }),

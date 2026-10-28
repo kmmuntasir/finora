@@ -27,11 +27,16 @@ let current: Language = "en";
 let catalogue: Catalogue = {};
 const listeners = new Set<() => void>();
 
+/** Numbers in placeholders use the language's digits (০১২… in Bengali). */
 function fill(text: string, values?: Record<string, string | number>): string {
   if (!values) return text;
-  return text.replace(/\{(\w+)\}/g, (match, name: string) =>
-    name in values ? String(values[name]) : match,
-  );
+  const numbers =
+    current === "en" ? null : new Intl.NumberFormat(languageLocale(), { useGrouping: false });
+  return text.replace(/\{(\w+)\}/g, (match, name: string) => {
+    if (!(name in values)) return match;
+    const value = values[name]!;
+    return typeof value === "number" && numbers ? numbers.format(value) : String(value);
+  });
 }
 
 /**

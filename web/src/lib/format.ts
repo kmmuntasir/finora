@@ -1,13 +1,14 @@
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import { currentLanguage, languageLocale, t } from "@/i18n";
 
 const TICKS_PER_MINUTE = 600_000_000;
 
 export function formatMinutes(totalMinutes: number): string {
   const minutes = Math.max(0, Math.round(totalMinutes));
-  if (minutes < 60) return `${minutes} min`;
+  if (minutes < 60) return t("{minutes} min", { minutes });
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  return rest ? `${hours} h ${rest} min` : `${hours} h`;
+  return rest ? t("{hours} h {minutes} min", { hours, minutes: rest }) : t("{hours} h", { hours });
 }
 
 export function runtime(item: BaseItemDto): string | null {
@@ -19,7 +20,7 @@ export function timeLeft(item: BaseItemDto): string | null {
   const total = item.RunTimeTicks;
   const position = item.UserData?.PlaybackPositionTicks;
   if (!total || !position) return null;
-  return `${formatMinutes((total - position) / TICKS_PER_MINUTE)} left`;
+  return t("{time} left", { time: formatMinutes((total - position) / TICKS_PER_MINUTE) });
 }
 
 /** Watched fraction between 0 and 1, or null when not started. */
@@ -40,7 +41,7 @@ export function episodeCode(item: BaseItemDto): string | null {
 
 /** Card title: series name for episodes, item name otherwise. */
 export function cardTitle(item: BaseItemDto): string {
-  return (item.Type === "Episode" ? item.SeriesName : item.Name) ?? item.Name ?? "Untitled";
+  return (item.Type === "Episode" ? item.SeriesName : item.Name) ?? item.Name ?? t("Untitled");
 }
 
 /** Secondary line for cards. */
@@ -69,7 +70,7 @@ export function continueSubtitle(item: BaseItemDto): string | null {
 
 /** "3 hours ago", "2 days ago"; "Never" for missing dates. */
 export function relativeTime(iso: string | null | undefined, now = Date.now()): string {
-  if (!iso) return "Never";
+  if (!iso) return t("Never");
   const seconds = Math.round((new Date(iso).getTime() - now) / 1000);
   const units: [Intl.RelativeTimeFormatUnit, number][] = [
     ["year", 31_536_000],
@@ -79,12 +80,19 @@ export function relativeTime(iso: string | null | undefined, now = Date.now()): 
     ["hour", 3_600],
     ["minute", 60],
   ];
-  const format = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+  // English follows the browser (as before); other interface languages use their own.
+  const language = currentLanguage();
+  const format = new Intl.RelativeTimeFormat(
+    language === "en" ? undefined : languageLocale(language),
+    {
+      numeric: "auto",
+    },
+  );
   for (const [unit, size] of units) {
     // Round towards zero: 18 months ago reads as "last year", not "2 years ago".
     if (Math.abs(seconds) >= size) return format.format(Math.trunc(seconds / size), unit);
   }
-  return "Just now";
+  return t("Just now");
 }
 
 /** Locale for dates and numbers from Settings; undefined follows the browser. */

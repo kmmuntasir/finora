@@ -8,6 +8,7 @@ import { Spinner } from "@/components/Spinner";
 import { useSession } from "@/features/auth/context";
 import { relativeTime } from "@/lib/format";
 import { useDeviceMutations, useUserDevices } from "./queries";
+import { t } from "@/i18n";
 
 /** The user's signed-in devices: sign out one or all of them. */
 export function UserDevices({ userId, name }: { userId: string; name: string }) {
@@ -23,14 +24,16 @@ export function UserDevices({ userId, name }: { userId: string; name: string }) 
   if (devices.isError)
     return (
       <p role="alert" className="text-body-sm text-error">
-        Couldn't load devices.
+        {t("Couldn't load devices.")}
       </p>
     );
 
   return (
     <div>
       {devices.data.length === 0 ? (
-        <p className="text-body-sm text-on-surface-muted">{name} isn't signed in anywhere.</p>
+        <p className="text-body-sm text-on-surface-muted">
+          {t("{name} isn't signed in anywhere.", { name })}
+        </p>
       ) : (
         <ul className="divide-y divide-border">
           {devices.data.map((device) => (
@@ -39,7 +42,9 @@ export function UserDevices({ userId, name }: { userId: string; name: string }) 
                 <p className="truncate text-label-md">
                   {device.CustomName || device.Name}
                   {device.Id === currentDevice && (
-                    <span className="ml-2 text-caption text-on-surface-muted">This device</span>
+                    <span className="ml-2 text-caption text-on-surface-muted">
+                      {t("This device")}
+                    </span>
                   )}
                 </p>
                 <p className="truncate text-body-sm text-on-surface-muted">
@@ -54,12 +59,13 @@ export function UserDevices({ userId, name }: { userId: string; name: string }) 
                   disabled={signOut.isPending}
                   onClick={() =>
                     signOut.mutate([device.Id!], {
-                      onSuccess: () => toast.success(`Signed out ${device.Name}.`),
-                      onError: () => toast.error("Couldn't sign out that device."),
+                      onSuccess: () =>
+                        toast.success(t("Signed out {name}.", { name: device.Name ?? "" })),
+                      onError: () => toast.error(t("Couldn't sign out that device.")),
                     })
                   }
                 >
-                  Sign out
+                  {t("Sign out")}
                 </Button>
               )}
             </li>
@@ -74,14 +80,14 @@ export function UserDevices({ userId, name }: { userId: string; name: string }) 
           onClick={() => setConfirmAll(true)}
         >
           <LogOut aria-hidden className="size-4" />
-          Sign out of all devices
+          {t("Sign out of all devices")}
         </Button>
       )}
       <ConfirmDialog
         open={confirmAll}
         onOpenChange={setConfirmAll}
-        title={`Sign ${name} out everywhere?`}
-        confirmLabel="Sign out"
+        title={t("Sign {name} out everywhere?", { name })}
+        confirmLabel={t("Sign out")}
         destructive
         busy={signOut.isPending}
         onConfirm={() =>
@@ -90,14 +96,16 @@ export function UserDevices({ userId, name }: { userId: string; name: string }) 
             {
               onSuccess: () => {
                 setConfirmAll(false);
-                toast.success(`Signed ${name} out of ${others.length} devices.`);
+                toast.success(
+                  t("Signed {name} out of {count} devices.", { name, count: others.length }),
+                );
               },
-              onError: () => toast.error("Some devices couldn't be signed out."),
+              onError: () => toast.error(t("Some devices couldn't be signed out.")),
             },
           )
         }
       >
-        Every app and browser {name} uses will need to sign in again.
+        {t("Every app and browser {name} uses will need to sign in again.", { name })}
       </ConfirmDialog>
     </div>
   );
@@ -112,13 +120,13 @@ export function QuickConnectForUser({ userId, name }: { userId: string; name: st
     authorizeQuickConnect.mutate(code.trim(), {
       onSuccess: () => {
         setCode("");
-        toast.success(`The device is now signed in as ${name}.`);
+        toast.success(t("The device is now signed in as {name}.", { name }));
       },
       onError: (error) =>
         toast.error(
           isAxiosError(error) && error.response?.status === 404
-            ? "That code wasn't found or has expired."
-            : "Couldn't approve the code. Is Quick Connect enabled?",
+            ? t("That code wasn't found or has expired.")
+            : t("Couldn't approve the code. Is Quick Connect enabled?"),
         ),
     });
   };
@@ -127,7 +135,7 @@ export function QuickConnectForUser({ userId, name }: { userId: string; name: st
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
       <div>
         <label htmlFor="qc-code" className="mb-1.5 block text-label-md">
-          Quick Connect code
+          {t("Quick Connect code")}
         </label>
         <input
           id="qc-code"
@@ -152,7 +160,7 @@ export function QuickConnectForUser({ userId, name }: { userId: string; name: st
         variant="secondary"
         disabled={code.length < 6 || authorizeQuickConnect.isPending}
       >
-        Sign in as {name}
+        {t("Sign in as {name}", { name })}
       </Button>
     </div>
   );

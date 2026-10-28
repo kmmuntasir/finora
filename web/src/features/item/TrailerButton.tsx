@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useLocalTrailers } from "./queries";
 import { youtubeId } from "./youtube";
+import { t } from "@/i18n";
 
 /**
  * Plays a local trailer in the player, or a remote one (usually YouTube) in a
@@ -29,8 +30,8 @@ export function TrailerButton({ item, className }: { item: BaseItemDto; classNam
       <button
         type="button"
         onClick={play}
-        aria-label="Play trailer"
-        title="Trailer"
+        aria-label={t("Play trailer")}
+        title={t("Trailer")}
         className={className}
       >
         <Clapperboard aria-hidden className="size-5" />
@@ -40,12 +41,16 @@ export function TrailerButton({ item, className }: { item: BaseItemDto; classNam
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 z-50 bg-black/85 data-[state=open]:animate-[fade-in_150ms_ease-out]" />
             <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[min(64rem,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2">
-              <Dialog.Title className="sr-only">Trailer for {item.Name}</Dialog.Title>
-              <Dialog.Description className="sr-only">Press Escape to close.</Dialog.Description>
+              <Dialog.Title className="sr-only">
+                {t("Trailer for {title}", { title: item.Name ?? "" })}
+              </Dialog.Title>
+              <Dialog.Description className="sr-only">
+                {t("Press Escape to close.")}
+              </Dialog.Description>
               <div className="aspect-video overflow-hidden rounded-lg bg-black shadow-[0_24px_48px_rgb(0_0_0/0.6)]">
                 <iframe
                   src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(video)}?autoplay=1&rel=0`}
-                  title={`Trailer for ${item.Name}`}
+                  title={t("Trailer for {title}", { title: item.Name ?? "" })}
                   allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
                   allowFullScreen
                   referrerPolicy="strict-origin-when-cross-origin"
@@ -53,7 +58,7 @@ export function TrailerButton({ item, className }: { item: BaseItemDto; classNam
                 />
               </div>
               <Dialog.Close className="mt-3 block w-full text-center text-label-md text-white/80 hover:text-white">
-                Close
+                {t("Close")}
               </Dialog.Close>
             </Dialog.Content>
           </Dialog.Portal>

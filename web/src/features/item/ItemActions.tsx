@@ -11,6 +11,7 @@ import { ItemMenu } from "./ItemMenu";
 import { TrailerButton } from "./TrailerButton";
 import { useUserDataToggle } from "./queries";
 import { playHref, type PlaySelection } from "./selection";
+import { t } from "@/i18n";
 
 const ROUND =
   "grid size-12 place-items-center rounded-full bg-white/10 light:bg-black/5 text-on-surface backdrop-blur-sm transition-colors duration-[120ms] hover:bg-white/20 light:hover:bg-black/10 disabled:opacity-50";
@@ -61,11 +62,11 @@ export function ItemActions({ item, playTarget, playLabel, selection }: ItemActi
   return (
     <div className="flex flex-wrap items-center gap-3">
       {(music || list) && (
-        <PlayButton label="Play" disabled={loading} onClick={() => void playQueue("play")} />
+        <PlayButton label={t("Play")} disabled={loading} onClick={() => void playQueue("play")} />
       )}
       {!music && !list && target && (
         <PlayButton
-          label={playLabel ?? (resumable ? "Resume" : "Play")}
+          label={playLabel ?? (resumable ? t("Resume") : t("Play"))}
           onClick={() => void navigate(playHref(target, selection))}
         />
       )}
@@ -74,8 +75,8 @@ export function ItemActions({ item, playTarget, playLabel, selection }: ItemActi
           type="button"
           onClick={() => void playQueue("shuffle")}
           disabled={loading}
-          aria-label="Shuffle"
-          title="Shuffle"
+          aria-label={t("Shuffle")}
+          title={t("Shuffle")}
           className={ROUND}
         >
           <Shuffle aria-hidden className="size-5" />
@@ -86,8 +87,8 @@ export function ItemActions({ item, playTarget, playLabel, selection }: ItemActi
           type="button"
           onClick={() => void playQueue("mix")}
           disabled={loading}
-          aria-label="Instant mix"
-          title="Instant mix"
+          aria-label={t("Instant mix")}
+          title={t("Instant mix")}
           className={ROUND}
         >
           <Sparkles aria-hidden className="size-5" />
@@ -99,7 +100,7 @@ export function ItemActions({ item, playTarget, playLabel, selection }: ItemActi
           onClick={() => void navigate(playHref(target, selection, true))}
           className="h-12 rounded-full bg-white/10 light:bg-black/5 px-5 text-label-md backdrop-blur-sm hover:bg-white/20 light:hover:bg-black/10"
         >
-          Play from beginning
+          {t("Play from beginning")}
         </button>
       )}
       {canMarkPlayed && (
@@ -107,8 +108,8 @@ export function ItemActions({ item, playTarget, playLabel, selection }: ItemActi
           type="button"
           onClick={() => played.mutate(!isPlayed)}
           aria-pressed={isPlayed}
-          aria-label={isPlayed ? "Mark as unwatched" : "Mark as watched"}
-          title={isPlayed ? "Mark as unwatched" : "Mark as watched"}
+          aria-label={isPlayed ? t("Mark as unwatched") : t("Mark as watched")}
+          title={isPlayed ? t("Mark as unwatched") : t("Mark as watched")}
           className={cn(ROUND, isPlayed && "text-success")}
         >
           <Check aria-hidden className="size-5" strokeWidth={isPlayed ? 3 : 2} />
@@ -118,8 +119,8 @@ export function ItemActions({ item, playTarget, playLabel, selection }: ItemActi
         type="button"
         onClick={() => favorite.mutate(!isFavorite)}
         aria-pressed={isFavorite}
-        aria-label={isFavorite ? "Remove from favourites" : "Add to favourites"}
-        title={isFavorite ? "Remove from favourites" : "Add to favourites"}
+        aria-label={isFavorite ? t("Remove from favourites") : t("Add to favourites")}
+        title={isFavorite ? t("Remove from favourites") : t("Add to favourites")}
         className={cn(ROUND, isFavorite && "text-error")}
       >
         <Heart aria-hidden className={cn("size-5", isFavorite && "fill-current")} />

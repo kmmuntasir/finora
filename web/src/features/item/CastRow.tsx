@@ -2,12 +2,13 @@ import type { BaseItemPerson } from "@jellyfin/sdk/lib/generated-client/models";
 import { Link } from "react-router";
 import { Artwork } from "@/components/media/Artwork";
 import { MediaRow } from "@/components/media/MediaRow";
+import { t } from "@/i18n";
 
 export function CastRow({ people }: { people: BaseItemPerson[] }) {
   const shown = people.filter((person) => person.Id).slice(0, 30);
   if (!shown.length) return null;
   return (
-    <MediaRow title="Cast & crew" itemClassName="w-28 md:w-32">
+    <MediaRow title={t("Cast & crew")} itemClassName="w-28 md:w-32">
       {shown.map((person, index) => (
         <Link
           key={`${person.Id}-${index}`}

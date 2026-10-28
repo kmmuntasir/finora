@@ -7,6 +7,7 @@ import { PlayButton } from "@/components/media/PlayButton";
 import { Button } from "@/components/Button";
 import { Spinner } from "@/components/Spinner";
 import { useUserViews } from "@/features/home/queries";
+import { t, tn } from "@/i18n";
 import { AlphabetRail } from "./AlphabetRail";
 import { ItemGrid } from "./ItemGrid";
 import {
@@ -38,9 +39,9 @@ export function LibraryPage() {
   if (!view?.Id) {
     return (
       <div className="px-page-x-mobile py-10 md:px-page-x">
-        <h1 className="text-headline-md">Library not found</h1>
+        <h1 className="text-headline-md">{t("Library not found")}</h1>
         <p className="mt-2 text-body-md text-on-surface-muted">
-          It may have been removed, or you no longer have access.
+          {t("It may have been removed, or you no longer have access.")}
         </p>
       </div>
     );
@@ -170,7 +171,7 @@ function Library({
         <p className="mt-1 text-body-sm text-on-surface-muted" aria-live="polite">
           {items.isPending
             ? " "
-            : `${formatNumber(total)} ${total === 1 ? kind.noun.one : kind.noun.many}`}
+            : tn(total, kind.noun.one, kind.noun.many, { count: formatNumber(total) })}
         </p>
         {!kind.recursive && list.some((item) => item.MediaType === "Video") && (
           <PlayAll items={list} />
@@ -206,15 +207,15 @@ function Library({
             <PageSpinner />
           ) : items.isError ? (
             <div role="alert" className="py-16 text-center">
-              <p className="text-body-md">Couldn't load this library.</p>
+              <p className="text-body-md">{t("Couldn't load this library.")}</p>
               <Button className="mt-4" variant="secondary" onClick={() => void items.refetch()}>
-                Try again
+                {t("Try again")}
               </Button>
             </div>
           ) : list.length === 0 ? (
             <div className="py-16 text-center">
               <p className="text-body-md">
-                {filtered ? "Nothing matches these filters." : "This library is empty."}
+                {filtered ? t("Nothing matches these filters.") : t("This library is empty.")}
               </p>
               {filtered && (
                 <Button
@@ -236,7 +237,7 @@ function Library({
                     })
                   }
                 >
-                  Clear filters
+                  {t("Clear filters")}
                 </Button>
               )}
             </div>
@@ -265,7 +266,7 @@ function Library({
             />
           )}
           {items.isFetchingNextPage && (
-            <Spinner className="mt-8 flex justify-center" label="Loading more" />
+            <Spinner className="mt-8 flex justify-center" label={t("Loading more")} />
           )}
         </div>
         {selecting && (
@@ -318,7 +319,7 @@ function FolderTrail({
   return (
     <div>
       <nav
-        aria-label="Folder"
+        aria-label={t("Folder")}
         className="flex flex-wrap items-center gap-1 text-label-md text-on-surface-muted"
       >
         <Link
@@ -356,7 +357,7 @@ function PlayAll({ items }: { items: BaseItemDto[] }) {
   return (
     <PlayButton
       className="mt-4"
-      label="Play all"
+      label={t("Play all")}
       onClick={() => void navigate(`/play/${first.Id}`)}
     />
   );

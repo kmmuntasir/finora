@@ -15,6 +15,7 @@ import { useAdminMutations, useMediaFolders, useUser } from "./queries";
 import { QuickConnectForUser, UserDevices } from "./UserDevices";
 import { RESTRICTION_DEFAULTS, type RestrictionDraft } from "./restrictions";
 import { Limits, ParentalControls } from "./UserRestrictions";
+import { msg, t } from "@/i18n";
 
 type PolicyDraft = Pick<
   UserPolicy,
@@ -55,26 +56,26 @@ const NEW_USER_DEFAULTS: PolicyDraft = {
 
 const PERMISSIONS: { key: keyof PolicyDraft & `Enable${string}`; label: string; hint?: string }[] =
   [
-    { key: "EnableMediaPlayback", label: "Can play media" },
-    { key: "EnableRemoteAccess", label: "Can connect from outside the home network" },
+    { key: "EnableMediaPlayback", label: msg("Can play media") },
+    { key: "EnableRemoteAccess", label: msg("Can connect from outside the home network") },
     {
       key: "EnableVideoPlaybackTranscoding",
-      label: "Allow video transcoding",
-      hint: "Uses the server's CPU when a device can't play a file",
+      label: msg("Allow video transcoding"),
+      hint: msg("Uses the server's CPU when a device can't play a file"),
     },
-    { key: "EnableAudioPlaybackTranscoding", label: "Allow audio transcoding" },
+    { key: "EnableAudioPlaybackTranscoding", label: msg("Allow audio transcoding") },
     {
       key: "EnablePlaybackRemuxing",
-      label: "Allow remuxing",
-      hint: "Repackaging without re-encoding; cheap",
+      label: msg("Allow remuxing"),
+      hint: msg("Repackaging without re-encoding; cheap"),
     },
-    { key: "EnableContentDownloading", label: "Can download files" },
-    { key: "EnableSubtitleManagement", label: "Can manage subtitles" },
-    { key: "EnableCollectionManagement", label: "Can create and edit collections" },
+    { key: "EnableContentDownloading", label: msg("Can download files") },
+    { key: "EnableSubtitleManagement", label: msg("Can manage subtitles") },
+    { key: "EnableCollectionManagement", label: msg("Can create and edit collections") },
     {
       key: "EnableContentDeletion",
-      label: "Can delete media",
-      hint: "Deletes files from the server's disks",
+      label: msg("Can delete media"),
+      hint: msg("Deletes files from the server's disks"),
     },
   ];
 
@@ -155,7 +156,7 @@ export function UserEditPage() {
   if (!isNew && (isError || !user))
     return (
       <p role="alert" className="text-body-md text-error">
-        This user could not be loaded.
+        {t("This user could not be loaded.")}
       </p>
     );
   return <UserForm key={user?.Id ?? "new"} user={isNew ? null : user!} />;
@@ -196,15 +197,15 @@ function UserForm({ user }: { user: UserDto | null }) {
     try {
       if (!user) {
         const created = await createUser.mutateAsync({ name: trimmed, password, policy });
-        toast.success(`${trimmed} was created.`);
+        toast.success(t("{name} was created.", { name: trimmed }));
         void navigate(`/admin/users/${created.Id}`, { replace: true });
         return;
       }
       if (nameChanged) await rename.mutateAsync({ user, name: trimmed });
       if (policyChanged) await updatePolicy.mutateAsync({ user, changes: policy });
-      toast.success("Changes saved.");
+      toast.success(t("Changes saved."));
     } catch (error) {
-      toast.error(errorMessage(error, "Couldn't save the changes."));
+      toast.error(errorMessage(error, t("Couldn't save the changes.")));
     }
   };
 
@@ -213,25 +214,27 @@ function UserForm({ user }: { user: UserDto | null }) {
       <div className="flex items-center gap-3">
         <Link
           to="/admin/users"
-          aria-label="Back to users"
+          aria-label={t("Back to users")}
           className="grid size-10 place-items-center rounded-full hover:bg-surface-raised"
         >
           <ArrowLeft aria-hidden className="size-5" />
         </Link>
         <div className="min-w-0">
-          <h2 className="truncate text-headline-md">{user ? user.Name : "New user"}</h2>
+          <h2 className="truncate text-headline-md">{user ? user.Name : t("New user")}</h2>
           {user && (
             <p className="text-body-sm text-on-surface-muted">
-              Last active {relativeTime(user.LastActivityDate).toLowerCase()}
+              {t("Last active {when}", {
+                when: relativeTime(user.LastActivityDate).toLowerCase(),
+              })}
             </p>
           )}
         </div>
       </div>
 
-      <Section title="Account">
+      <Section title={t("Account")}>
         <div className="grid gap-4 sm:max-w-sm">
           <TextField
-            label="Name"
+            label={t("Name")}
             required
             value={name}
             onChange={(event) => setName(event.target.value)}
@@ -239,7 +242,7 @@ function UserForm({ user }: { user: UserDto | null }) {
           />
           {!user && (
             <TextField
-              label="Password"
+              label={t("Password")}
               type="password"
               autoComplete="new-password"
               value={password}
@@ -249,41 +252,41 @@ function UserForm({ user }: { user: UserDto | null }) {
         </div>
         <div className="mt-2 divide-y divide-border">
           <ToggleRow
-            label="Account enabled"
+            label={t("Account enabled")}
             checked={!policy.IsDisabled}
             onChange={(value) => set("IsDisabled", !value)}
             disabled={isSelf}
           />
           <ToggleRow
-            label="Administrator"
-            hint="Full control over the server"
+            label={t("Administrator")}
+            hint={t("Full control over the server")}
             checked={Boolean(policy.IsAdministrator)}
             onChange={(value) => set("IsAdministrator", value)}
             disabled={isSelf}
           />
           <ToggleRow
-            label="Hide from the login screen"
-            hint="The user types their name to sign in"
+            label={t("Hide from the login screen")}
+            hint={t("The user types their name to sign in")}
             checked={Boolean(policy.IsHidden)}
             onChange={(value) => set("IsHidden", value)}
           />
         </div>
         {isSelf && (
           <p className="mt-2 text-body-sm text-on-surface-muted">
-            You can't disable yourself or remove your own admin rights.
+            {t("You can't disable yourself or remove your own admin rights.")}
           </p>
         )}
       </Section>
 
-      <Section title="Library access">
+      <Section title={t("Library access")}>
         <ToggleRow
-          label="All libraries"
+          label={t("All libraries")}
           checked={Boolean(policy.EnableAllFolders)}
           onChange={(value) => set("EnableAllFolders", value)}
         />
         {!policy.EnableAllFolders && (
           <fieldset className="mt-2 grid gap-1 sm:grid-cols-2">
-            <legend className="sr-only">Libraries</legend>
+            <legend className="sr-only">{t("Libraries")}</legend>
             {folders?.map((folder) => {
               const checked = policy.EnabledFolders?.includes(folder.Id!) ?? false;
               return (
@@ -305,13 +308,13 @@ function UserForm({ user }: { user: UserDto | null }) {
         )}
       </Section>
 
-      <Section title="Permissions">
+      <Section title={t("Permissions")}>
         <div className="divide-y divide-border">
           {PERMISSIONS.map((permission) => (
             <ToggleRow
               key={permission.key}
-              label={permission.label}
-              hint={permission.hint}
+              label={t(permission.label)}
+              hint={permission.hint && t(permission.hint)}
               checked={Boolean(policy[permission.key])}
               onChange={(value) => set(permission.key, value as never)}
             />
@@ -319,24 +322,24 @@ function UserForm({ user }: { user: UserDto | null }) {
         </div>
       </Section>
 
-      <Section title="Parental controls">
+      <Section title={t("Parental controls")}>
         <ParentalControls draft={policy} set={set} />
       </Section>
 
-      <Section title="Limits">
+      <Section title={t("Limits")}>
         <Limits draft={policy} set={set} />
       </Section>
 
       {user && (
-        <Section title="Devices">
+        <Section title={t("Devices")}>
           <UserDevices userId={user.Id!} name={user.Name ?? ""} />
         </Section>
       )}
 
       {user && (
-        <Section title="Sign in a TV or another device">
+        <Section title={t("Sign in a TV or another device")}>
           <p className="mb-4 text-body-sm text-on-surface-muted">
-            Choose Quick Connect on the device, then enter the code it shows.
+            {t("Choose Quick Connect on the device, then enter the code it shows.")}
           </p>
           <QuickConnectForUser userId={user.Id!} name={user.Name ?? ""} />
         </Section>
@@ -353,9 +356,11 @@ function UserForm({ user }: { user: UserDto | null }) {
       )}
 
       {user && !isSelf && (
-        <Section title="Delete user">
+        <Section title={t("Delete user")}>
           <p className="text-body-sm text-on-surface-muted">
-            Removes the account, its settings and its watch history. Media files are not affected.
+            {t(
+              "Removes the account, its settings and its watch history. Media files are not affected.",
+            )}
           </p>
           <Button
             type="button"
@@ -363,26 +368,29 @@ function UserForm({ user }: { user: UserDto | null }) {
             className="mt-4 text-error"
             onClick={() => setConfirmDelete(true)}
           >
-            Delete {user.Name}
+            {t("Delete {name}", { name: user.Name ?? "" })}
           </Button>
           <ConfirmDialog
             open={confirmDelete}
             onOpenChange={setConfirmDelete}
-            title={`Delete ${user.Name}?`}
-            confirmLabel="Delete user"
+            title={t("Delete {name}?", { name: user.Name ?? "" })}
+            confirmLabel={t("Delete user")}
             destructive
             busy={deleteUser.isPending}
             onConfirm={() =>
               deleteUser.mutate(user.Id!, {
                 onSuccess: () => {
-                  toast.success(`${user.Name} was deleted.`);
+                  toast.success(t("{name} was deleted.", { name: user.Name ?? "" }));
                   void navigate("/admin/users", { replace: true });
                 },
-                onError: (error) => toast.error(errorMessage(error, "Couldn't delete the user.")),
+                onError: (error) =>
+                  toast.error(errorMessage(error, t("Couldn't delete the user."))),
               })
             }
           >
-            This can't be undone. {user.Name} will lose their watch history and settings.
+            {t("This can't be undone. {name} will lose their watch history and settings.", {
+              name: user.Name ?? "",
+            })}
           </ConfirmDialog>
         </Section>
       )}
@@ -398,11 +406,11 @@ function UserForm({ user }: { user: UserDto | null }) {
                 setName(user.Name ?? "");
               }}
             >
-              Discard
+              {t("Discard")}
             </Button>
           )}
           <Button type="submit" disabled={saving || !name.trim()}>
-            {saving ? "Saving…" : user ? "Save changes" : "Create user"}
+            {saving ? t("Saving…") : user ? t("Save changes") : t("Create user")}
           </Button>
         </div>
       )}
@@ -426,11 +434,11 @@ function PasswordReset({
   const [value, setValue] = useState("");
   if (isSelf) {
     return (
-      <Section title="Password">
+      <Section title={t("Password")}>
         <p className="text-body-sm text-on-surface-muted">
-          Change your own password in{" "}
+          {t("Change your own password in")}{" "}
           <Link to="/settings" className="text-primary hover:underline">
-            Settings
+            {t("Settings")}
           </Link>
           .
         </p>
@@ -438,10 +446,10 @@ function PasswordReset({
     );
   }
   return (
-    <Section title="Set a new password">
+    <Section title={t("Set a new password")}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <TextField
-          label={`New password for ${name}`}
+          label={t("New password for {name}", { name })}
           type="password"
           autoComplete="new-password"
           value={value}
@@ -456,14 +464,14 @@ function PasswordReset({
             void onSet({ userId, password: value })
               .then(() => {
                 setValue("");
-                toast.success(`Password for ${name} updated.`);
+                toast.success(t("Password for {name} updated.", { name }));
               })
               .catch((error: unknown) =>
-                toast.error(errorMessage(error, "Couldn't set the password.")),
+                toast.error(errorMessage(error, t("Couldn't set the password."))),
               )
           }
         >
-          Set password
+          {t("Set password")}
         </Button>
       </div>
     </Section>

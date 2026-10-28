@@ -1,9 +1,11 @@
+import { msg } from "@/i18n";
+
 /** Rows on the home page that the user can reorder or hide. */
 export const HOME_SECTIONS = [
-  { id: "resume", label: "Continue watching" },
-  { id: "nextup", label: "Next up" },
-  { id: "listening", label: "Continue listening" },
-  { id: "latest", label: "Recently added" },
+  { id: "resume", label: msg("Continue watching") },
+  { id: "nextup", label: msg("Next up") },
+  { id: "listening", label: msg("Continue listening") },
+  { id: "latest", label: msg("Recently added") },
 ] as const;
 
 export type HomeSectionId = (typeof HOME_SECTIONS)[number]["id"];

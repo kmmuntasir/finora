@@ -4,6 +4,7 @@ import { useState } from "react";
 import { finoraFetch, useFinoraConfig } from "@/api/finora";
 import { useRuntimeConfig } from "@/config/context";
 import { cn } from "@/lib/cn";
+import { t } from "@/i18n";
 
 export interface Announcement {
   id: number;
@@ -66,7 +67,7 @@ export function AnnouncementBanner() {
                 setDismissed(next);
                 window.sessionStorage.setItem(DISMISSED_KEY, JSON.stringify(next));
               }}
-              aria-label="Dismiss announcement"
+              aria-label={t("Dismiss announcement")}
               className="grid size-7 shrink-0 place-items-center rounded-full text-on-surface-muted hover:bg-black/10 hover:text-on-surface"
             >
               <X aria-hidden className="size-4" />

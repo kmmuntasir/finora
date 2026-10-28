@@ -2,6 +2,7 @@ import type { ChapterInfo } from "@jellyfin/sdk/lib/generated-client/models";
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { formatClock } from "./player-preferences";
 import type { TrickplayFrame } from "./trickplay";
+import { t } from "@/i18n";
 
 interface SeekBarProps {
   current: number;
@@ -106,11 +107,14 @@ export function SeekBar({ current, duration, buffered, chapters, onSeek, frameAt
         ref={track}
         role="slider"
         tabIndex={0}
-        aria-label="Seek"
+        aria-label={t("Seek")}
         aria-valuemin={0}
         aria-valuemax={Math.round(safeDuration)}
         aria-valuenow={Math.round(shown)}
-        aria-valuetext={`${formatClock(shown)} of ${formatClock(duration)}`}
+        aria-valuetext={t("{current} of {total}", {
+          current: formatClock(shown),
+          total: formatClock(duration),
+        })}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

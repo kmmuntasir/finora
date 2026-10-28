@@ -42,6 +42,7 @@ import { SeekBar } from "./SeekBar";
 import { useAssRenderer } from "./ass-renderer";
 import { adjustCues, offsetLabel } from "./subtitle-timing";
 import { trickplayFrame, trickplayInfo } from "./trickplay";
+import { msg, t } from "@/i18n";
 
 const TICKS_PER_SECOND = 10_000_000;
 const PROGRESS_INTERVAL_MS = 10_000;
@@ -56,13 +57,13 @@ export function PlayerPage() {
   if (isPending) {
     return (
       <div className="fixed inset-0 grid place-items-center bg-black">
-        <Spinner label="Loading" />
+        <Spinner label={t("Loading")} />
       </div>
     );
   }
   if (isError || !item?.Id) {
     return (
-      <PlayerError message="This item could not be loaded." onBack={() => void navigate(-1)} />
+      <PlayerError message={t("This item could not be loaded.")} onBack={() => void navigate(-1)} />
     );
   }
   if (!item.MediaSources?.length) {
@@ -70,8 +71,8 @@ export function PlayerPage() {
       <PlayerError
         message={
           item.MediaType === "Audio" || item.Type === "MusicAlbum"
-            ? "Music playback arrives with the music player."
-            : "This item has nothing to play."
+            ? t("Music playback arrives with the music player.")
+            : t("This item has nothing to play.")
         }
         onBack={() => void navigate(-1)}
       />
@@ -95,12 +96,12 @@ function PlayerError({
       className="fixed inset-0 z-50 grid place-items-center bg-black px-page-x-mobile"
     >
       <div className="max-w-md text-center">
-        <p className="text-title">Playback problem</p>
+        <p className="text-title">{t("Playback problem")}</p>
         <p className="mt-2 text-body-md text-on-surface-muted">{message}</p>
         <div className="mt-6 flex justify-center gap-2">
-          {onRetry && <Button onClick={onRetry}>Try again</Button>}
+          {onRetry && <Button onClick={onRetry}>{t("Try again")}</Button>}
           <Button variant="secondary" onClick={onBack}>
-            Go back
+            {t("Go back")}
           </Button>
         </div>
       </div>
@@ -252,7 +253,7 @@ function Player({ item }: { item: BaseItemDto }) {
         if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls?.startLoad();
         else if (data.type === Hls.ErrorTypes.MEDIA_ERROR && mediaRecoveries++ < 2)
           hls?.recoverMediaError();
-        else setMediaError("The stream stopped unexpectedly.");
+        else setMediaError(t("The stream stopped unexpectedly."));
       });
     } else {
       video.src = source.url;
@@ -348,7 +349,7 @@ function Player({ item }: { item: BaseItemDto }) {
     (value: number) => {
       const rounded = Math.round(value * 100) / 100;
       setSubtitleOffset(rounded);
-      showOsd(`Subtitle timing: ${offsetLabel(rounded)}`);
+      showOsd(t("Subtitle timing: {offset}", { offset: offsetLabel(rounded) }));
     },
     [showOsd],
   );
@@ -382,7 +383,7 @@ function Player({ item }: { item: BaseItemDto }) {
       reload({ forceStream: true });
       return;
     }
-    setMediaError("This browser could not play the stream.");
+    setMediaError(t("This browser could not play the stream."));
   };
 
   const selectSubtitle = (index: number) => {
@@ -578,7 +579,7 @@ function Player({ item }: { item: BaseItemDto }) {
     if (!autoSkip || !activeSegment || skippedSegments.current.has(activeSegment.start)) return;
     skippedSegments.current.add(activeSegment.start);
     seekTo(activeSegment.end);
-    showOsd(SEGMENT_DONE[activeSegment.type]);
+    showOsd(t(SEGMENT_DONE[activeSegment.type]));
   });
   const remaining = duration - current;
   const showUpNext =
@@ -591,7 +592,7 @@ function Player({ item }: { item: BaseItemDto }) {
       <PlayerError
         message={
           mediaError ??
-          (playback.error instanceof Error ? playback.error.message : "Playback failed.")
+          (playback.error instanceof Error ? playback.error.message : t("Playback failed."))
         }
         onBack={exit}
         onRetry={() => {
@@ -673,7 +674,7 @@ function Player({ item }: { item: BaseItemDto }) {
 
       {(waiting || playback.isPending) && !mediaError && (
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
-          <Spinner label="Buffering" className="[&_svg]:size-12 [&_svg]:text-white" />
+          <Spinner label={t("Buffering")} className="[&_svg]:size-12 [&_svg]:text-white" />
         </div>
       )}
 
@@ -688,7 +689,7 @@ function Player({ item }: { item: BaseItemDto }) {
         )}
       >
         <div className="pointer-events-auto flex items-center gap-3 bg-linear-to-b from-black/80 to-transparent px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-10 md:px-6">
-          <button type="button" onClick={exit} aria-label="Back" className={CONTROL_BUTTON}>
+          <button type="button" onClick={exit} aria-label={t("Back")} className={CONTROL_BUTTON}>
             <ArrowLeft aria-hidden className="size-6" />
           </button>
           <div className="min-w-0">
@@ -710,7 +711,7 @@ function Player({ item }: { item: BaseItemDto }) {
             <button
               type="button"
               onClick={togglePlay}
-              aria-label={playing ? "Pause" : "Play"}
+              aria-label={playing ? t("Pause") : t("Play")}
               className={CONTROL_BUTTON}
             >
               {playing ? (
@@ -722,7 +723,7 @@ function Player({ item }: { item: BaseItemDto }) {
             <button
               type="button"
               onClick={() => seekBy(-10)}
-              aria-label="Back 10 seconds"
+              aria-label={t("Back 10 seconds")}
               className={CONTROL_BUTTON}
             >
               <RotateCcw aria-hidden className="size-5" />
@@ -730,7 +731,7 @@ function Player({ item }: { item: BaseItemDto }) {
             <button
               type="button"
               onClick={() => seekBy(30)}
-              aria-label="Forward 30 seconds"
+              aria-label={t("Forward 30 seconds")}
               className={CONTROL_BUTTON}
             >
               <RotateCw aria-hidden className="size-5" />
@@ -739,7 +740,7 @@ function Player({ item }: { item: BaseItemDto }) {
               <button
                 type="button"
                 onClick={toggleMute}
-                aria-label={muted ? "Unmute" : "Mute"}
+                aria-label={muted ? t("Unmute") : t("Mute")}
                 className={CONTROL_BUTTON}
               >
                 {muted || volume === 0 ? (
@@ -757,7 +758,7 @@ function Player({ item }: { item: BaseItemDto }) {
                 step={0.05}
                 value={muted ? 0 : volume}
                 onChange={(event) => changeVolume(Number(event.target.value))}
-                aria-label="Volume"
+                aria-label={t("Volume")}
                 className="hidden w-0 accent-white opacity-0 transition-all duration-200 group-hover/volume:w-24 group-hover/volume:opacity-100 focus-visible:w-24 focus-visible:opacity-100 [@media(pointer:fine)]:block"
               />
             </div>
@@ -807,7 +808,7 @@ function Player({ item }: { item: BaseItemDto }) {
                   if (document.pictureInPictureElement) void document.exitPictureInPicture();
                   else void videoRef.current?.requestPictureInPicture();
                 }}
-                aria-label="Picture in picture"
+                aria-label={t("Picture in picture")}
                 className={cn(CONTROL_BUTTON, "hidden sm:grid")}
               >
                 <PictureInPicture2 aria-hidden className="size-5" />
@@ -816,7 +817,7 @@ function Player({ item }: { item: BaseItemDto }) {
             <button
               type="button"
               onClick={toggleFullscreen}
-              aria-label={fullscreen ? "Exit full screen" : "Full screen"}
+              aria-label={fullscreen ? t("Exit full screen") : t("Full screen")}
               className={CONTROL_BUTTON}
             >
               {fullscreen ? (
@@ -863,19 +864,19 @@ function Player({ item }: { item: BaseItemDto }) {
 }
 
 const SEGMENT_LABEL: Record<SkippableSegment["type"], string> = {
-  Intro: "Skip intro",
-  Recap: "Skip recap",
-  Outro: "Skip credits",
-  Preview: "Skip preview",
-  Commercial: "Skip ad",
+  Intro: msg("Skip intro"),
+  Recap: msg("Skip recap"),
+  Outro: msg("Skip credits"),
+  Preview: msg("Skip preview"),
+  Commercial: msg("Skip ad"),
 };
 
 const SEGMENT_DONE: Record<SkippableSegment["type"], string> = {
-  Intro: "Skipped intro",
-  Recap: "Skipped recap",
-  Outro: "Skipped credits",
-  Preview: "Skipped preview",
-  Commercial: "Skipped ad",
+  Intro: msg("Skipped intro"),
+  Recap: msg("Skipped recap"),
+  Outro: msg("Skipped credits"),
+  Preview: msg("Skipped preview"),
+  Commercial: msg("Skipped ad"),
 };
 
 function SkipSegmentButton({
@@ -896,7 +897,7 @@ function SkipSegmentButton({
         raised ? "bottom-36" : "bottom-10",
       )}
     >
-      {SEGMENT_LABEL[segment.type]}
+      {t(SEGMENT_LABEL[segment.type])}
     </button>
   );
 }
@@ -931,7 +932,7 @@ function UpNext({
   return (
     <div
       role="dialog"
-      aria-label="Up next"
+      aria-label={t("Up next")}
       className={cn(
         "absolute right-4 w-[min(22rem,calc(100%-2rem))] overflow-hidden rounded-lg bg-surface-overlay/95 shadow-[0_16px_48px_rgb(0_0_0/0.6)] ring-1 ring-border backdrop-blur transition-[bottom] duration-200 md:right-6",
         raised ? "bottom-36" : "bottom-10",
@@ -946,17 +947,17 @@ function UpNext({
       )}
       <div className="p-4">
         <p className="text-label-sm text-on-surface-subtle">
-          Up next{countdown ? ` in ${secondsLeft}s` : ""}
+          {countdown ? t("Up next in {seconds}s", { seconds: secondsLeft }) : t("Up next")}
         </p>
         <p className="mt-1 line-clamp-2 text-label-md">
           {[episodeCode(episode), episode.Name].filter(Boolean).join(" · ")}
         </p>
         <div className="mt-3 flex gap-2">
           <Button size="sm" onClick={onPlay}>
-            Play now
+            {t("Play now")}
           </Button>
           <Button size="sm" variant="ghost" onClick={onCancel}>
-            {countdown ? "Cancel" : "Dismiss"}
+            {countdown ? t("Cancel") : t("Dismiss")}
           </Button>
         </div>
       </div>
@@ -965,18 +966,18 @@ function UpNext({
 }
 
 const REASON_TEXT: Record<string, string> = {
-  ContainerNotSupported: "file container not supported by this browser",
-  VideoCodecNotSupported: "video codec not supported by this browser",
-  AudioCodecNotSupported: "audio codec not supported by this browser",
-  ContainerBitrateExceedsLimit: "file bitrate above the selected quality",
-  VideoBitrateNotSupported: "video bitrate above the selected quality",
-  AudioBitrateNotSupported: "audio bitrate above the selected quality",
-  SubtitleCodecNotSupported: "subtitles have to be burned in",
-  VideoBitDepthNotSupported: "10-bit video not supported by this browser",
-  VideoProfileNotSupported: "video profile not supported by this browser",
-  VideoLevelNotSupported: "video level not supported by this browser",
-  AudioChannelsNotSupported: "too many audio channels",
-  SecondaryAudioNotSupported: "the selected audio track needs remuxing",
+  ContainerNotSupported: msg("file container not supported by this browser"),
+  VideoCodecNotSupported: msg("video codec not supported by this browser"),
+  AudioCodecNotSupported: msg("audio codec not supported by this browser"),
+  ContainerBitrateExceedsLimit: msg("file bitrate above the selected quality"),
+  VideoBitrateNotSupported: msg("video bitrate above the selected quality"),
+  AudioBitrateNotSupported: msg("audio bitrate above the selected quality"),
+  SubtitleCodecNotSupported: msg("subtitles have to be burned in"),
+  VideoBitDepthNotSupported: msg("10-bit video not supported by this browser"),
+  VideoProfileNotSupported: msg("video profile not supported by this browser"),
+  VideoLevelNotSupported: msg("video level not supported by this browser"),
+  AudioChannelsNotSupported: msg("too many audio channels"),
+  SecondaryAudioNotSupported: msg("the selected audio track needs remuxing"),
 };
 
 function PlaybackInfoPanel({ source, onClose }: { source: PlaybackSource; onClose: () => void }) {
@@ -984,42 +985,44 @@ function PlaybackInfoPanel({ source, onClose }: { source: PlaybackSource; onClos
   const video = streams.find((stream) => stream.Type === "Video");
   const rows: [string, string | null | undefined][] = [
     [
-      "Method",
+      t("Method"),
       source.method === "DirectPlay"
-        ? "Direct play"
+        ? t("Direct play")
         : source.method === "DirectStream"
-          ? "Direct stream (remux)"
-          : "Transcode",
+          ? t("Direct stream (remux)")
+          : t("Transcode"),
     ],
     [
-      "Reason",
-      source.transcodeReasons.map((reason) => REASON_TEXT[reason] ?? reason).join("; ") || null,
+      t("Reason"),
+      source.transcodeReasons
+        .map((reason) => (REASON_TEXT[reason] ? t(REASON_TEXT[reason]) : reason))
+        .join("; ") || null,
     ],
-    ["Container", source.mediaSource.Container],
+    [t("Container"), source.mediaSource.Container],
     [
-      "Video",
+      t("Video"),
       video
         ? `${video.Codec?.toUpperCase() ?? ""} ${video.Width ?? ""}×${video.Height ?? ""} ${video.BitDepth ? `${video.BitDepth}-bit` : ""}`
         : null,
     ],
     [
-      "Bitrate",
+      t("Bitrate"),
       source.mediaSource.Bitrate
         ? `${(source.mediaSource.Bitrate / 1_000_000).toFixed(1)} Mbps`
         : null,
     ],
-    ["Delivery", source.isHls ? "HLS" : "Progressive"],
+    [t("Delivery"), source.isHls ? "HLS" : t("Progressive")],
   ];
   return (
     <div className="absolute top-20 left-4 z-10 w-[min(24rem,calc(100%-2rem))] rounded-lg bg-black/80 p-4 text-body-sm ring-1 ring-white/15 md:left-6">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-label-md">Playback info</p>
+        <p className="text-label-md">{t("Playback info")}</p>
         <button
           type="button"
           onClick={onClose}
           className="text-label-sm text-white/70 hover:text-white"
         >
-          Close
+          {t("Close")}
         </button>
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">

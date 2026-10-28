@@ -33,7 +33,7 @@ import {
 } from "@/features/home/sections";
 import { cn } from "@/lib/cn";
 import { readTvMode, saveTvMode } from "@/features/tv/tv-mode";
-import { LANGUAGES, setLanguage, type Language } from "@/i18n";
+import { LANGUAGES, msg, setLanguage, t, type Language } from "@/i18n";
 import { languageOptions, SUBTITLE_MODES } from "./subtitle-options";
 import {
   useChangePassword,
@@ -116,15 +116,15 @@ function Toggle({
 }
 
 const HOME_LAYOUTS: { value: HomeLayout; label: string }[] = [
-  { value: "spotlight", label: "Spotlight" },
-  { value: "dashboard", label: "Dashboard" },
-  { value: "focus", label: "Focus" },
+  { value: "spotlight", label: msg("Spotlight") },
+  { value: "dashboard", label: msg("Dashboard") },
+  { value: "focus", label: msg("Focus") },
 ];
 
 export function SettingsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-page-x-mobile pt-8 pb-24 md:px-page-x md:pt-10">
-      <h1 className="text-headline-lg">Settings</h1>
+      <h1 className="text-headline-lg">{t("Settings")}</h1>
       <ProfileSection />
       <AppearanceSection />
       <HomeSection />
@@ -147,7 +147,7 @@ function ProfileSection() {
     : null;
 
   return (
-    <Section title="Profile">
+    <Section title={t("Profile")}>
       <div className="flex items-center gap-5 py-1">
         <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-full bg-surface-overlay text-headline-md uppercase">
           {avatar ? (
@@ -159,7 +159,7 @@ function ProfileSection() {
         <div className="min-w-0">
           <p className="truncate text-title">{user.Name}</p>
           {user.Policy?.IsAdministrator && (
-            <p className="text-body-sm text-on-surface-muted">Administrator</p>
+            <p className="text-body-sm text-on-surface-muted">{t("Administrator")}</p>
           )}
           <div className="mt-3 flex flex-wrap gap-2">
             <input
@@ -173,10 +173,10 @@ function ProfileSection() {
                 event.target.value = "";
                 if (!file) return;
                 if (file.size > 5 * 1024 * 1024)
-                  return setError("Choose an image smaller than 5 MB.");
+                  return setError(t("Choose an image smaller than 5 MB."));
                 setError(null);
                 upload.mutate(file, {
-                  onError: () => setError("The picture could not be uploaded."),
+                  onError: () => setError(t("The picture could not be uploaded.")),
                 });
               }}
             />
@@ -187,7 +187,7 @@ function ProfileSection() {
               disabled={upload.isPending}
             >
               <Camera aria-hidden className="size-4" />
-              {upload.isPending ? "Uploading…" : avatar ? "Change picture" : "Add picture"}
+              {upload.isPending ? t("Uploading…") : avatar ? t("Change picture") : t("Add picture")}
             </Button>
             {avatar && (
               <Button
@@ -197,7 +197,7 @@ function ProfileSection() {
                 disabled={remove.isPending}
               >
                 <Trash2 aria-hidden className="size-4" />
-                Remove
+                {t("Remove")}
               </Button>
             )}
           </div>
@@ -224,10 +224,10 @@ function AppearanceSection() {
   const [tvMode, setTvMode] = useState(readTvMode);
   return (
     <Section
-      title="Appearance"
-      description="Theme is saved on this device; the home layout follows you everywhere."
+      title={t("Appearance")}
+      description={t("Theme is saved on this device; the home layout follows you everywhere.")}
     >
-      <Row label="Theme" htmlFor={themeId}>
+      <Row label={t("Theme")} htmlFor={themeId}>
         <select
           id={themeId}
           className={SELECT}
@@ -239,12 +239,12 @@ function AppearanceSection() {
             applyTheme(choice);
           }}
         >
-          <option value="dark">Dark</option>
-          <option value="light">Light</option>
-          <option value="system">Match system</option>
+          <option value="dark">{t("Dark")}</option>
+          <option value="light">{t("Light")}</option>
+          <option value="system">{t("Match system")}</option>
         </select>
       </Row>
-      <Row label="Home layout" htmlFor={layoutId}>
+      <Row label={t("Home layout")} htmlFor={layoutId}>
         <select
           id={layoutId}
           className={SELECT}
@@ -255,14 +255,14 @@ function AppearanceSection() {
         >
           {HOME_LAYOUTS.map((layout) => (
             <option key={layout.value} value={layout.value}>
-              {layout.label}
+              {t(layout.label)}
             </option>
           ))}
         </select>
       </Row>
       <Row
-        label="Language"
-        hint="বাংলা is a draft that is still being reviewed."
+        label={t("Language")}
+        hint={t("বাংলা is a draft that is still being reviewed.")}
         htmlFor={languageId}
       >
         <select
@@ -283,15 +283,15 @@ function AppearanceSection() {
         </select>
       </Row>
       <Row
-        label="Date and number format"
-        hint="Finora's text is in English for now."
+        label={t("Date and number format")}
+        hint={t("“Same as this browser” follows the language above.")}
         htmlFor={localeId}
       >
         <PreferenceSelect id={localeId} name="dateLocale" options={DATE_LOCALES} />
       </Row>
       <Row
-        label="Remote-control navigation"
-        hint="For TVs: arrow keys move between items, Back goes back. This device only."
+        label={t("Remote-control navigation")}
+        hint={t("For TVs: arrow keys move between items, Back goes back. This device only.")}
         htmlFor={tvId}
       >
         <Toggle
@@ -322,7 +322,7 @@ function MoveButtons({
     <span className="flex">
       <button
         type="button"
-        aria-label={`Move ${label} up`}
+        aria-label={t("Move {label} up", { label })}
         disabled={index === 0}
         onClick={() => onMove(index, index - 1)}
         className="grid size-9 place-items-center rounded-full text-on-surface-muted hover:bg-surface-raised hover:text-on-surface disabled:opacity-30"
@@ -331,7 +331,7 @@ function MoveButtons({
       </button>
       <button
         type="button"
-        aria-label={`Move ${label} down`}
+        aria-label={t("Move {label} down", { label })}
         disabled={index === count - 1}
         onClick={() => onMove(index, index + 1)}
         className="grid size-9 place-items-center rounded-full text-on-surface-muted hover:bg-surface-raised hover:text-on-surface disabled:opacity-30"
@@ -368,14 +368,16 @@ function HomeSection() {
 
   return (
     <Section
-      title="Home"
-      description="Rows follow you everywhere; library settings are shared with other Jellyfin apps."
+      title={t("Home")}
+      description={t(
+        "Rows follow you everywhere; library settings are shared with other Jellyfin apps.",
+      )}
     >
       <div className="py-4 first:pt-0">
-        <h3 className="text-label-md">Rows</h3>
+        <h3 className="text-label-md">{t("Rows")}</h3>
         <ul className="mt-2">
           {sections.map((section, index) => {
-            const label = HOME_SECTIONS.find((entry) => entry.id === section.id)!.label;
+            const label = t(HOME_SECTIONS.find((entry) => entry.id === section.id)!.label);
             return (
               <li key={section.id} className="flex items-center justify-between gap-3 py-1.5">
                 <span className={cn("text-body-md", !section.visible && "text-on-surface-subtle")}>
@@ -390,7 +392,7 @@ function HomeSection() {
                   />
                   <Toggle
                     id={`home-section-${section.id}`}
-                    label={`Show ${label}`}
+                    label={t("Show {label}", { label })}
                     checked={section.visible}
                     onChange={(visible) =>
                       saveSections(
@@ -408,9 +410,9 @@ function HomeSection() {
       </div>
       {views && views.length > 0 && (
         <div className="py-4 last:pb-0">
-          <h3 className="text-label-md">Libraries</h3>
+          <h3 className="text-label-md">{t("Libraries")}</h3>
           <p className="text-body-sm text-on-surface-muted">
-            Order, and whether each appears on the home page and in “Recently added”.
+            {t("Order, and whether each appears on the home page and in “Recently added”.")}
           </p>
           <ul className="mt-2">
             {views.map((view, index) => {
@@ -433,7 +435,7 @@ function HomeSection() {
                         }
                         className="size-4 accent-primary"
                       />
-                      Home
+                      {t("Home")}
                     </label>
                     <label className="flex items-center gap-2 text-body-sm text-on-surface-muted">
                       <input
@@ -446,10 +448,10 @@ function HomeSection() {
                         }
                         className="size-4 accent-primary"
                       />
-                      Recently added
+                      {t("Recently added")}
                     </label>
                     <MoveButtons
-                      label={view.Name ?? "library"}
+                      label={view.Name ?? t("library")}
                       index={index}
                       count={views.length}
                       onMove={(from, to) =>
@@ -492,7 +494,7 @@ function LanguageSelect({
       value={value}
       onChange={(event) => onChange(event.target.value)}
     >
-      <option value="">Any language</option>
+      <option value="">{t("Any language")}</option>
       {languages.map(([code, name]) => (
         <option key={code} value={code}>
           {name}
@@ -521,7 +523,7 @@ function SaveStatus({ saving, failed }: { saving: boolean; failed: boolean }) {
       aria-live="polite"
       className={cn("h-5 text-caption", failed ? "text-error" : "text-on-surface-subtle")}
     >
-      {failed ? "Couldn't save. Try again." : saving ? "Saving…" : ""}
+      {failed ? t("Couldn't save. Try again.") : saving ? t("Saving…") : ""}
     </p>
   );
 }
@@ -541,8 +543,8 @@ function PlaybackSection() {
   };
 
   return (
-    <Section title="Playback" description="Saved to your Jellyfin account unless noted.">
-      <Row label="Preferred audio language" htmlFor={ids.audio}>
+    <Section title={t("Playback")} description={t("Saved to your Jellyfin account unless noted.")}>
+      <Row label={t("Preferred audio language")} htmlFor={ids.audio}>
         <LanguageSelect
           id={ids.audio}
           value={config.AudioLanguagePreference ?? ""}
@@ -550,8 +552,8 @@ function PlaybackSection() {
         />
       </Row>
       <Row
-        label="Play the default audio track"
-        hint="Otherwise prefer your audio language"
+        label={t("Play the default audio track")}
+        hint={t("Otherwise prefer your audio language")}
         htmlFor={ids.defaultTrack}
       >
         <Toggle
@@ -561,8 +563,8 @@ function PlaybackSection() {
         />
       </Row>
       <Row
-        label="Streaming quality"
-        hint="On this device. Lower it on slow connections."
+        label={t("Streaming quality")}
+        hint={t("On this device. Lower it on slow connections.")}
         htmlFor={ids.quality}
       >
         <select
@@ -577,12 +579,12 @@ function PlaybackSection() {
         >
           {BITRATE_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
-              {option.label === "Original" ? "Original (no limit)" : option.label}
+              {option.label === "Original" ? t("Original (no limit)") : option.label}
             </option>
           ))}
         </select>
       </Row>
-      <Row label="Autoplay next episode" htmlFor={ids.autoplay}>
+      <Row label={t("Autoplay next episode")} htmlFor={ids.autoplay}>
         <Toggle
           id={ids.autoplay}
           checked={config.EnableNextEpisodeAutoPlay ?? true}
@@ -593,27 +595,27 @@ function PlaybackSection() {
         />
       </Row>
       <Row
-        label="Intros, recaps and credits"
-        hint="When the server knows where they are"
+        label={t("Intros, recaps and credits")}
+        hint={t("When the server knows where they are")}
         htmlFor={ids.skip}
       >
         <PreferenceSelect id={ids.skip} name="skipSegments" options={SKIP_SEGMENTS} />
       </Row>
       <Row
-        label="Theme music on detail pages"
-        hint="When the library has theme songs or videos"
+        label={t("Theme music on detail pages")}
+        hint={t("When the library has theme songs or videos")}
         htmlFor={ids.theme}
       >
         <PreferenceSelect id={ids.theme} name="themeMedia" options={THEME_MEDIA} />
       </Row>
-      <Row label="Remember audio choices" hint="Per series" htmlFor={ids.rememberAudio}>
+      <Row label={t("Remember audio choices")} hint={t("Per series")} htmlFor={ids.rememberAudio}>
         <Toggle
           id={ids.rememberAudio}
           checked={config.RememberAudioSelections ?? true}
           onChange={(value) => save({ RememberAudioSelections: value })}
         />
       </Row>
-      <Row label="Remember subtitle choices" hint="Per series" htmlFor={ids.rememberSubs}>
+      <Row label={t("Remember subtitle choices")} hint={t("Per series")} htmlFor={ids.rememberSubs}>
         <Toggle
           id={ids.rememberSubs}
           checked={config.RememberSubtitleSelections ?? true}
@@ -638,15 +640,15 @@ function SubtitleSection() {
   const mode =
     SUBTITLE_MODES.find((option) => option.value === config.SubtitleMode) ?? SUBTITLE_MODES[0]!;
   return (
-    <Section title="Subtitles" description="Saved to your Jellyfin account.">
-      <Row label="Preferred subtitle language" htmlFor={ids.language}>
+    <Section title={t("Subtitles")} description={t("Saved to your Jellyfin account.")}>
+      <Row label={t("Preferred subtitle language")} htmlFor={ids.language}>
         <LanguageSelect
           id={ids.language}
           value={config.SubtitleLanguagePreference ?? ""}
           onChange={(value) => save({ SubtitleLanguagePreference: value || null })}
         />
       </Row>
-      <Row label="When to show subtitles" hint={mode.hint} htmlFor={ids.mode}>
+      <Row label={t("When to show subtitles")} hint={t(mode.hint)} htmlFor={ids.mode}>
         <select
           id={ids.mode}
           className={SELECT}
@@ -655,29 +657,29 @@ function SubtitleSection() {
         >
           {SUBTITLE_MODES.map((option) => (
             <option key={option.value} value={option.value}>
-              {option.label}
+              {t(option.label)}
             </option>
           ))}
         </select>
       </Row>
       <SaveStatus saving={saving} failed={failed} />
-      <h3 className="mt-6 text-label-md">Appearance</h3>
-      <p className="text-body-sm text-on-surface-muted">Follows you to every device.</p>
+      <h3 className="mt-6 text-label-md">{t("Appearance")}</h3>
+      <p className="text-body-sm text-on-surface-muted">{t("Follows you to every device.")}</p>
       <SubtitlePreview />
-      <Row label="Size" htmlFor={ids.size}>
+      <Row label={t("Size")} htmlFor={ids.size}>
         <PreferenceSelect id={ids.size} name="subtitleSize" options={SUBTITLE_SIZES} />
       </Row>
-      <Row label="Colour" htmlFor={ids.color}>
+      <Row label={t("Colour")} htmlFor={ids.color}>
         <PreferenceSelect id={ids.color} name="subtitleColor" options={SUBTITLE_COLORS} />
       </Row>
-      <Row label="Background" htmlFor={ids.background}>
+      <Row label={t("Background")} htmlFor={ids.background}>
         <PreferenceSelect
           id={ids.background}
           name="subtitleBackground"
           options={SUBTITLE_BACKGROUNDS}
         />
       </Row>
-      <Row label="Position" htmlFor={ids.position}>
+      <Row label={t("Position")} htmlFor={ids.position}>
         <PreferenceSelect id={ids.position} name="subtitlePosition" options={SUBTITLE_POSITIONS} />
       </Row>
     </Section>
@@ -709,7 +711,7 @@ function PreferenceSelect<K extends ChoiceKey>({
     >
       {options.map((option) => (
         <option key={option.value} value={option.value}>
-          {option.label}
+          {t(option.label)}
         </option>
       ))}
     </select>
@@ -763,12 +765,12 @@ function QuickConnectSection() {
 
   return (
     <Section
-      title="Quick Connect"
-      description="Sign in a TV or another device: enter the code it shows."
+      title={t("Quick Connect")}
+      description={t("Sign in a TV or another device: enter the code it shows.")}
     >
       <form onSubmit={onSubmit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <TextField
-          label="Code"
+          label={t("Code")}
           inputMode="numeric"
           autoComplete="one-time-code"
           value={code}
@@ -776,7 +778,7 @@ function QuickConnectSection() {
           className="sm:w-64"
         />
         <Button type="submit" disabled={!code.trim() || authorize.isPending}>
-          {authorize.isPending ? "Authorising…" : "Authorise"}
+          {authorize.isPending ? t("Authorising…") : t("Authorise")}
         </Button>
       </form>
       <p
@@ -785,10 +787,10 @@ function QuickConnectSection() {
       >
         {authorize.isError
           ? isAxiosError(authorize.error) && authorize.error.response?.status === 404
-            ? "That code wasn't found. Check it and try again."
-            : "Couldn't authorise the code."
+            ? t("That code wasn't found. Check it and try again.")
+            : t("Couldn't authorise the code.")
           : authorize.isSuccess
-            ? "Device signed in."
+            ? t("Device signed in.")
             : ""}
       </p>
     </Section>
@@ -818,40 +820,42 @@ function PasswordSection() {
   };
 
   return (
-    <Section title="Password">
+    <Section title={t("Password")}>
       <form onSubmit={onSubmit} className="grid gap-4 sm:max-w-sm">
         <TextField
-          label="Current password"
+          label={t("Current password")}
           type="password"
           autoComplete="current-password"
           value={current}
           onChange={(event) => setCurrent(event.target.value)}
         />
         <TextField
-          label="New password"
+          label={t("New password")}
           type="password"
           autoComplete="new-password"
           value={next}
           onChange={(event) => setNext(event.target.value)}
         />
         <TextField
-          label="Confirm new password"
+          label={t("Confirm new password")}
           type="password"
           autoComplete="new-password"
           value={confirm}
           onChange={(event) => setConfirm(event.target.value)}
         />
-        {mismatch && <p className="text-body-sm text-error">The new passwords don't match.</p>}
+        {mismatch && (
+          <p className="text-body-sm text-error">{t("The new passwords don't match.")}</p>
+        )}
         <p
           role="status"
           className={cn("h-5 text-body-sm", change.isError ? "text-error" : "text-success")}
         >
           {change.isError
             ? isAxiosError(change.error) && change.error.response?.status === 403
-              ? "The current password is wrong."
-              : "Couldn't change the password."
+              ? t("The current password is wrong.")
+              : t("Couldn't change the password.")
             : change.isSuccess
-              ? "Password changed."
+              ? t("Password changed.")
               : ""}
         </p>
         <Button
@@ -859,7 +863,7 @@ function PasswordSection() {
           disabled={!next || mismatch || change.isPending}
           className="justify-self-start"
         >
-          {change.isPending ? "Saving…" : "Change password"}
+          {change.isPending ? t("Saving…") : t("Change password")}
         </Button>
       </form>
     </Section>
@@ -867,45 +871,45 @@ function PasswordSection() {
 }
 
 const SUBTITLE_SIZES = [
-  { value: "small", label: "Small" },
-  { value: "medium", label: "Medium" },
-  { value: "large", label: "Large" },
-  { value: "xlarge", label: "Extra large" },
+  { value: "small", label: msg("Small") },
+  { value: "medium", label: msg("Medium") },
+  { value: "large", label: msg("Large") },
+  { value: "xlarge", label: msg("Extra large") },
 ] as const;
 
 const SUBTITLE_COLORS = [
-  { value: "white", label: "White" },
-  { value: "yellow", label: "Yellow" },
+  { value: "white", label: msg("White") },
+  { value: "yellow", label: msg("Yellow") },
 ] as const;
 
 const SUBTITLE_BACKGROUNDS = [
-  { value: "box", label: "Dark box" },
-  { value: "shadow", label: "Outline only" },
-  { value: "none", label: "None" },
+  { value: "box", label: msg("Dark box") },
+  { value: "shadow", label: msg("Outline only") },
+  { value: "none", label: msg("None") },
 ] as const;
 
 const SUBTITLE_POSITIONS = [
-  { value: "bottom", label: "Bottom" },
-  { value: "raised", label: "Raised" },
+  { value: "bottom", label: msg("Bottom") },
+  { value: "raised", label: msg("Raised") },
 ] as const;
 
 const THEME_MEDIA = [
-  { value: "off", label: "Off" },
-  { value: "music", label: "Theme songs" },
-  { value: "all", label: "Theme songs and videos" },
+  { value: "off", label: msg("Off") },
+  { value: "music", label: msg("Theme songs") },
+  { value: "all", label: msg("Theme songs and videos") },
 ] as const;
 
 const SKIP_SEGMENTS = [
-  { value: "button", label: "Show a skip button" },
-  { value: "auto", label: "Skip automatically" },
-  { value: "off", label: "Do nothing" },
+  { value: "button", label: msg("Show a skip button") },
+  { value: "auto", label: msg("Skip automatically") },
+  { value: "off", label: msg("Do nothing") },
 ] as const;
 
 const DATE_LOCALES = [
-  { value: "auto", label: "Same as this browser" },
-  { value: "en-US", label: "English (US) — Oct 28, 2026" },
-  { value: "en-GB", label: "English (UK) — 28 Oct 2026" },
-  { value: "en-IN", label: "English (India) — 28 Oct 2026" },
+  { value: "auto", label: msg("Same as this browser") },
+  { value: "en-US", label: msg("English (US) — Oct 28, 2026") },
+  { value: "en-GB", label: msg("English (UK) — 28 Oct 2026") },
+  { value: "en-IN", label: msg("English (India) — 28 Oct 2026") },
   { value: "bn-BD", label: "বাংলা — ২৮ অক্টো, ২০২৬" },
   { value: "de-DE", label: "Deutsch — 28.10.2026" },
   { value: "fr-FR", label: "Français — 28 oct. 2026" },

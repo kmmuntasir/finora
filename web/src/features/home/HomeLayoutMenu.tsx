@@ -1,11 +1,16 @@
 import { Check, LayoutTemplate } from "lucide-react";
 import { DropdownMenu } from "radix-ui";
 import { useSetPreference, type HomeLayout } from "@/features/preferences/preferences";
+import { msg, t } from "@/i18n";
 
 const LAYOUTS: { id: HomeLayout; name: string; description: string }[] = [
-  { id: "spotlight", name: "Spotlight", description: "Featured new arrivals up top" },
-  { id: "dashboard", name: "Dashboard", description: "Libraries and progress at a glance" },
-  { id: "focus", name: "Focus", description: "Pick up where you left off" },
+  { id: "spotlight", name: msg("Spotlight"), description: msg("Featured new arrivals up top") },
+  {
+    id: "dashboard",
+    name: msg("Dashboard"),
+    description: msg("Libraries and progress at a glance"),
+  },
+  { id: "focus", name: msg("Focus"), description: msg("Pick up where you left off") },
 ];
 
 export function HomeLayoutMenu({ current }: { current: HomeLayout }) {
@@ -13,7 +18,7 @@ export function HomeLayoutMenu({ current }: { current: HomeLayout }) {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger
-        aria-label="Home layout"
+        aria-label={t("Home layout")}
         className="grid size-10 place-items-center rounded-full bg-surface-overlay/80 text-on-surface-muted backdrop-blur transition-colors duration-[120ms] hover:text-on-surface data-[state=open]:text-on-surface"
       >
         <LayoutTemplate aria-hidden className="size-5" />
@@ -25,7 +30,7 @@ export function HomeLayoutMenu({ current }: { current: HomeLayout }) {
           className="z-50 w-72 rounded-lg bg-surface-overlay p-1.5 shadow-[0_8px_24px_rgb(0_0_0/0.5)] ring-1 ring-border data-[state=open]:animate-[fade-in_150ms_ease-out]"
         >
           <DropdownMenu.Label className="px-3 pt-2 pb-1 text-label-sm text-on-surface-subtle">
-            Home layout
+            {t("Home layout")}
           </DropdownMenu.Label>
           <DropdownMenu.RadioGroup
             value={current}
@@ -43,9 +48,9 @@ export function HomeLayoutMenu({ current }: { current: HomeLayout }) {
                   </DropdownMenu.ItemIndicator>
                 </span>
                 <span>
-                  <span className="block text-label-md">{layout.name}</span>
+                  <span className="block text-label-md">{t(layout.name)}</span>
                   <span className="block text-caption text-on-surface-muted">
-                    {layout.description}
+                    {t(layout.description)}
                   </span>
                 </span>
               </DropdownMenu.RadioItem>

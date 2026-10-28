@@ -1,10 +1,11 @@
 import { Play } from "lucide-react";
 import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
+import { t } from "@/i18n";
 
 /** The only element filled with the logo gradient (DESIGN.md, Components). */
 export function PlayButton({
-  label = "Play",
+  label,
   className,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { label?: string }) {
@@ -19,7 +20,7 @@ export function PlayButton({
       {...props}
     >
       <Play aria-hidden className="size-5 fill-current" />
-      {label}
+      {label ?? t("Play")}
     </button>
   );
 }

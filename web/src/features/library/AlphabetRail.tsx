@@ -1,5 +1,6 @@
 import { cn } from "@/lib/cn";
 import { LETTERS } from "./library-config";
+import { t } from "@/i18n";
 
 /** Jump to titles starting with a letter (only when sorted by name). */
 export function AlphabetRail({
@@ -11,7 +12,7 @@ export function AlphabetRail({
 }) {
   return (
     <nav
-      aria-label="Jump to letter"
+      aria-label={t("Jump to letter")}
       className="flex flex-wrap gap-1 lg:sticky lg:top-6 lg:flex-col lg:flex-nowrap"
     >
       <button
@@ -25,7 +26,7 @@ export function AlphabetRail({
             : "text-on-surface-muted hover:bg-surface-raised hover:text-on-surface",
         )}
       >
-        All
+        {t("All")}
       </button>
       {LETTERS.map((letter) => (
         <button
@@ -33,7 +34,9 @@ export function AlphabetRail({
           type="button"
           onClick={() => onSelect(letter === active ? null : letter)}
           aria-pressed={letter === active}
-          aria-label={letter === "#" ? "Numbers and symbols" : `Starts with ${letter}`}
+          aria-label={
+            letter === "#" ? t("Numbers and symbols") : t("Starts with {letter}", { letter })
+          }
           className={cn(
             "grid size-7 place-items-center rounded-full text-label-sm transition-colors duration-[120ms]",
             letter === active

@@ -2,6 +2,7 @@ import type { ActivityLogEntry } from "@jellyfin/sdk/lib/generated-client/models
 import { AlertTriangle, Info, LogIn, Play, Settings2, XCircle } from "lucide-react";
 import { formatDate, relativeTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { t } from "@/i18n";
 
 function icon(entry: ActivityLogEntry) {
   if (entry.Severity === "Error" || entry.Severity === "Critical") return XCircle;
@@ -17,7 +18,7 @@ function icon(entry: ActivityLogEntry) {
 /** Jellyfin activity entries: who signed in, what played, failures, server changes. */
 export function ActivityList({ entries }: { entries: ActivityLogEntry[] }) {
   if (!entries.length)
-    return <p className="text-body-md text-on-surface-muted">Nothing recorded yet.</p>;
+    return <p className="text-body-md text-on-surface-muted">{t("Nothing recorded yet.")}</p>;
   return (
     <ul className="divide-y divide-border rounded-lg bg-surface">
       {entries.map((entry) => {

@@ -13,6 +13,7 @@ import { cn } from "@/lib/cn";
 import { formatDate } from "@/lib/format";
 import { useSubtitleLanguages } from "@/features/subtitles/api";
 import { useUsers } from "./queries";
+import { msg, t, tn } from "@/i18n";
 
 interface ApiSettings {
   jellyfinUrl: string;
@@ -46,12 +47,16 @@ interface OpenSubtitlesActivity {
 }
 
 const PROVIDERS = [
-  { id: "addic7ed", name: "Addic7ed", hint: "TV episodes; free, no account" },
-  { id: "subdl", name: "SubDL", hint: "Movies and TV; free, about 300 downloads a day per server" },
+  { id: "addic7ed", name: "Addic7ed", hint: msg("TV episodes; free, no account") },
+  {
+    id: "subdl",
+    name: "SubDL",
+    hint: msg("Movies and TV; free, about 300 downloads a day per server"),
+  },
   {
     id: "opensubtitles",
     name: "OpenSubtitles",
-    hint: "Needs a free API key from opensubtitles.com",
+    hint: msg("Needs a free API key from opensubtitles.com"),
   },
 ];
 
@@ -98,14 +103,14 @@ export function FinoraAdminPage() {
   if (!config.apiUrl)
     return (
       <p className="text-body-md text-on-surface-muted">
-        No Finora API is configured for this site.
+        {t("No Finora API is configured for this site.")}
       </p>
     );
   if (finora.isPending) return <Spinner />;
   if (!finora.data) {
     return (
       <p role="alert" className="text-body-md text-error">
-        The Finora API at {config.apiUrl} is not reachable.
+        {t("The Finora API at {url} is not reachable.", { url: config.apiUrl })}
       </p>
     );
   }
@@ -135,7 +140,7 @@ function SetupForm() {
         body: { code: code.trim(), jellyfinUrl, apiKey: apiKey.trim(), allowedOrigins: origins },
       }),
     onSuccess: (data) => {
-      toast.success(`Connected to ${data.serverName}.`);
+      toast.success(t("Connected to {name}.", { name: data.serverName }));
       void queryClient.invalidateQueries({ queryKey: ["finora"] });
     },
   });
@@ -145,25 +150,27 @@ function SetupForm() {
   };
   return (
     <Section
-      title="Set up the Finora API"
-      description="The API printed a one-time setup code in its log when it started. Create a Jellyfin API key in the Jellyfin dashboard (Administration → API Keys)."
+      title={t("Set up the Finora API")}
+      description={t(
+        "The API printed a one-time setup code in its log when it started. Create a Jellyfin API key in the Jellyfin dashboard (Administration → API Keys).",
+      )}
     >
       <form onSubmit={onSubmit} className="grid max-w-md gap-4">
         <TextField
-          label="Setup code"
+          label={t("Setup code")}
           inputMode="numeric"
           value={code}
           onChange={(event) => setCode(event.target.value)}
           required
         />
         <TextField
-          label="Jellyfin address"
+          label={t("Jellyfin address")}
           value={jellyfinUrl}
           onChange={(event) => setJellyfinUrl(event.target.value)}
           required
         />
         <TextField
-          label="Jellyfin API key"
+          label={t("Jellyfin API key")}
           type="password"
           value={apiKey}
           onChange={(event) => setApiKey(event.target.value)}
@@ -171,18 +178,18 @@ function SetupForm() {
           autoComplete="off"
         />
         <TextField
-          label="Finora Web addresses (comma-separated)"
+          label={t("Finora Web addresses (comma-separated)")}
           value={origins}
           onChange={(event) => setOrigins(event.target.value)}
           required
         />
         {setup.isError && (
           <p role="alert" className="text-body-sm text-error">
-            {errorText(setup.error, "Setup failed.")}
+            {errorText(setup.error, t("Setup failed."))}
           </p>
         )}
         <Button type="submit" disabled={setup.isPending} className="justify-self-start">
-          {setup.isPending ? "Connecting…" : "Connect"}
+          {setup.isPending ? t("Connecting…") : t("Connect")}
         </Button>
       </form>
     </Section>
@@ -200,7 +207,7 @@ function SettingsForm() {
   if (settings.isError || !settings.data) {
     return (
       <p role="alert" className="text-body-md text-error">
-        {errorText(settings.error, "Couldn't load the API settings.")}
+        {errorText(settings.error, t("Couldn't load the API settings."))}
       </p>
     );
   }
@@ -250,18 +257,19 @@ function SettingsFormFields({
     onSuccess: (next) => {
       setClientSecret("");
       onSaved(next);
-      toast.success("API settings saved.");
+      toast.success(t("API settings saved."));
     },
-    onError: (error) => toast.error(errorText(error, "Couldn't save the settings.")),
+    onError: (error) => toast.error(errorText(error, t("Couldn't save the settings."))),
   });
 
   return (
     <Section
-      title="API settings"
+      title={t("API settings")}
       description={
         <>
-          Connected to Jellyfin at <span className="text-on-surface">{settings.jellyfinUrl}</span>.
-          Values set by environment variables can't be changed here.
+          {t("Connected to Jellyfin at")}{" "}
+          <span className="text-on-surface">{settings.jellyfinUrl}</span>.{" "}
+          {t("Values set by environment variables can't be changed here.")}
         </>
       }
     >
@@ -273,29 +281,29 @@ function SettingsFormFields({
         className="grid gap-4 sm:max-w-lg"
       >
         <TextField
-          label="Finora Web addresses (comma-separated)"
+          label={t("Finora Web addresses (comma-separated)")}
           value={origins}
           onChange={(event) => setOrigins(event.target.value)}
           disabled={locked.allowed_origins}
         />
         <TextField
-          label="This API's public HTTPS address (for Google sign-in)"
+          label={t("This API's public HTTPS address (for Google sign-in)")}
           placeholder="https://finora-api.example.com"
           value={publicUrl}
           onChange={(event) => setPublicUrl(event.target.value)}
           disabled={locked.public_url}
         />
         <TextField
-          label="Google OAuth client ID"
+          label={t("Google OAuth client ID")}
           value={clientId}
           onChange={(event) => setClientId(event.target.value)}
           disabled={locked.google_client_id}
           autoComplete="off"
         />
         <TextField
-          label="Google OAuth client secret"
+          label={t("Google OAuth client secret")}
           type="password"
-          placeholder={settings.googleClientSecretSet ? "Saved — leave empty to keep" : ""}
+          placeholder={settings.googleClientSecretSet ? t("Saved — leave empty to keep") : ""}
           value={clientSecret}
           onChange={(event) => setClientSecret(event.target.value)}
           disabled={locked.google_client_secret}
@@ -303,7 +311,7 @@ function SettingsFormFields({
         />
         <div>
           <label htmlFor={hoursId} className="mb-1.5 block text-label-md">
-            Google admin sessions end after
+            {t("Google admin sessions end after")}
           </label>
           <select
             id={hoursId}
@@ -315,21 +323,21 @@ function SettingsFormFields({
             {[1, 4, 8, 12, 24, 72, 168].map((value) => (
               <option key={value} value={value}>
                 {value < 24
-                  ? `${value} hour${value === 1 ? "" : "s"}`
-                  : `${value / 24} day${value === 24 ? "" : "s"}`}
+                  ? tn(value, "{count} hour", "{count} hours")
+                  : tn(value / 24, "{count} day", "{count} days")}
               </option>
             ))}
           </select>
         </div>
         <p className="text-body-sm text-on-surface-muted">
-          In Google Cloud, add{" "}
+          {t("In Google Cloud, add")}{" "}
           <code className="text-on-surface">
             {(publicUrl || "https://…") + "/api/v1/auth/google/callback"}
           </code>{" "}
-          as an authorised redirect URI.
+          {t("as an authorised redirect URI.")}
         </p>
         <Button type="submit" disabled={save.isPending} className="justify-self-start">
-          {save.isPending ? "Saving…" : "Save settings"}
+          {save.isPending ? t("Saving…") : t("Save settings")}
         </Button>
       </form>
     </Section>
@@ -396,9 +404,9 @@ function SubtitleSettingsFields({
       setOsKey("");
       setOsPassword("");
       onSaved(next);
-      toast.success("Subtitle settings saved.");
+      toast.success(t("Subtitle settings saved."));
     },
-    onError: (error) => toast.error(errorText(error, "Couldn't save.")),
+    onError: (error) => toast.error(errorText(error, t("Couldn't save."))),
   });
 
   const move = (id: string, delta: -1 | 1) => {
@@ -416,8 +424,10 @@ function SubtitleSettingsFields({
   ];
   return (
     <Section
-      title="Subtitle finder"
-      description="Providers are searched together; results are ranked by how well they match the file."
+      title={t("Subtitle finder")}
+      description={t(
+        "Providers are searched together; results are ranked by how well they match the file.",
+      )}
     >
       <form
         onSubmit={(event) => {
@@ -443,12 +453,14 @@ function SubtitleSettingsFields({
                         : enabled.filter((value) => value !== id),
                     )
                   }
-                  aria-label={`Use ${provider.name}`}
+                  aria-label={t("Use {name}", { name: provider.name })}
                   className="size-4 accent-primary"
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block text-label-md">{provider.name}</span>
-                  <span className="block text-caption text-on-surface-muted">{provider.hint}</span>
+                  <span className="block text-caption text-on-surface-muted">
+                    {t(provider.hint)}
+                  </span>
                 </span>
                 {on && (
                   <span className="flex gap-1">
@@ -457,7 +469,7 @@ function SubtitleSettingsFields({
                       size="sm"
                       variant="ghost"
                       onClick={() => move(id, -1)}
-                      aria-label={`Move ${provider.name} up`}
+                      aria-label={t("Move {name} up", { name: provider.name })}
                     >
                       ↑
                     </Button>
@@ -466,7 +478,7 @@ function SubtitleSettingsFields({
                       size="sm"
                       variant="ghost"
                       onClick={() => move(id, 1)}
-                      aria-label={`Move ${provider.name} down`}
+                      aria-label={t("Move {name} down", { name: provider.name })}
                     >
                       ↓
                     </Button>
@@ -479,7 +491,7 @@ function SubtitleSettingsFields({
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor={ids.access} className="mb-1.5 block text-label-md">
-              Who can download subtitles
+              {t("Who can download subtitles")}
             </label>
             <select
               id={ids.access}
@@ -488,13 +500,13 @@ function SubtitleSettingsFields({
               onChange={(event) => setAccess(event.target.value as "all" | "admins")}
               className="h-12 w-full rounded-md border border-border-strong bg-background px-3 text-body-md"
             >
-              <option value="all">Everyone</option>
-              <option value="admins">Administrators only</option>
+              <option value="all">{t("Everyone")}</option>
+              <option value="admins">{t("Administrators only")}</option>
             </select>
           </div>
           <div>
             <label htmlFor={ids.limit} className="mb-1.5 block text-label-md">
-              Downloads per person per day (0 = no limit)
+              {t("Downloads per person per day (0 = no limit)")}
             </label>
             <input
               id={ids.limit}
@@ -510,26 +522,26 @@ function SubtitleSettingsFields({
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <TextField
-            label="OpenSubtitles API key"
+            label={t("OpenSubtitles API key")}
             type="password"
             autoComplete="off"
-            placeholder={settings.openSubtitlesApiKeySet ? "Saved — leave empty to keep" : ""}
+            placeholder={settings.openSubtitlesApiKeySet ? t("Saved — leave empty to keep") : ""}
             value={osKey}
             onChange={(event) => setOsKey(event.target.value)}
             disabled={locked.opensubtitles_api_key}
           />
           <TextField
-            label="Username (optional)"
+            label={t("Username (optional)")}
             autoComplete="off"
             value={osUser}
             onChange={(event) => setOsUser(event.target.value)}
             disabled={locked.opensubtitles_username}
           />
           <TextField
-            label="Password (optional)"
+            label={t("Password (optional)")}
             type="password"
             autoComplete="off"
-            placeholder={settings.openSubtitlesPasswordSet ? "Saved" : ""}
+            placeholder={settings.openSubtitlesPasswordSet ? t("Saved") : ""}
             value={osPassword}
             onChange={(event) => setOsPassword(event.target.value)}
             disabled={locked.opensubtitles_password}
@@ -540,7 +552,7 @@ function SubtitleSettingsFields({
         )}
         <ProviderHealthTable />
         <Button type="submit" disabled={save.isPending} className="justify-self-start">
-          {save.isPending ? "Saving…" : "Save subtitle settings"}
+          {save.isPending ? t("Saving…") : t("Save subtitle settings")}
         </Button>
       </form>
     </Section>
@@ -568,7 +580,7 @@ function ProviderHealthTable() {
   if (!health.data?.length) return null;
   return (
     <div>
-      <p className="mb-2 text-label-md">Provider status</p>
+      <p className="mb-2 text-label-md">{t("Provider status")}</p>
       <ul className="divide-y divide-border rounded-md bg-background">
         {health.data.map((provider) => (
           <li
@@ -577,23 +589,25 @@ function ProviderHealthTable() {
           >
             <span className={cn("text-body-md", !provider.enabled && "text-on-surface-subtle")}>
               {provider.name}
-              {!provider.enabled && " (off)"}
+              {!provider.enabled && ` ${t("(off)")}`}
             </span>
             <span className="text-body-sm text-on-surface-muted">
               {provider.cooldownUntil ? (
                 <span className="text-warning">
-                  Paused until {formatDate(provider.cooldownUntil, "datetime")}:{" "}
-                  {provider.cooldownReason}
+                  {t("Paused until {date}: {reason}", {
+                    date: formatDate(provider.cooldownUntil, "datetime"),
+                    reason: provider.cooldownReason ?? "",
+                  })}
                 </span>
               ) : provider.enabled ? (
-                "Ready"
+                t("Ready")
               ) : (
                 "—"
               )}
               {" · "}
-              {provider.downloadsToday} {provider.downloadsToday === 1 ? "download" : "downloads"}{" "}
-              today
-              {provider.remaining !== null && ` · ${provider.remaining} left`}
+              {tn(provider.downloadsToday, "{count} download today", "{count} downloads today")}
+              {provider.remaining !== null &&
+                ` · ${t("{count} left", { count: provider.remaining })}`}
             </span>
           </li>
         ))}
@@ -605,12 +619,18 @@ function ProviderHealthTable() {
 /** OpenSubtitles deletes keys that download nothing for 60 days; Finora tracks the last download. */
 function OpenSubtitlesStatus({ activity }: { activity: OpenSubtitlesActivity }) {
   const last = activity.lastDownload
-    ? `Last download through Finora: ${formatDate(activity.lastDownload)}.`
-    : "No download through Finora yet.";
+    ? t("Last download through Finora: {date}.", { date: formatDate(activity.lastDownload) })
+    : t("No download through Finora yet.");
   const purge = activity.purgeAfter
-    ? ` OpenSubtitles deletes keys with no downloads for 60 days — download a subtitle before ${formatDate(activity.purgeAfter)} to keep this one.`
-    : " OpenSubtitles deletes keys with no downloads for 60 days.";
-  const quota = activity.remaining !== null ? ` ${activity.remaining} downloads left today.` : "";
+    ? ` ${t(
+        "OpenSubtitles deletes keys with no downloads for 60 days — download a subtitle before {date} to keep this one.",
+        { date: formatDate(activity.purgeAfter) },
+      )}`
+    : ` ${t("OpenSubtitles deletes keys with no downloads for 60 days.")}`;
+  const quota =
+    activity.remaining !== null
+      ? ` ${t("{count} downloads left today.", { count: activity.remaining })}`
+      : "";
   return (
     <p
       role={activity.warning ? "alert" : undefined}
@@ -649,9 +669,9 @@ function Allowlist() {
     onSuccess: (next) => {
       queryClient.setQueryData(["finora", "allowlist"], next);
       setEmail("");
-      toast.success("Google account linked.");
+      toast.success(t("Google account linked."));
     },
-    onError: (error) => toast.error(errorText(error, "Couldn't link the account.")),
+    onError: (error) => toast.error(errorText(error, t("Couldn't link the account."))),
   });
   const remove = useMutation({
     mutationFn: (address: string) =>
@@ -661,8 +681,10 @@ function Allowlist() {
 
   return (
     <Section
-      title="Google sign-in for admins"
-      description="Link Google accounts to Jellyfin administrators. Over plain HTTP, the admin console only opens for sessions started with Google."
+      title={t("Google sign-in for admins")}
+      description={t(
+        "Link Google accounts to Jellyfin administrators. Over plain HTTP, the admin console only opens for sessions started with Google.",
+      )}
     >
       {list.data?.length ? (
         <ul className="mb-5 divide-y divide-border rounded-md bg-background">
@@ -672,13 +694,14 @@ function Allowlist() {
                 <span className="block truncate">{entry.email}</span>
                 <span className="text-on-surface-muted">
                   →{" "}
-                  {users?.find((user) => user.Id === entry.jellyfinUserId)?.Name ?? "Unknown user"}
+                  {users?.find((user) => user.Id === entry.jellyfinUserId)?.Name ??
+                    t("Unknown user")}
                 </span>
               </span>
               <button
                 type="button"
                 onClick={() => remove.mutate(entry.email)}
-                aria-label={`Remove ${entry.email}`}
+                aria-label={t("Remove {name}", { name: entry.email })}
                 className="grid size-8 place-items-center rounded-full text-on-surface-muted hover:bg-surface-raised hover:text-error"
               >
                 <Trash2 aria-hidden className="size-4" />
@@ -687,7 +710,9 @@ function Allowlist() {
           ))}
         </ul>
       ) : (
-        <p className="mb-5 text-body-sm text-on-surface-muted">No Google accounts linked yet.</p>
+        <p className="mb-5 text-body-sm text-on-surface-muted">
+          {t("No Google accounts linked yet.")}
+        </p>
       )}
       <form
         onSubmit={(event) => {
@@ -697,7 +722,7 @@ function Allowlist() {
         className="flex flex-col gap-3 sm:flex-row sm:items-end"
       >
         <TextField
-          label="Google email"
+          label={t("Google email")}
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
@@ -706,7 +731,7 @@ function Allowlist() {
         />
         <div>
           <label htmlFor={selectId} className="mb-1.5 block text-label-md">
-            Jellyfin admin
+            {t("Jellyfin admin")}
           </label>
           <select
             id={selectId}
@@ -722,7 +747,7 @@ function Allowlist() {
           </select>
         </div>
         <Button type="submit" disabled={!email || add.isPending}>
-          Link
+          {t("Link")}
         </Button>
       </form>
     </Section>
@@ -768,9 +793,9 @@ function Announcements() {
       setStartsAt("");
       setEndsAt("");
       refresh();
-      toast.success("Announcement published.");
+      toast.success(t("Announcement published."));
     },
-    onError: (error) => toast.error(errorText(error, "Couldn't publish.")),
+    onError: (error) => toast.error(errorText(error, t("Couldn't publish."))),
   });
   const remove = useMutation({
     mutationFn: (id: number) => call(`/admin/announcements/${id}`, { method: "DELETE" }),
@@ -780,7 +805,10 @@ function Announcements() {
   const inputClass =
     "h-12 w-full rounded-md border border-border-strong bg-background px-3 text-body-md";
   return (
-    <Section title="Announcements" description="Shown at the top of every page for all users.">
+    <Section
+      title={t("Announcements")}
+      description={t("Shown at the top of every page for all users.")}
+    >
       {list.data?.length ? (
         <ul className="mb-5 space-y-2">
           {list.data.map((announcement) => (
@@ -791,19 +819,25 @@ function Announcements() {
               <div className="min-w-0">
                 <p className="text-body-md whitespace-pre-line">{announcement.message}</p>
                 <p className="mt-1 text-caption text-on-surface-muted">
-                  {announcement.tone} ·{" "}
+                  {t(TONE_LABELS[announcement.tone] ?? announcement.tone)} ·{" "}
                   {announcement.startsAt
-                    ? `from ${formatDate(announcement.startsAt, "datetime")}`
-                    : "now"}
-                  {announcement.endsAt
-                    ? ` until ${formatDate(announcement.endsAt, "datetime")}`
-                    : " until removed"}
+                    ? announcement.endsAt
+                      ? t("from {start} until {end}", {
+                          start: formatDate(announcement.startsAt, "datetime"),
+                          end: formatDate(announcement.endsAt, "datetime"),
+                        })
+                      : t("from {start} until removed", {
+                          start: formatDate(announcement.startsAt, "datetime"),
+                        })
+                    : announcement.endsAt
+                      ? t("now until {end}", { end: formatDate(announcement.endsAt, "datetime") })
+                      : t("now until removed")}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => remove.mutate(announcement.id)}
-                aria-label="Delete announcement"
+                aria-label={t("Delete announcement")}
                 className="grid size-8 shrink-0 place-items-center rounded-full text-on-surface-muted hover:bg-surface-raised hover:text-error"
               >
                 <Trash2 aria-hidden className="size-4" />
@@ -812,7 +846,7 @@ function Announcements() {
           ))}
         </ul>
       ) : (
-        <p className="mb-5 text-body-sm text-on-surface-muted">No announcements.</p>
+        <p className="mb-5 text-body-sm text-on-surface-muted">{t("No announcements.")}</p>
       )}
       <form
         onSubmit={(event) => {
@@ -823,7 +857,7 @@ function Announcements() {
       >
         <div>
           <label htmlFor={ids.message} className="mb-1.5 block text-label-md">
-            Message
+            {t("Message")}
           </label>
           <textarea
             id={ids.message}
@@ -838,7 +872,7 @@ function Announcements() {
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
             <label htmlFor={ids.tone} className="mb-1.5 block text-label-md">
-              Style
+              {t("Style")}
             </label>
             <select
               id={ids.tone}
@@ -846,14 +880,14 @@ function Announcements() {
               onChange={(event) => setTone(event.target.value as Announcement["tone"])}
               className={inputClass}
             >
-              <option value="info">Information</option>
-              <option value="warning">Warning</option>
-              <option value="success">Good news</option>
+              <option value="info">{t("Information")}</option>
+              <option value="warning">{t("Warning")}</option>
+              <option value="success">{t("Good news")}</option>
             </select>
           </div>
           <div>
             <label htmlFor={ids.starts} className="mb-1.5 block text-label-md">
-              Starts (optional)
+              {t("Starts (optional)")}
             </label>
             <input
               id={ids.starts}
@@ -865,7 +899,7 @@ function Announcements() {
           </div>
           <div>
             <label htmlFor={ids.ends} className="mb-1.5 block text-label-md">
-              Ends (optional)
+              {t("Ends (optional)")}
             </label>
             <input
               id={ids.ends}
@@ -882,12 +916,18 @@ function Announcements() {
           disabled={!message.trim() || create.isPending}
           className="justify-self-start"
         >
-          Publish
+          {t("Publish")}
         </Button>
       </form>
     </Section>
   );
 }
+
+const TONE_LABELS: Record<string, string> = {
+  info: msg("Information"),
+  warning: msg("Warning"),
+  success: msg("Good news"),
+};
 
 interface AutoRun {
   started: string;
@@ -908,11 +948,14 @@ interface AutoStatus {
 
 function runSummary(run: AutoRun): string {
   const parts = [
-    `${run.downloaded} downloaded`,
-    `${run.checked} checked`,
-    run.failed ? `${run.failed} without a match` : null,
+    t("{count} downloaded", { count: run.downloaded }),
+    t("{count} checked", { count: run.checked }),
+    run.failed ? t("{count} without a match", { count: run.failed }) : null,
   ].filter(Boolean);
-  return parts.join(", ") + (run.stopped ? `. Stopped early: ${run.stopped}.` : ".");
+  return (
+    parts.join(", ") +
+    (run.stopped ? `. ${t("Stopped early: {reason}.", { reason: run.stopped })}` : ".")
+  );
 }
 
 /** The nightly job that fetches missing subtitles across the library. */
@@ -931,10 +974,10 @@ function AutoSubtitleSettings() {
   const runNow = useMutation({
     mutationFn: () => call("/admin/auto-subtitles/run", { method: "POST" }),
     onSuccess: () => {
-      toast.success("Started. Progress shows here.");
+      toast.success(t("Started. Progress shows here."));
       window.setTimeout(() => void status.refetch(), 1000);
     },
-    onError: (error) => toast.error(errorText(error, "Couldn't start the run.")),
+    onError: (error) => toast.error(errorText(error, t("Couldn't start the run."))),
   });
   if (!settings.data) return null;
   const current = status.data?.current;
@@ -942,8 +985,10 @@ function AutoSubtitleSettings() {
 
   return (
     <Section
-      title="Automatic subtitles"
-      description="Every night, look for movies and episodes without subtitles in your languages and download the best match, newest first. Off by default."
+      title={t("Automatic subtitles")}
+      description={t(
+        "Every night, look for movies and episodes without subtitles in your languages and download the best match, newest first. Off by default.",
+      )}
     >
       <AutoSubtitleFields
         key={JSON.stringify([
@@ -964,19 +1009,22 @@ function AutoSubtitleSettings() {
       >
         {status.data?.running && current ? (
           <p className="flex items-center gap-2">
-            <Spinner label="Running" />
-            Running now: {runSummary(current).replace(/\.$/, "")}…
+            <Spinner label={t("Running")} />
+            {t("Running now: {summary}…", { summary: runSummary(current).replace(/\.$/, "") })}
           </p>
         ) : last ? (
           <p>
-            Last run {formatDate(last.started, "datetime")}: {runSummary(last)}
+            {t("Last run {date}: {summary}", {
+              date: formatDate(last.started, "datetime"),
+              summary: runSummary(last),
+            })}
           </p>
         ) : (
-          <p className="text-on-surface-muted">Hasn't run yet.</p>
+          <p className="text-on-surface-muted">{t("Hasn't run yet.")}</p>
         )}
         {status.data?.nextRun && !status.data.running && (
           <p className="text-on-surface-muted">
-            Next run {formatDate(status.data.nextRun, "datetime")}.
+            {t("Next run {date}.", { date: formatDate(status.data.nextRun, "datetime") })}
           </p>
         )}
         <Button
@@ -985,7 +1033,7 @@ function AutoSubtitleSettings() {
           disabled={runNow.isPending || status.data?.running}
           onClick={() => runNow.mutate()}
         >
-          Run now
+          {t("Run now")}
         </Button>
       </div>
     </Section>
@@ -1021,9 +1069,9 @@ function AutoSubtitleFields({
       }),
     onSuccess: (next) => {
       onSaved(next);
-      toast.success("Automatic subtitle settings saved.");
+      toast.success(t("Automatic subtitle settings saved."));
     },
-    onError: (error) => toast.error(errorText(error, "Couldn't save.")),
+    onError: (error) => toast.error(errorText(error, t("Couldn't save."))),
   });
 
   return (
@@ -1043,10 +1091,10 @@ function AutoSubtitleFields({
           onChange={(event) => setOn(event.target.checked)}
           className="size-4 accent-primary"
         />
-        Download missing subtitles automatically
+        {t("Download missing subtitles automatically")}
       </label>
       <fieldset disabled={locked.auto_subtitle_languages}>
-        <legend className="mb-1.5 text-label-md">Languages</legend>
+        <legend className="mb-1.5 text-label-md">{t("Languages")}</legend>
         <div className="flex flex-wrap gap-2">
           {codes.map((code) => (
             <span
@@ -1056,7 +1104,7 @@ function AutoSubtitleFields({
               {languages.data?.find((language) => language.code === code)?.name ?? code}
               <button
                 type="button"
-                aria-label={`Remove ${code}`}
+                aria-label={t("Remove {name}", { name: code })}
                 disabled={codes.length === 1}
                 onClick={() => setCodes(codes.filter((other) => other !== code))}
                 className="grid size-6 place-items-center rounded-full hover:bg-surface-overlay disabled:opacity-40"
@@ -1067,7 +1115,7 @@ function AutoSubtitleFields({
           ))}
           <select
             id={ids.language}
-            aria-label="Add a language"
+            aria-label={t("Add a language")}
             value=""
             onChange={(event) => {
               const code = event.target.value;
@@ -1075,7 +1123,7 @@ function AutoSubtitleFields({
             }}
             className="h-8 rounded-full border border-border-strong bg-background px-3 text-label-sm"
           >
-            <option value="">Add a language…</option>
+            <option value="">{t("Add a language…")}</option>
             {languages.data
               ?.filter((language) => !codes.includes(language.code))
               .map((language) => (
@@ -1089,7 +1137,7 @@ function AutoSubtitleFields({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor={ids.hour} className="mb-1.5 block text-label-md">
-            Start time (server's time zone)
+            {t("Start time (server's time zone)")}
           </label>
           <select
             id={ids.hour}
@@ -1107,7 +1155,7 @@ function AutoSubtitleFields({
         </div>
         <div>
           <label htmlFor={ids.perRun} className="mb-1.5 block text-label-md">
-            Downloads per night
+            {t("Downloads per night")}
           </label>
           <input
             id={ids.perRun}
@@ -1122,12 +1170,12 @@ function AutoSubtitleFields({
         </div>
       </div>
       <p className="text-body-sm text-on-surface-muted">
-        A title with no match is tried again after a week, three times at most. Providers that reach
-        their daily limit are paused until the next day. OpenSubtitles allows automatic downloads
-        for your own library on your own account.
+        {t(
+          "A title with no match is tried again after a week, three times at most. Providers that reach their daily limit are paused until the next day. OpenSubtitles allows automatic downloads for your own library on your own account.",
+        )}
       </p>
       <Button type="submit" disabled={save.isPending} className="justify-self-start">
-        {save.isPending ? "Saving…" : "Save"}
+        {save.isPending ? t("Saving…") : t("Save")}
       </Button>
     </form>
   );

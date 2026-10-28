@@ -5,13 +5,14 @@ import { cn } from "@/lib/cn";
 import { Spinner } from "@/components/Spinner";
 import { useAdminAccess } from "./access";
 import { useGoogleSession } from "./useGoogleSession";
+import { msg, t } from "@/i18n";
 
 const TABS = [
-  { to: "/admin/overview", label: "Overview" },
-  { to: "/admin/users", label: "Users" },
-  { to: "/admin/sessions", label: "Active sessions" },
-  { to: "/admin/libraries", label: "Libraries" },
-  { to: "/admin/activity", label: "Activity" },
+  { to: "/admin/overview", label: msg("Overview") },
+  { to: "/admin/users", label: msg("Users") },
+  { to: "/admin/sessions", label: msg("Active sessions") },
+  { to: "/admin/libraries", label: msg("Libraries") },
+  { to: "/admin/activity", label: msg("Activity") },
   { to: "/admin/finora", label: "Finora", needsApi: true },
 ];
 
@@ -31,11 +32,13 @@ export function AdminLayout() {
   if (!access.allowed) {
     return (
       <div className="px-page-x-mobile py-12 md:px-page-x">
-        <h1 className="text-headline-md">Admin</h1>
+        <h1 className="text-headline-md">{t("Admin")}</h1>
         <p className="mt-2 max-w-xl text-body-md text-on-surface-muted">
           {access.reason === "not-admin"
-            ? "This area is for server administrators."
-            : "This server is reached over an unencrypted connection, so the admin console needs Google sign-in. Ask the server owner to set up the Finora API, or use the Jellyfin dashboard."}
+            ? t("This area is for server administrators.")
+            : t(
+                "This server is reached over an unencrypted connection, so the admin console needs Google sign-in. Ask the server owner to set up the Finora API, or use the Jellyfin dashboard.",
+              )}
         </p>
       </div>
     );
@@ -44,18 +47,18 @@ export function AdminLayout() {
   return (
     <div className="px-page-x-mobile pt-8 pb-24 md:px-page-x md:pt-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <h1 className="text-headline-lg">Admin</h1>
+        <h1 className="text-headline-lg">{t("Admin")}</h1>
         <a
           href={`${config.jellyfinUrl}/web/#/dashboard`}
           target="_blank"
           rel="noreferrer noopener"
           className="inline-flex items-center gap-1.5 text-label-md text-on-surface-muted hover:text-on-surface"
         >
-          Open Jellyfin dashboard
+          {t("Open Jellyfin dashboard")}
           <ExternalLink aria-hidden className="size-4" />
         </a>
       </div>
-      <nav aria-label="Admin" className="mt-5 flex gap-1 border-b border-border">
+      <nav aria-label={t("Admin")} className="mt-5 flex gap-1 border-b border-border">
         {TABS.filter((tab) => !tab.needsApi || config.apiUrl).map((tab) => (
           <NavLink
             key={tab.to}
@@ -69,7 +72,7 @@ export function AdminLayout() {
               )
             }
           >
-            {tab.label}
+            {t(tab.label)}
           </NavLink>
         ))}
       </nav>

@@ -11,6 +11,7 @@ import { cn } from "@/lib/cn";
 import { cardSubtitle, cardTitle, progress, runtime } from "@/lib/format";
 import { itemHref } from "@/lib/routes";
 import type { ViewMode } from "./library-config";
+import { t, tn } from "@/i18n";
 
 const MIN_WIDTH: Record<ArtworkShape, string> = {
   poster:
@@ -124,7 +125,7 @@ function Selectable({
         type="button"
         role="checkbox"
         aria-checked={selected}
-        aria-label={`Select ${cardTitle(item)}`}
+        aria-label={t("Select {title}", { title: cardTitle(item) })}
         onClick={() => onToggle(item)}
         className={cn(
           "absolute inset-0 rounded-md ring-inset",
@@ -178,7 +179,7 @@ function ListRow({ item, href, square }: { item: BaseItemDto; href: string; squa
           {cardTitle(item)}
           {item.UserData?.IsFavorite && (
             <Heart
-              aria-label="Favourite"
+              aria-label={t("Favourite")}
               className="ml-2 inline size-3.5 fill-current text-error"
             />
           )}
@@ -191,7 +192,7 @@ function ListRow({ item, href, square }: { item: BaseItemDto; href: string; squa
         ) : null}
       </div>
       {item.UserData?.Played && (
-        <Check aria-label="Watched" className="size-5 shrink-0 text-success" strokeWidth={3} />
+        <Check aria-label={t("Watched")} className="size-5 shrink-0 text-success" strokeWidth={3} />
       )}
     </Link>
   );
@@ -199,6 +200,6 @@ function ListRow({ item, href, square }: { item: BaseItemDto; href: string; squa
 
 function folderLabel(item: BaseItemDto): string | null {
   const count = item.ChildCount;
-  if (count == null) return "Folder";
-  return `${count} ${count === 1 ? "item" : "items"}`;
+  if (count == null) return t("Folder");
+  return tn(count, "{count} item", "{count} items");
 }

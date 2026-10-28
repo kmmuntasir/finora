@@ -8,6 +8,7 @@ import { getItemsApi } from "@jellyfin/sdk/lib/utils/api/items-api";
 import { getPersonsApi } from "@jellyfin/sdk/lib/utils/api/persons-api";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useSession } from "@/features/auth/context";
+import { msg } from "@/i18n";
 
 export interface SearchGroup {
   id: string;
@@ -16,14 +17,14 @@ export interface SearchGroup {
 }
 
 const GROUPS: { id: string; title: string; types: BaseItemKind[] }[] = [
-  { id: "movies", title: "Movies", types: [BaseItemKind.Movie] },
-  { id: "series", title: "Shows", types: [BaseItemKind.Series] },
-  { id: "episodes", title: "Episodes", types: [BaseItemKind.Episode] },
-  { id: "videos", title: "Videos", types: [BaseItemKind.Video] },
-  { id: "collections", title: "Collections", types: [BaseItemKind.BoxSet] },
-  { id: "artists", title: "Artists", types: [BaseItemKind.MusicArtist] },
-  { id: "albums", title: "Albums", types: [BaseItemKind.MusicAlbum] },
-  { id: "songs", title: "Songs", types: [BaseItemKind.Audio] },
+  { id: "movies", title: msg("Movies"), types: [BaseItemKind.Movie] },
+  { id: "series", title: msg("Shows"), types: [BaseItemKind.Series] },
+  { id: "episodes", title: msg("Episodes"), types: [BaseItemKind.Episode] },
+  { id: "videos", title: msg("Videos"), types: [BaseItemKind.Video] },
+  { id: "collections", title: msg("Collections"), types: [BaseItemKind.BoxSet] },
+  { id: "artists", title: msg("Artists"), types: [BaseItemKind.MusicArtist] },
+  { id: "albums", title: msg("Albums"), types: [BaseItemKind.MusicAlbum] },
+  { id: "songs", title: msg("Songs"), types: [BaseItemKind.Audio] },
 ];
 
 /** Searches every library at once; each group is its own request so slow ones don't block others. */
@@ -54,7 +55,7 @@ export function useSearch(term: string) {
       });
       const people = getPersonsApi(api)
         .getPersons({ userId: user.Id, searchTerm: trimmed, limit: 24 }, { signal })
-        .then(({ data }) => ({ id: "people", title: "People", items: data.Items ?? [] }));
+        .then(({ data }) => ({ id: "people", title: msg("People"), items: data.Items ?? [] }));
       const groups = await Promise.all([...groupResults, people]);
       return groups.filter((group) => group.items.length > 0);
     },

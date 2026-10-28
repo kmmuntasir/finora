@@ -5,6 +5,7 @@ import { offsetLabel, SUBTITLE_OFFSETS } from "./subtitle-timing";
 import type { ReactNode } from "react";
 import type { AudioTrack, SubtitleTrack } from "./playback";
 import { BITRATE_OPTIONS, formatClock } from "./player-preferences";
+import { msg, t } from "@/i18n";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
@@ -56,8 +57,8 @@ export function ChapterMenu({
   const starts = chapters.map((chapter) => (chapter.StartPositionTicks ?? 0) / 10_000_000);
   const active = starts.findLastIndex((start) => start <= current + 0.5);
   return (
-    <Menu label="Chapters" icon={<ListVideo aria-hidden className="size-6" />}>
-      <DropdownMenu.Label className={LABEL}>Chapters</DropdownMenu.Label>
+    <Menu label={t("Chapters")} icon={<ListVideo aria-hidden className="size-6" />}>
+      <DropdownMenu.Label className={LABEL}>{t("Chapters")}</DropdownMenu.Label>
       <div className="max-h-[50vh] overflow-y-auto">
         <DropdownMenu.RadioGroup
           value={String(active)}
@@ -67,7 +68,7 @@ export function ChapterMenu({
             <DropdownMenu.RadioItem key={index} value={String(index)} className={ITEM}>
               <Indicator />
               <span className="min-w-0 flex-1 truncate">
-                {chapter.Name || `Chapter ${index + 1}`}
+                {chapter.Name || t("Chapter {number}", { number: index + 1 })}
               </span>
               <span className="text-caption text-on-surface-subtle tabular-nums">
                 {formatClock(starts[index]!)}
@@ -91,22 +92,22 @@ export function SubtitleMenu({
 }) {
   if (!tracks.length) return null;
   return (
-    <Menu label="Subtitles" icon={<Captions aria-hidden className="size-6" />}>
-      <DropdownMenu.Label className={LABEL}>Subtitles</DropdownMenu.Label>
+    <Menu label={t("Subtitles")} icon={<Captions aria-hidden className="size-6" />}>
+      <DropdownMenu.Label className={LABEL}>{t("Subtitles")}</DropdownMenu.Label>
       <DropdownMenu.RadioGroup
         value={String(selected)}
         onValueChange={(value) => onSelect(Number(value))}
       >
         <DropdownMenu.RadioItem value="-1" className={ITEM}>
           <Indicator />
-          Off
+          {t("Off")}
         </DropdownMenu.RadioItem>
         {tracks.map((track) => (
           <DropdownMenu.RadioItem key={track.index} value={String(track.index)} className={ITEM}>
             <Indicator />
             <span className="min-w-0 flex-1 truncate">{track.label}</span>
             {track.url === null && (
-              <span className="text-caption text-on-surface-subtle">burn-in</span>
+              <span className="text-caption text-on-surface-subtle">{t("burn-in")}</span>
             )}
           </DropdownMenu.RadioItem>
         ))}
@@ -126,8 +127,8 @@ export function AudioMenu({
 }) {
   if (tracks.length < 2) return null;
   return (
-    <Menu label="Audio" icon={<AudioLines aria-hidden className="size-6" />}>
-      <DropdownMenu.Label className={LABEL}>Audio</DropdownMenu.Label>
+    <Menu label={t("Audio")} icon={<AudioLines aria-hidden className="size-6" />}>
+      <DropdownMenu.Label className={LABEL}>{t("Audio")}</DropdownMenu.Label>
       <DropdownMenu.RadioGroup
         value={String(selected)}
         onValueChange={(value) => onSelect(Number(value))}
@@ -169,12 +170,12 @@ export function SettingsMenu({
   showSubtitleOffset: boolean;
 }) {
   return (
-    <Menu label="Settings" icon={<Settings aria-hidden className="size-6" />}>
+    <Menu label={t("Settings")} icon={<Settings aria-hidden className="size-6" />}>
       <DropdownMenu.Sub>
         <DropdownMenu.SubTrigger className={ITEM}>
-          <span className="flex-1">Quality</span>
+          <span className="flex-1">{t("Quality")}</span>
           <span className="text-on-surface-muted">
-            {BITRATE_OPTIONS.find((o) => o.value === bitrate)?.label ?? "Custom"}
+            {t(BITRATE_OPTIONS.find((o) => o.value === bitrate)?.label ?? msg("Custom"))}
           </span>
         </DropdownMenu.SubTrigger>
         <DropdownMenu.Portal>
@@ -190,7 +191,7 @@ export function SettingsMenu({
                   className={ITEM}
                 >
                   <Indicator />
-                  {option.label}
+                  {t(option.label)}
                 </DropdownMenu.RadioItem>
               ))}
             </DropdownMenu.RadioGroup>
@@ -200,16 +201,18 @@ export function SettingsMenu({
       {showSubtitleOffset && (
         <DropdownMenu.Sub>
           <DropdownMenu.SubTrigger className={ITEM}>
-            <span className="flex-1">Subtitle timing</span>
+            <span className="flex-1">{t("Subtitle timing")}</span>
             <span className="text-on-surface-muted">
               {subtitleOffset === 0
-                ? "In sync"
-                : `${subtitleOffset > 0 ? "+" : ""}${subtitleOffset} s`}
+                ? t("In sync")
+                : t("{offset} s", { offset: `${subtitleOffset > 0 ? "+" : ""}${subtitleOffset}` })}
             </span>
           </DropdownMenu.SubTrigger>
           <DropdownMenu.Portal>
             <DropdownMenu.SubContent sideOffset={6} className={CONTENT}>
-              <DropdownMenu.Label className={LABEL}>Keys: G earlier, H later</DropdownMenu.Label>
+              <DropdownMenu.Label className={LABEL}>
+                {t("Keys: G earlier, H later")}
+              </DropdownMenu.Label>
               <DropdownMenu.RadioGroup
                 value={String(subtitleOffset)}
                 onValueChange={(value) => onSubtitleOffset(Number(value))}
@@ -230,8 +233,8 @@ export function SettingsMenu({
       )}
       <DropdownMenu.Sub>
         <DropdownMenu.SubTrigger className={ITEM}>
-          <span className="flex-1">Speed</span>
-          <span className="text-on-surface-muted">{speed === 1 ? "Normal" : `${speed}×`}</span>
+          <span className="flex-1">{t("Speed")}</span>
+          <span className="text-on-surface-muted">{speed === 1 ? t("Normal") : `${speed}×`}</span>
         </DropdownMenu.SubTrigger>
         <DropdownMenu.Portal>
           <DropdownMenu.SubContent sideOffset={6} className={CONTENT}>
@@ -242,7 +245,7 @@ export function SettingsMenu({
               {SPEEDS.map((value) => (
                 <DropdownMenu.RadioItem key={value} value={String(value)} className={ITEM}>
                   <Indicator />
-                  {value === 1 ? "Normal" : `${value}×`}
+                  {value === 1 ? t("Normal") : `${value}×`}
                 </DropdownMenu.RadioItem>
               ))}
             </DropdownMenu.RadioGroup>
@@ -256,13 +259,13 @@ export function SettingsMenu({
           className={ITEM}
         >
           <Indicator />
-          Autoplay next episode
+          {t("Autoplay next episode")}
         </DropdownMenu.CheckboxItem>
       )}
       <DropdownMenu.Separator className="my-1.5 h-px bg-border" />
       <DropdownMenu.Item onSelect={onShowInfo} className={ITEM}>
         <span className="size-4" />
-        Playback info
+        {t("Playback info")}
       </DropdownMenu.Item>
     </Menu>
   );

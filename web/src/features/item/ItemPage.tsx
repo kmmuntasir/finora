@@ -29,6 +29,7 @@ import { ThemeMusic, ThemeVideo } from "./ThemeMedia";
 import { TrackPickers } from "./TrackPickers";
 import { CollectionItems, PlaylistItems } from "@/features/collections/ContainerItems";
 import { SubtitleFinder } from "@/features/subtitles/SubtitleFinder";
+import { t, tn } from "@/i18n";
 
 export function ItemPage() {
   const { itemId } = useParams();
@@ -44,12 +45,12 @@ export function ItemPage() {
   if (isError || !item) {
     return (
       <div className="px-page-x-mobile py-12 md:px-page-x">
-        <h1 className="text-headline-md">Couldn't load this item</h1>
+        <h1 className="text-headline-md">{t("Couldn't load this item")}</h1>
         <p className="mt-2 text-body-md text-on-surface-muted">
-          It may have been removed, or the server is unreachable.
+          {t("It may have been removed, or the server is unreachable.")}
         </p>
         <Button className="mt-6" variant="secondary" onClick={() => void refetch()}>
-          Try again
+          {t("Try again")}
         </Button>
       </div>
     );
@@ -68,9 +69,13 @@ function metaLine(item: BaseItemDto): string {
   return [
     year,
     item.OfficialRating,
-    item.Type !== "Series" ? runtime(item) : item.ChildCount ? `${item.ChildCount} seasons` : null,
+    item.Type !== "Series"
+      ? runtime(item)
+      : item.ChildCount
+        ? tn(item.ChildCount, "{count} season", "{count} seasons")
+        : null,
     item.CommunityRating ? `★ ${item.CommunityRating.toFixed(1)}` : null,
-    item.CriticRating ? `${item.CriticRating}% critics` : null,
+    item.CriticRating ? t("{rating}% critics", { rating: item.CriticRating }) : null,
   ]
     .filter(Boolean)
     .join("  ·  ");
@@ -106,9 +111,17 @@ function ItemDetails({ item }: { item: BaseItemDto }) {
     item.Type === "BoxSet" ||
     item.Type === "Playlist";
   const playTarget = isSeries ? (nextUp.data ?? seasons.data?.[0] ?? null) : playable ? item : null;
+  const nextCode = nextUp.data ? episodeCode(nextUp.data) : null;
+  const nextResumable = (nextUp.data?.UserData?.PlaybackPositionTicks ?? 0) > 0;
   const playLabel =
     isSeries && nextUp.data
-      ? `${(nextUp.data.UserData?.PlaybackPositionTicks ?? 0) > 0 ? "Resume" : "Play"} ${episodeCode(nextUp.data) ?? ""}`.trim()
+      ? nextCode
+        ? nextResumable
+          ? t("Resume {episode}", { episode: nextCode })
+          : t("Play {episode}", { episode: nextCode })
+        : nextResumable
+          ? t("Resume")
+          : t("Play")
       : undefined;
   const square =
     item.Type === "MusicAlbum" || item.Type === "MusicArtist" || item.Type === "Playlist";
@@ -252,7 +265,7 @@ function ItemDetails({ item }: { item: BaseItemDto }) {
         )}
 
         {item.Type === "Playlist" && (
-          <Section title="Items">
+          <Section title={t("Items")}>
             <PlaylistItems playlist={item} />
           </Section>
         )}
@@ -261,10 +274,10 @@ function ItemDetails({ item }: { item: BaseItemDto }) {
           <Section
             title={
               item.Type === "Person"
-                ? "Filmography"
+                ? t("Filmography")
                 : item.Type === "MusicArtist"
-                  ? "Albums"
-                  : "Items"
+                  ? t("Albums")
+                  : t("Items")
             }
           >
             {related.isPending ? (
@@ -278,13 +291,13 @@ function ItemDetails({ item }: { item: BaseItemDto }) {
                 ))}
               </div>
             ) : (
-              <p className="text-body-md text-on-surface-muted">Nothing here yet.</p>
+              <p className="text-body-md text-on-surface-muted">{t("Nothing here yet.")}</p>
             )}
           </Section>
         )}
 
         {[...(trailers.data ?? []), ...(extras.data ?? [])].length > 0 && (
-          <MediaRow title="Trailers & extras" itemClassName="w-64 md:w-72">
+          <MediaRow title={t("Trailers & extras")} itemClassName="w-64 md:w-72">
             {[...(trailers.data ?? []), ...(extras.data ?? [])].map((extra) => (
               <LandscapeCard key={extra.Id} item={extra} width={288} subtitle={runtime(extra)} />
             ))}
@@ -294,7 +307,10 @@ function ItemDetails({ item }: { item: BaseItemDto }) {
         {item.People?.length ? <CastRow people={item.People} /> : null}
 
         {similar.data?.length ? (
-          <MediaRow title="More like this" itemClassName={square ? "w-36 md:w-44" : "w-32 md:w-40"}>
+          <MediaRow
+            title={t("More like this")}
+            itemClassName={square ? "w-36 md:w-44" : "w-32 md:w-40"}
+          >
             {similar.data.map((other) => (
               <PosterCard key={other.Id} item={other} />
             ))}
@@ -302,7 +318,7 @@ function ItemDetails({ item }: { item: BaseItemDto }) {
         ) : null}
 
         {source && item.Type !== "MusicAlbum" && (
-          <Section title="Details">
+          <Section title={t("Details")}>
             <div className="max-w-3xl space-y-4">
               <MediaInfo source={source} />
               <ExternalLinks item={item} />
@@ -345,7 +361,7 @@ function Overview({ text }: { text: string }) {
           onClick={() => setExpanded((value) => !value)}
           className="mt-1 text-label-md text-primary hover:underline"
         >
-          {expanded ? "Show less" : "Show more"}
+          {expanded ? t("Show less") : t("Show more")}
         </button>
       )}
     </div>

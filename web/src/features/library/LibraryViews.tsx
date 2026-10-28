@@ -10,6 +10,7 @@ import { useSession } from "@/features/auth/context";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { LIBRARY_TABS, type LibraryTab } from "./library-config";
+import { t } from "@/i18n";
 
 export function LibraryTabs({
   collectionType,
@@ -24,7 +25,7 @@ export function LibraryTabs({
   if (!tabs) return null;
   return (
     <nav
-      aria-label="Library views"
+      aria-label={t("Library views")}
       className="mt-4 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-border [scrollbar-width:none]"
     >
       {tabs.map(({ tab, label }) => (
@@ -40,7 +41,7 @@ export function LibraryTabs({
               : "border-transparent text-on-surface-muted hover:text-on-surface",
           )}
         >
-          {label}
+          {t(label)}
         </button>
       ))}
     </nav>
@@ -51,15 +52,15 @@ function recommendationTitle(group: RecommendationDto): string {
   const name = group.BaselineItemName ?? "";
   switch (group.RecommendationType) {
     case "SimilarToRecentlyPlayed":
-      return `Because you watched ${name}`;
+      return t("Because you watched {name}", { name });
     case "SimilarToLikedItem":
-      return `Because you liked ${name}`;
+      return t("Because you liked {name}", { name });
     case "HasDirectorFromRecentlyPlayed":
     case "HasLikedDirector":
-      return `Directed by ${name}`;
+      return t("Directed by {name}", { name });
     case "HasActorFromRecentlyPlayed":
     case "HasLikedActor":
-      return `Starring ${name}`;
+      return t("Starring {name}", { name });
     default:
       return name;
   }
@@ -83,14 +84,14 @@ export function SuggestionsView({ view }: { view: BaseItemDto }) {
   if (isError)
     return (
       <p role="alert" className="py-12 text-body-md text-error">
-        Couldn't load suggestions.
+        {t("Couldn't load suggestions.")}
       </p>
     );
   const groups = data.filter((group) => group.Items?.length);
   if (!groups.length)
     return (
       <p className="py-12 text-body-md text-on-surface-muted">
-        Watch a few movies and suggestions will appear here.
+        {t("Watch a few movies and suggestions will appear here.")}
       </p>
     );
   return (
@@ -127,14 +128,15 @@ export function UpcomingView({ view }: { view: BaseItemDto }) {
   if (isError)
     return (
       <p role="alert" className="py-12 text-body-md text-error">
-        Couldn't load upcoming episodes.
+        {t("Couldn't load upcoming episodes.")}
       </p>
     );
   if (!data.length)
     return (
       <p className="py-12 text-body-md text-on-surface-muted">
-        Nothing scheduled. Upcoming episodes appear when Jellyfin knows their air dates (with
-        “missing episodes” metadata).
+        {t(
+          "Nothing scheduled. Upcoming episodes appear when Jellyfin knows their air dates (with “missing episodes” metadata).",
+        )}
       </p>
     );
   const days = new Map<string, BaseItemDto[]>();
@@ -146,7 +148,7 @@ export function UpcomingView({ view }: { view: BaseItemDto }) {
     <div className="space-y-8">
       {[...days.entries()].map(([day, episodes]) => (
         <section key={day}>
-          <h2 className="mb-3 text-title">{day ? formatDate(day) : "Date unknown"}</h2>
+          <h2 className="mb-3 text-title">{day ? formatDate(day) : t("Date unknown")}</h2>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-x-4 gap-y-6">
             {episodes.map((episode) => (
               <LandscapeCard key={episode.Id} item={episode} width={300} />
@@ -184,7 +186,9 @@ export function NetworksView({
   if (isPending) return <Spinner className="flex justify-center py-12" />;
   if (!data?.length)
     return (
-      <p className="py-12 text-body-md text-on-surface-muted">No networks found for these shows.</p>
+      <p className="py-12 text-body-md text-on-surface-muted">
+        {t("No networks found for these shows.")}
+      </p>
     );
   return (
     <ul className="grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-3">

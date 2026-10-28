@@ -1,6 +1,10 @@
 import type { Page, Route } from "@playwright/test";
 
-export const JELLYFIN = "http://jellyfin.test";
+/**
+ * The fake Jellyfin lives on the app's own origin (under /jf), so the video
+ * stream can come from the dev server without cross-origin trouble.
+ */
+export const JELLYFIN = "http://127.0.0.1:4173/jf";
 const USER_ID = "user1";
 const TOKEN = "test-token";
 
@@ -39,7 +43,24 @@ function json(route: Route, body: unknown, status = 200) {
 }
 
 /** Installs the fake Jellyfin and runtime config on a page. */
-export async function mockJellyfin(page: Page, options: { publicUsers?: boolean } = {}) {
+/** A second account for the admin tests. */
+const kid = {
+  Id: "kid1",
+  Name: "Kid",
+  Policy: {
+    IsAdministrator: false,
+    EnableAllFolders: true,
+    EnabledFolders: [],
+    MaxActiveSessions: 0,
+  },
+  Configuration: {},
+};
+
+export async function mockJellyfin(
+  page: Page,
+  options: { publicUsers?: boolean; admin?: boolean } = {},
+) {
+  const me = options.admin ? { ...user, Policy: { ...user.Policy, IsAdministrator: true } } : user;
   await page.route("**/config.json", (route) =>
     json(route, { jellyfinUrl: JELLYFIN, apiUrl: null }),
   );
@@ -47,8 +68,11 @@ export async function mockJellyfin(page: Page, options: { publicUsers?: boolean 
   await page.route(`${JELLYFIN}/**`, async (route) => {
     const request = route.request();
     const url = new URL(request.url());
-    const path = url.pathname;
-    const authorized = (request.headers()["authorization"] ?? "").includes(`Token="${TOKEN}"`);
+    const path = url.pathname.replace(/^\/jf/, "");
+    // Media URLs carry the token as ?ApiKey=…, like Jellyfin accepts.
+    const authorized =
+      (request.headers()["authorization"] ?? "").includes(`Token="${TOKEN}"`) ||
+      url.searchParams.get("ApiKey") === TOKEN;
 
     if (path.includes("/Images/"))
       return route.fulfill({ status: 200, contentType: "image/png", body: PNG });
@@ -78,14 +102,56 @@ export async function mockJellyfin(page: Page, options: { publicUsers?: boolean 
     if (path === "/Users/AuthenticateByName") {
       const body = request.postDataJSON() as { Username: string; Pw: string };
       if (body.Username.toLowerCase() === "alex" && body.Pw === "secret")
-        return json(route, { AccessToken: TOKEN, User: user });
+        return json(route, { AccessToken: TOKEN, User: me });
       if (body.Username === "Kid" && body.Pw === "")
         return json(route, { AccessToken: TOKEN, User: { ...user, Name: "Kid" } });
       return route.fulfill({ status: 401, body: "" });
     }
     if (!authorized) return route.fulfill({ status: 401, body: "" });
 
-    if (path === "/Users/Me") return json(route, user);
+    if (path === "/Users/Me") return json(route, me);
+    // Playback: a real VP9/Opus clip, direct-played.
+    if (/^\/Items\/[^/]+\/PlaybackInfo$/.test(path)) {
+      const id = path.split("/")[2];
+      return json(route, {
+        PlaySessionId: "ps1",
+        MediaSources: [
+          {
+            Id: id,
+            Container: "webm",
+            Protocol: "File",
+            SupportsDirectPlay: true,
+            SupportsDirectStream: true,
+            RunTimeTicks: 6 * 10_000_000,
+            MediaStreams: [
+              { Type: "Video", Index: 0, Codec: "vp9", Width: 320, Height: 180, IsDefault: true },
+              { Type: "Audio", Index: 1, Codec: "opus", Channels: 1, IsDefault: true },
+            ],
+          },
+        ],
+      });
+    }
+    // Media elements don't play fulfilled responses, so the stream comes from
+    // the real clip on the dev server.
+    if (/^\/Videos\/[^/]+\/stream/.test(path))
+      return route.continue({ url: `${url.origin}/e2e/fixtures/clip.webm` });
+    if (path.startsWith("/Sessions/Playing")) return route.fulfill({ status: 204 });
+    if (path.startsWith("/MediaSegments/")) return json(route, { Items: [] });
+    // Admin.
+    if (path === "/Users" && request.method() === "GET") return json(route, [me, kid]);
+    if (path === "/Users/kid1") return json(route, kid);
+    if (/^\/Users\/[^/]+(\/Policy)?$/.test(path) && request.method() === "POST")
+      return route.fulfill({ status: 204 });
+    if (path === "/Library/MediaFolders")
+      return json(route, { Items: views.map((view) => ({ ...view, Type: "CollectionFolder" })) });
+    if (path === "/Localization/ParentalRatings")
+      return json(route, [
+        { Name: "G", Value: 0, RatingScore: { score: 0, subScore: 0 } },
+        { Name: "PG", Value: 10, RatingScore: { score: 10, subScore: 0 } },
+        { Name: "R", Value: 17, RatingScore: { score: 17, subScore: 0 } },
+      ]);
+    if (path === "/Devices") return json(route, { Items: [] });
+    if (path === "/Sessions") return json(route, []);
     if (path === "/Sessions/Logout") return route.fulfill({ status: 204 });
     if (path.startsWith("/DisplayPreferences/")) return json(route, { CustomPrefs: {} });
     if (path === "/UserViews") return json(route, { Items: views, TotalRecordCount: views.length });
@@ -138,8 +204,8 @@ export async function mockJellyfin(page: Page, options: { publicUsers?: boolean 
         MediaSources: [
           {
             Id: movie.Id,
-            Container: "mp4",
-            MediaStreams: [{ Type: "Video", Index: 0, Codec: "h264" }],
+            Container: "webm",
+            MediaStreams: [{ Type: "Video", Index: 0, Codec: "vp9" }],
           },
         ],
       });
@@ -150,8 +216,8 @@ export async function mockJellyfin(page: Page, options: { publicUsers?: boolean 
 }
 
 /** Signs in through the real login form. */
-export async function signIn(page: Page) {
-  await mockJellyfin(page);
+export async function signIn(page: Page, options: { admin?: boolean } = {}) {
+  await mockJellyfin(page, options);
   await page.goto("/login");
   await page.getByLabel("Username").fill("alex");
   await page.getByRole("textbox", { name: "Password" }).fill("secret");

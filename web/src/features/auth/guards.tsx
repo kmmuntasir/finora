@@ -3,6 +3,7 @@ import { Button } from "@/components/Button";
 import { MessageScreen } from "@/components/MessageScreen";
 import { Spinner } from "@/components/Spinner";
 import { useAuth } from "./context";
+import { t } from "@/i18n";
 
 function FullPageSpinner({ label }: { label: string }) {
   return (
@@ -19,21 +20,21 @@ export function RequireAuth() {
 
   switch (state.status) {
     case "restoring":
-      return <FullPageSpinner label="Signing you in" />;
+      return <FullPageSpinner label={t("Signing you in")} />;
     case "unreachable":
       return (
         <MessageScreen
-          title="Can't reach the server"
+          title={t("Can't reach the server")}
           actions={
             <>
-              <Button onClick={retryRestore}>Try again</Button>
+              <Button onClick={retryRestore}>{t("Try again")}</Button>
               <Button variant="secondary" onClick={() => void signOut()}>
-                Sign out
+                {t("Sign out")}
               </Button>
             </>
           }
         >
-          <p>Your Jellyfin server did not respond. It may be offline or restarting.</p>
+          <p>{t("Your Jellyfin server did not respond. It may be offline or restarting.")}</p>
         </MessageScreen>
       );
     case "signed-out":
@@ -47,7 +48,7 @@ export function RequireAuth() {
 export function RedirectIfSignedIn() {
   const { state } = useAuth();
   const location = useLocation();
-  if (state.status === "restoring") return <FullPageSpinner label="Signing you in" />;
+  if (state.status === "restoring") return <FullPageSpinner label={t("Signing you in")} />;
   if (state.status === "signed-in") {
     const from = (location.state as { from?: string } | null)?.from;
     return <Navigate to={from && from !== "/login" ? from : "/"} replace />;

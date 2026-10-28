@@ -37,6 +37,7 @@ import {
   usePlaylistItems,
   useRemoveFromContainer,
 } from "./api";
+import { t } from "@/i18n";
 
 /** Playlist contents in playlist order; owners can drag to reorder and remove entries. */
 export function PlaylistItems({ playlist }: { playlist: BaseItemDto }) {
@@ -54,12 +55,12 @@ export function PlaylistItems({ playlist }: { playlist: BaseItemDto }) {
   if (items.isError)
     return (
       <p role="alert" className="text-body-md text-error">
-        Couldn't load this playlist.
+        {t("Couldn't load this playlist.")}
       </p>
     );
   const list = items.data;
   if (!list.length)
-    return <p className="text-body-md text-on-surface-muted">This playlist is empty.</p>;
+    return <p className="text-body-md text-on-surface-muted">{t("This playlist is empty.")}</p>;
 
   const play = (index: number) => {
     const item = list[index]!;
@@ -76,7 +77,7 @@ export function PlaylistItems({ playlist }: { playlist: BaseItemDto }) {
     const from = list.findIndex((item) => item.PlaylistItemId === event.active.id);
     const to = list.findIndex((item) => item.PlaylistItemId === event.over!.id);
     if (from < 0 || to < 0) return;
-    move.mutate({ from, to }, { onError: () => toast.error("Couldn't reorder the playlist.") });
+    move.mutate({ from, to }, { onError: () => toast.error(t("Couldn't reorder the playlist.")) });
   };
 
   return (
@@ -94,8 +95,8 @@ export function PlaylistItems({ playlist }: { playlist: BaseItemDto }) {
               onPlay={() => play(index)}
               onRemove={() =>
                 remove.mutate([item], {
-                  onSuccess: () => toast.success(`Removed “${item.Name}”.`),
-                  onError: () => toast.error("Couldn't remove it."),
+                  onSuccess: () => toast.success(t("Removed “{name}”.", { name: item.Name ?? "" })),
+                  onError: () => toast.error(t("Couldn't remove it.")),
                 })
               }
             />
@@ -139,7 +140,7 @@ function PlaylistRow({
           type="button"
           {...attributes}
           {...listeners}
-          aria-label={`Reorder ${item.Name}`}
+          aria-label={t("Reorder {name}", { name: item.Name ?? "" })}
           className="grid size-8 shrink-0 cursor-grab touch-none place-items-center text-on-surface-subtle active:cursor-grabbing"
         >
           <GripVertical aria-hidden className="size-4" />
@@ -149,7 +150,7 @@ function PlaylistRow({
         type="button"
         onClick={onPlay}
         className="flex min-w-0 flex-1 items-center gap-3 text-left"
-        aria-label={`Play ${cardTitle(item)}`}
+        aria-label={t("Play {title}", { title: cardTitle(item) })}
       >
         <Artwork
           image={audio ? trackArt(item) : wide.image}
@@ -173,8 +174,8 @@ function PlaylistRow({
         <button
           type="button"
           onClick={onRemove}
-          aria-label={`Remove ${item.Name} from playlist`}
-          title="Remove"
+          aria-label={t("Remove {name} from playlist", { name: item.Name ?? "" })}
+          title={t("Remove")}
           className="grid size-8 shrink-0 place-items-center rounded-full text-on-surface-subtle opacity-0 transition-opacity group-hover:opacity-100 hover:text-error focus-visible:opacity-100 [@media(pointer:coarse)]:opacity-100"
         >
           <X aria-hidden className="size-4" />
@@ -206,11 +207,11 @@ export function CollectionItems({
           onClick={() => setEditing((value) => !value)}
         >
           {editing ? (
-            "Done"
+            t("Done")
           ) : (
             <>
               <Pencil aria-hidden className="size-4" />
-              Edit collection
+              {t("Edit collection")}
             </>
           )}
         </Button>
@@ -224,11 +225,14 @@ export function CollectionItems({
                 type="button"
                 onClick={() =>
                   remove.mutate([child], {
-                    onSuccess: () => toast.success(`Removed “${child.Name}” from the collection.`),
-                    onError: () => toast.error("Couldn't remove it."),
+                    onSuccess: () =>
+                      toast.success(
+                        t("Removed “{name}” from the collection.", { name: child.Name ?? "" }),
+                      ),
+                    onError: () => toast.error(t("Couldn't remove it.")),
                   })
                 }
-                aria-label={`Remove ${child.Name} from collection`}
+                aria-label={t("Remove {name} from collection", { name: child.Name ?? "" })}
                 className="absolute top-2 right-2 grid size-9 place-items-center rounded-full bg-scrim text-on-surface ring-1 ring-white/20 hover:bg-error hover:text-background"
               >
                 <X aria-hidden className="size-4" />

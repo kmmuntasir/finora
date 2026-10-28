@@ -4,22 +4,23 @@ import { toast } from "sonner";
 import { Button } from "@/components/Button";
 import { Sheet } from "@/components/Sheet";
 import { useRefreshItem, type RefreshMode } from "./api";
+import { msg, t } from "@/i18n";
 
 const MODES: { value: RefreshMode; label: string; hint: string }[] = [
   {
     value: "scan",
-    label: "Scan for new and updated files",
-    hint: "Quick; keeps existing metadata.",
+    label: msg("Scan for new and updated files"),
+    hint: msg("Quick; keeps existing metadata."),
   },
   {
     value: "missing",
-    label: "Search for missing metadata",
-    hint: "Fills empty fields from online providers.",
+    label: msg("Search for missing metadata"),
+    hint: msg("Fills empty fields from online providers."),
   },
   {
     value: "replace",
-    label: "Replace all metadata",
-    hint: "Downloads everything again. Locked fields are kept.",
+    label: msg("Replace all metadata"),
+    hint: msg("Downloads everything again. Locked fields are kept."),
   },
 ];
 
@@ -32,12 +33,12 @@ export function RefreshDialog({ item, onClose }: { item: BaseItemDto; onClose: (
     <Sheet
       open
       onOpenChange={(open) => !open && onClose()}
-      title="Refresh metadata"
+      title={t("Refresh metadata")}
       description={item.Name ?? undefined}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             disabled={refresh.isPending}
@@ -46,21 +47,21 @@ export function RefreshDialog({ item, onClose }: { item: BaseItemDto; onClose: (
                 { mode, replaceImages },
                 {
                   onSuccess: () => {
-                    toast.success("Refresh started. Changes appear in a moment.");
+                    toast.success(t("Refresh started. Changes appear in a moment."));
                     onClose();
                   },
-                  onError: () => toast.error("Couldn't start the refresh."),
+                  onError: () => toast.error(t("Couldn't start the refresh.")),
                 },
               )
             }
           >
-            Refresh
+            {t("Refresh")}
           </Button>
         </>
       }
     >
       <fieldset className="space-y-2">
-        <legend className="sr-only">Refresh mode</legend>
+        <legend className="sr-only">{t("Refresh mode")}</legend>
         {MODES.map((option) => (
           <label
             key={option.value}
@@ -75,8 +76,8 @@ export function RefreshDialog({ item, onClose }: { item: BaseItemDto; onClose: (
               className="mt-1 accent-primary"
             />
             <span>
-              <span className="block text-label-md">{option.label}</span>
-              <span className="block text-body-sm text-on-surface-muted">{option.hint}</span>
+              <span className="block text-label-md">{t(option.label)}</span>
+              <span className="block text-body-sm text-on-surface-muted">{t(option.hint)}</span>
             </span>
           </label>
         ))}
@@ -89,7 +90,7 @@ export function RefreshDialog({ item, onClose }: { item: BaseItemDto; onClose: (
             onChange={(event) => setReplaceImages(event.target.checked)}
             className="size-4 accent-primary"
           />
-          Replace existing images
+          {t("Replace existing images")}
         </label>
       )}
     </Sheet>

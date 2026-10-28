@@ -4,13 +4,14 @@ import { Artwork } from "@/components/media/Artwork";
 import { useUserViews } from "@/features/home/queries";
 import { libraryHref } from "@/lib/routes";
 import { viewIcon } from "./view-icons";
+import { t } from "@/i18n";
 
 /** All libraries as tiles (the mobile entry point to libraries). */
 export function LibrariesPage() {
   const { data: views } = useUserViews();
   return (
     <div className="px-page-x-mobile pt-8 pb-24 md:px-page-x md:pt-10">
-      <h1 className="text-headline-lg">Libraries</h1>
+      <h1 className="text-headline-lg">{t("Libraries")}</h1>
       <ul className="mt-6 grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-4">
         {views?.map((view) => {
           const Icon = viewIcon(view.CollectionType);

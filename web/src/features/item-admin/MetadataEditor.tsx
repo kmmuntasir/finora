@@ -5,6 +5,7 @@ import { Button } from "@/components/Button";
 import { Sheet } from "@/components/Sheet";
 import { Spinner } from "@/components/Spinner";
 import { useMetadataEditorInfo, useUpdateItem } from "./api";
+import { t } from "@/i18n";
 
 const INPUT =
   "h-11 w-full rounded-md border border-border-strong bg-background px-3 text-body-md disabled:opacity-60";
@@ -110,10 +111,10 @@ export function MetadataEditor({ item, onClose }: { item: BaseItemDto; onClose: 
       },
       {
         onSuccess: () => {
-          toast.success("Metadata saved.");
+          toast.success(t("Metadata saved."));
           onClose();
         },
-        onError: () => toast.error("Couldn't save the metadata."),
+        onError: () => toast.error(t("Couldn't save the metadata.")),
       },
     );
   };
@@ -122,22 +123,22 @@ export function MetadataEditor({ item, onClose }: { item: BaseItemDto; onClose: 
     <Sheet
       open
       onOpenChange={(open) => !open && onClose()}
-      title="Edit metadata"
+      title={t("Edit metadata")}
       description={item.Name ?? undefined}
       className="md:w-[min(48rem,calc(100%-2rem))]"
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button onClick={save} disabled={update.isPending}>
-            {update.isPending ? "Saving…" : "Save"}
+            {update.isPending ? t("Saving…") : t("Save")}
           </Button>
         </>
       }
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Title" wide>
+        <Field label={t("Title")} wide>
           {(id) => (
             <input
               id={id}
@@ -147,7 +148,7 @@ export function MetadataEditor({ item, onClose }: { item: BaseItemDto; onClose: 
             />
           )}
         </Field>
-        <Field label="Original title">
+        <Field label={t("Original title")}>
           {(id) => (
             <input
               id={id}
@@ -157,7 +158,7 @@ export function MetadataEditor({ item, onClose }: { item: BaseItemDto; onClose: 
             />
           )}
         </Field>
-        <Field label="Sort title">
+        <Field label={t("Sort title")}>
           {(id) => (
             <input
               id={id}
@@ -169,7 +170,7 @@ export function MetadataEditor({ item, onClose }: { item: BaseItemDto; onClose: 
         </Field>
         {episode && (
           <>
-            <Field label="Season number">
+            <Field label={t("Season number")}>
               {(id) => (
                 <input
                   id={id}
@@ -180,7 +181,7 @@ export function MetadataEditor({ item, onClose }: { item: BaseItemDto; onClose: 
                 />
               )}
             </Field>
-            <Field label="Episode number">
+            <Field label={t("Episode number")}>
               {(id) => (
                 <input
                   id={id}
@@ -193,7 +194,7 @@ export function MetadataEditor({ item, onClose }: { item: BaseItemDto; onClose: 
             </Field>
           </>
         )}
-        <Field label="Year">
+        <Field label={t("Year")}>
           {(id) => (
             <input
               id={id}
@@ -206,7 +207,7 @@ export function MetadataEditor({ item, onClose }: { item: BaseItemDto; onClose: 
             />
           )}
         </Field>
-        <Field label="Release date">
+        <Field label={t("Release date")}>
           {(id) => (
             <input
               id={id}
@@ -217,7 +218,7 @@ export function MetadataEditor({ item, onClose }: { item: BaseItemDto; onClose: 
             />
           )}
         </Field>
-        <Field label="Age rating">
+        <Field label={t("Age rating")}>
           {(id) =>
             info.isPending ? (
               <Spinner />
@@ -228,7 +229,7 @@ export function MetadataEditor({ item, onClose }: { item: BaseItemDto; onClose: 
                 value={form.rating}
                 onChange={(e) => set("rating", e.target.value)}
               >
-                <option value="">None</option>
+                <option value="">{t("None")}</option>
                 {ratings.map((rating) => (
                   <option key={rating} value={rating}>
                     {rating}
@@ -238,7 +239,7 @@ export function MetadataEditor({ item, onClose }: { item: BaseItemDto; onClose: 
             )
           }
         </Field>
-        <Field label="Community rating (0–10)">
+        <Field label={t("Community rating (0–10)")}>
           {(id) => (
             <input
               id={id}
@@ -252,7 +253,7 @@ export function MetadataEditor({ item, onClose }: { item: BaseItemDto; onClose: 
             />
           )}
         </Field>
-        <Field label="Critic rating (0–100)">
+        <Field label={t("Critic rating (0–100)")}>
           {(id) => (
             <input
               id={id}
@@ -265,7 +266,7 @@ export function MetadataEditor({ item, onClose }: { item: BaseItemDto; onClose: 
             />
           )}
         </Field>
-        <Field label="Tagline" wide>
+        <Field label={t("Tagline")} wide>
           {(id) => (
             <input
               id={id}
@@ -275,7 +276,7 @@ export function MetadataEditor({ item, onClose }: { item: BaseItemDto; onClose: 
             />
           )}
         </Field>
-        <Field label="Overview" wide>
+        <Field label={t("Overview")} wide>
           {(id) => (
             <textarea
               id={id}
@@ -286,7 +287,7 @@ export function MetadataEditor({ item, onClose }: { item: BaseItemDto; onClose: 
             />
           )}
         </Field>
-        <Field label="Genres (comma-separated)" wide>
+        <Field label={t("Genres (comma-separated)")} wide>
           {(id) => (
             <input
               id={id}
@@ -296,7 +297,7 @@ export function MetadataEditor({ item, onClose }: { item: BaseItemDto; onClose: 
             />
           )}
         </Field>
-        <Field label="Tags (comma-separated)">
+        <Field label={t("Tags (comma-separated)")}>
           {(id) => (
             <input
               id={id}
@@ -306,7 +307,7 @@ export function MetadataEditor({ item, onClose }: { item: BaseItemDto; onClose: 
             />
           )}
         </Field>
-        <Field label="Studios (comma-separated)">
+        <Field label={t("Studios (comma-separated)")}>
           {(id) => (
             <input
               id={id}
@@ -317,7 +318,7 @@ export function MetadataEditor({ item, onClose }: { item: BaseItemDto; onClose: 
           )}
         </Field>
         {externalIds.map((external) => (
-          <Field key={external.Key} label={`${external.Name} ID`}>
+          <Field key={external.Key} label={t("{provider} ID", { provider: external.Name ?? "" })}>
             {(id) => (
               <input
                 id={id}
@@ -337,7 +338,7 @@ export function MetadataEditor({ item, onClose }: { item: BaseItemDto; onClose: 
             onChange={(e) => set("locked", e.target.checked)}
             className="size-4 accent-primary"
           />
-          Lock this item so metadata refreshes don't change it
+          {t("Lock this item so metadata refreshes don't change it")}
         </label>
       </div>
     </Sheet>

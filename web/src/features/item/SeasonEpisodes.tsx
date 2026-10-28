@@ -9,6 +9,7 @@ import { cn } from "@/lib/cn";
 import { formatDate, progress, runtime } from "@/lib/format";
 import { itemHref } from "@/lib/routes";
 import { useEpisodes } from "./queries";
+import { t } from "@/i18n";
 
 interface SeasonEpisodesProps {
   series: BaseItemDto;
@@ -23,12 +24,12 @@ export function SeasonEpisodes({ series, seasons, seasonId, onSeasonChange }: Se
   return (
     <section aria-labelledby="episodes-title" className="px-page-x-mobile md:px-page-x">
       <h2 id="episodes-title" className="sr-only">
-        Episodes
+        {t("Episodes")}
       </h2>
       {seasons.length > 1 && (
         <div
           role="tablist"
-          aria-label="Seasons"
+          aria-label={t("Seasons")}
           className="-mx-1 mb-6 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none]"
         >
           {seasons.map((season) => (
@@ -81,7 +82,7 @@ export function SeasonEpisodes({ series, seasons, seasonId, onSeasonChange }: Se
                       <span className="line-clamp-2">{episode.Name}</span>
                       {episode.UserData?.Played && (
                         <CircleCheck
-                          aria-label="Watched"
+                          aria-label={t("Watched")}
                           className="ml-auto size-4 shrink-0 text-success"
                         />
                       )}

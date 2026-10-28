@@ -1,6 +1,7 @@
 import type { BaseItemDto, MediaStream } from "@jellyfin/sdk/lib/generated-client/models";
 import { useId } from "react";
 import { selectedSource, type PlaySelection } from "./selection";
+import { t } from "@/i18n";
 
 function Picker({
   label,
@@ -36,7 +37,9 @@ function Picker({
 }
 
 function streamLabel(stream: MediaStream): string {
-  return stream.DisplayTitle ?? stream.Language ?? `Track ${stream.Index}`;
+  return (
+    stream.DisplayTitle ?? stream.Language ?? t("Track {index}", { index: stream.Index ?? "" })
+  );
 }
 
 /** Version, audio and subtitle choices before playback. Hidden when there is nothing to choose. */
@@ -64,18 +67,18 @@ export function TrackPickers({
     <div className="flex flex-wrap gap-4">
       {sources.length > 1 && (
         <Picker
-          label="Version"
+          label={t("Version")}
           value={source.Id ?? ""}
           onChange={(sourceId) => onChange({ sourceId })}
           options={sources.map((option) => ({
             value: option.Id ?? "",
-            label: option.Name ?? "Version",
+            label: option.Name ?? t("Version"),
           }))}
         />
       )}
       {audio.length > 1 && (
         <Picker
-          label="Audio"
+          label={t("Audio")}
           value={String(audioIndex)}
           onChange={(value) => onChange({ ...selection, audioIndex: Number(value) })}
           options={audio.map((stream) => ({
@@ -86,11 +89,11 @@ export function TrackPickers({
       )}
       {subtitles.length > 0 && (
         <Picker
-          label="Subtitles"
+          label={t("Subtitles")}
           value={String(subtitleIndex)}
           onChange={(value) => onChange({ ...selection, subtitleIndex: Number(value) })}
           options={[
-            { value: "-1", label: "Off" },
+            { value: "-1", label: t("Off") },
             ...subtitles.map((stream) => ({
               value: String(stream.Index),
               label: streamLabel(stream),

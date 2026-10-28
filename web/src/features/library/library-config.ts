@@ -1,39 +1,40 @@
 import { BaseItemKind, ItemSortBy, SortOrder } from "@jellyfin/sdk/lib/generated-client/models";
 import type { ArtworkShape } from "@/components/media/Artwork";
+import { msg } from "@/i18n";
 
 export type SortKey = "name" | "added" | "released" | "rating" | "runtime" | "random";
 export type FilterKey = "unplayed" | "played" | "resumable" | "favorite";
 
 export const SORTS: Record<SortKey, { label: string; by: ItemSortBy[]; order: SortOrder }> = {
-  name: { label: "Name", by: [ItemSortBy.SortName], order: SortOrder.Ascending },
+  name: { label: msg("Name"), by: [ItemSortBy.SortName], order: SortOrder.Ascending },
   added: {
-    label: "Date added",
+    label: msg("Date added"),
     by: [ItemSortBy.DateCreated, ItemSortBy.SortName],
     order: SortOrder.Descending,
   },
   released: {
-    label: "Release date",
+    label: msg("Release date"),
     by: [ItemSortBy.PremiereDate, ItemSortBy.ProductionYear, ItemSortBy.SortName],
     order: SortOrder.Descending,
   },
   rating: {
-    label: "Rating",
+    label: msg("Rating"),
     by: [ItemSortBy.CommunityRating, ItemSortBy.SortName],
     order: SortOrder.Descending,
   },
   runtime: {
-    label: "Runtime",
+    label: msg("Runtime"),
     by: [ItemSortBy.Runtime, ItemSortBy.SortName],
     order: SortOrder.Ascending,
   },
-  random: { label: "Random", by: [ItemSortBy.Random], order: SortOrder.Ascending },
+  random: { label: msg("Random"), by: [ItemSortBy.Random], order: SortOrder.Ascending },
 };
 
 export const FILTERS: Record<FilterKey, string> = {
-  unplayed: "Unwatched",
-  played: "Watched",
-  resumable: "In progress",
-  favorite: "Favourites",
+  unplayed: msg("Unwatched"),
+  played: msg("Watched"),
+  resumable: msg("In progress"),
+  favorite: msg("Favourites"),
 };
 
 export interface LibraryKind {
@@ -50,22 +51,23 @@ export interface LibraryKind {
   advancedFilters: boolean;
   /** Continuing / ended filter (TV). */
   seriesStatus?: boolean;
+  /** Item counts, singular and plural ("{count} movie"); render with `tn`. */
   noun: { one: string; many: string };
 }
 
 export type ViewMode = "grid" | "thumbs" | "list";
 export const VIEW_MODES: Record<ViewMode, string> = {
-  grid: "Posters",
-  thumbs: "Thumbnails",
-  list: "List",
+  grid: msg("Posters"),
+  thumbs: msg("Thumbnails"),
+  list: msg("List"),
 };
 
 /** Item-query flags; Jellyfin 10.11 has no HDR filter. */
 export type Feature = "3d" | "trailer" | "extras";
 export const FEATURES: Record<Feature, string> = {
   "3d": "3D",
-  trailer: "Has a trailer",
-  extras: "Has extras",
+  trailer: msg("Has a trailer"),
+  extras: msg("Has extras"),
 };
 
 export type SeriesStatus = "Continuing" | "Ended";
@@ -85,7 +87,7 @@ export const LIBRARY_KINDS: Record<string, LibraryKind> = {
     filters: VIDEO_FILTERS,
     genres: true,
     advancedFilters: true,
-    noun: { one: "movie", many: "movies" },
+    noun: { one: msg("{count} movie"), many: msg("{count} movies") },
   },
   tvshows: {
     itemTypes: [BaseItemKind.Series],
@@ -97,7 +99,7 @@ export const LIBRARY_KINDS: Record<string, LibraryKind> = {
     genres: true,
     advancedFilters: true,
     seriesStatus: true,
-    noun: { one: "show", many: "shows" },
+    noun: { one: msg("{count} show"), many: msg("{count} shows") },
   },
   music: {
     itemTypes: [BaseItemKind.MusicAlbum],
@@ -108,7 +110,7 @@ export const LIBRARY_KINDS: Record<string, LibraryKind> = {
     filters: ["favorite"],
     genres: true,
     advancedFilters: false,
-    noun: { one: "album", many: "albums" },
+    noun: { one: msg("{count} album"), many: msg("{count} albums") },
   },
   boxsets: {
     itemTypes: [BaseItemKind.BoxSet],
@@ -119,7 +121,7 @@ export const LIBRARY_KINDS: Record<string, LibraryKind> = {
     filters: ["favorite"],
     genres: false,
     advancedFilters: false,
-    noun: { one: "collection", many: "collections" },
+    noun: { one: msg("{count} collection"), many: msg("{count} collections") },
   },
   playlists: {
     itemTypes: [BaseItemKind.Playlist],
@@ -130,7 +132,7 @@ export const LIBRARY_KINDS: Record<string, LibraryKind> = {
     filters: [],
     genres: false,
     advancedFilters: false,
-    noun: { one: "playlist", many: "playlists" },
+    noun: { one: msg("{count} playlist"), many: msg("{count} playlists") },
   },
   homevideos: {
     itemTypes: null,
@@ -141,7 +143,7 @@ export const LIBRARY_KINDS: Record<string, LibraryKind> = {
     filters: VIDEO_FILTERS,
     genres: false,
     advancedFilters: false,
-    noun: { one: "item", many: "items" },
+    noun: { one: msg("{count} item"), many: msg("{count} items") },
   },
 };
 
@@ -155,7 +157,7 @@ export const EPISODES_KIND: LibraryKind = {
   filters: VIDEO_FILTERS,
   genres: false,
   advancedFilters: false,
-  noun: { one: "episode", many: "episodes" },
+  noun: { one: msg("{count} episode"), many: msg("{count} episodes") },
 };
 
 export function libraryKind(collectionType: string | null | undefined): LibraryKind {
@@ -169,13 +171,13 @@ export type LibraryTab = "library" | "suggestions" | "upcoming" | "networks" | "
 /** Extra views per library type, after the main library grid. */
 export const LIBRARY_TABS: Record<string, { tab: LibraryTab; label: string }[]> = {
   movies: [
-    { tab: "library", label: "Movies" },
-    { tab: "suggestions", label: "Suggestions" },
+    { tab: "library", label: msg("Movies") },
+    { tab: "suggestions", label: msg("Suggestions") },
   ],
   tvshows: [
-    { tab: "library", label: "Shows" },
-    { tab: "upcoming", label: "Upcoming" },
-    { tab: "networks", label: "Networks" },
-    { tab: "episodes", label: "Episodes" },
+    { tab: "library", label: msg("Shows") },
+    { tab: "upcoming", label: msg("Upcoming") },
+    { tab: "networks", label: msg("Networks") },
+    { tab: "episodes", label: msg("Episodes") },
   ],
 };

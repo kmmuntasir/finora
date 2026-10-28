@@ -1,7 +1,8 @@
+import { msg } from "@/i18n";
 /** Device-local player preferences. Server-synced settings arrive with the settings phase. */
 
 export const BITRATE_OPTIONS = [
-  { label: "Original", value: 120_000_000 },
+  { label: msg("Original"), value: 120_000_000 },
   { label: "20 Mbps", value: 20_000_000 },
   { label: "10 Mbps", value: 10_000_000 },
   { label: "8 Mbps", value: 8_000_000 },

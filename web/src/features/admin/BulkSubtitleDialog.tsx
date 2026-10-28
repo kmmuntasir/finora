@@ -12,6 +12,7 @@ import { Sheet } from "@/components/Sheet";
 import { useSession } from "@/features/auth/context";
 import { useCultures } from "@/features/settings/queries";
 import { languageOptions, SUBTITLE_MODES } from "@/features/settings/subtitle-options";
+import { t, tn } from "@/i18n";
 
 const KEEP = "__keep__";
 const SELECT = "h-11 w-full rounded-md border border-border-strong bg-background px-3 text-body-md";
@@ -39,10 +40,10 @@ export function BulkSubtitleDialog({ users, onClose }: { users: UserDto[]; onClo
       }
     },
     onSuccess: () => {
-      toast.success(`Updated ${users.length} ${users.length === 1 ? "user" : "users"}.`);
+      toast.success(tn(users.length, "Updated {count} user.", "Updated {count} users."));
       onClose();
     },
-    onError: () => toast.error("Some users couldn't be updated."),
+    onError: () => toast.error(t("Some users couldn't be updated.")),
     onSettled: () => void queryClient.invalidateQueries({ queryKey: ["admin", "users"] }),
   });
 
@@ -50,30 +51,31 @@ export function BulkSubtitleDialog({ users, onClose }: { users: UserDto[]; onClo
     <Sheet
       open
       onOpenChange={(open) => !open && onClose()}
-      title="Subtitle settings"
+      title={t("Subtitle settings")}
       description={users.map((user) => user.Name).join(", ")}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             disabled={apply.isPending || (mode === KEEP && language === KEEP)}
             onClick={() => apply.mutate()}
           >
-            {apply.isPending ? "Saving…" : `Apply to ${users.length}`}
+            {apply.isPending ? t("Saving…") : t("Apply to {count}", { count: users.length })}
           </Button>
         </>
       }
     >
       <div className="space-y-4">
         <p className="text-body-sm text-on-surface-muted">
-          These are the users' own Jellyfin settings, so every app they use follows them. They can
-          change them again in Settings.
+          {t(
+            "These are the users' own Jellyfin settings, so every app they use follows them. They can change them again in Settings.",
+          )}
         </p>
         <div>
           <label htmlFor={ids.mode} className="mb-1.5 block text-label-md">
-            When to show subtitles
+            {t("When to show subtitles")}
           </label>
           <select
             id={ids.mode}
@@ -81,17 +83,17 @@ export function BulkSubtitleDialog({ users, onClose }: { users: UserDto[]; onClo
             value={mode}
             onChange={(event) => setMode(event.target.value)}
           >
-            <option value={KEEP}>Keep each user's choice</option>
+            <option value={KEEP}>{t("Keep each user's choice")}</option>
             {SUBTITLE_MODES.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label} — {option.hint}
+                {t(option.label)} — {t(option.hint)}
               </option>
             ))}
           </select>
         </div>
         <div>
           <label htmlFor={ids.language} className="mb-1.5 block text-label-md">
-            Preferred subtitle language
+            {t("Preferred subtitle language")}
           </label>
           <select
             id={ids.language}
@@ -99,8 +101,8 @@ export function BulkSubtitleDialog({ users, onClose }: { users: UserDto[]; onClo
             value={language}
             onChange={(event) => setLanguage(event.target.value)}
           >
-            <option value={KEEP}>Keep each user's choice</option>
-            <option value="">Any language</option>
+            <option value={KEEP}>{t("Keep each user's choice")}</option>
+            <option value="">{t("Any language")}</option>
             {languageOptions(cultures.data).map(([code, name]) => (
               <option key={code} value={code}>
                 {name}

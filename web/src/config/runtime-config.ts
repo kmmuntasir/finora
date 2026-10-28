@@ -3,6 +3,8 @@
  * one build works in every deployment (see docs/concept.md, section 7.4).
  */
 
+import { t } from "@/i18n";
+
 export interface RuntimeConfig {
   /** The single Jellyfin address used by browsers. No trailing slash. */
   jellyfinUrl: string;
@@ -22,10 +24,10 @@ export type ConfigResult =
 export function normalizeBaseUrl(raw: string): string {
   const url = new URL(raw.trim());
   if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new Error(`Unsupported protocol "${url.protocol}"`);
+    throw new Error(t('Unsupported protocol "{protocol}"', { protocol: url.protocol }));
   }
   if (url.username || url.password) {
-    throw new Error("Credentials are not allowed in the URL");
+    throw new Error(t("Credentials are not allowed in the URL"));
   }
   url.hash = "";
   url.search = "";
@@ -37,16 +39,19 @@ export function parseRuntimeConfig(data: unknown, pageProtocol: string): ConfigR
   if (typeof data !== "object" || data === null) {
     return {
       ok: false,
-      problem: { kind: "invalid", detail: "config.json must contain an object" },
+      problem: { kind: "invalid", detail: t("config.json must contain an object") },
     };
   }
   const record = data as Record<string, unknown>;
 
   if (typeof record.jellyfinUrl !== "string" || record.jellyfinUrl.trim() === "") {
-    return { ok: false, problem: { kind: "invalid", detail: "jellyfinUrl is required" } };
+    return { ok: false, problem: { kind: "invalid", detail: t("jellyfinUrl is required") } };
   }
   if (record.apiUrl !== undefined && record.apiUrl !== null && typeof record.apiUrl !== "string") {
-    return { ok: false, problem: { kind: "invalid", detail: "apiUrl must be a string or null" } };
+    return {
+      ok: false,
+      problem: { kind: "invalid", detail: t("apiUrl must be a string or null") },
+    };
   }
 
   let config: RuntimeConfig;
@@ -90,7 +95,10 @@ export async function loadRuntimeConfig(
   if (!response.ok) {
     return {
       ok: false,
-      problem: { kind: "missing", detail: `GET /config.json returned ${response.status}` },
+      problem: {
+        kind: "missing",
+        detail: t("GET /config.json returned {status}", { status: response.status }),
+      },
     };
   }
 
@@ -98,7 +106,7 @@ export async function loadRuntimeConfig(
   try {
     data = await response.json();
   } catch {
-    return { ok: false, problem: { kind: "invalid", detail: "config.json is not valid JSON" } };
+    return { ok: false, problem: { kind: "invalid", detail: t("config.json is not valid JSON") } };
   }
   return parseRuntimeConfig(data, pageProtocol);
 }

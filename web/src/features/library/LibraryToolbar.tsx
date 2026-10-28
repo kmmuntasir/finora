@@ -25,6 +25,7 @@ import {
   type ViewMode,
 } from "./library-config";
 import type { LibraryState } from "./library-state";
+import { t, tn } from "@/i18n";
 
 interface LibraryToolbarProps {
   kind: LibraryKind;
@@ -48,11 +49,14 @@ const VIEW_ICONS: Record<ViewMode, typeof List> = {
 /** A dropdown with an "Any" choice for one optional filter value. */
 function ChoiceMenu({
   label,
+  anyLabel,
   value,
   options,
   onChange,
 }: {
   label: string;
+  /** The "Any …" choice, e.g. "Any year". */
+  anyLabel: string;
   value: string | null;
   options: { value: string; label: string }[];
   onChange: (value: string | null) => void;
@@ -70,7 +74,7 @@ function ChoiceMenu({
           >
             <DropdownMenu.RadioItem value="" className={MENU_ITEM}>
               <Indicator />
-              Any {label.toLowerCase()}
+              {anyLabel}
             </DropdownMenu.RadioItem>
             {options.map((option) => (
               <DropdownMenu.RadioItem key={option.value} value={option.value} className={MENU_ITEM}>
@@ -128,7 +132,7 @@ export function LibraryToolbar({
     <div className="-mx-page-x-mobile flex items-center gap-2 overflow-x-auto px-page-x-mobile pb-1 [scrollbar-width:none] md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:pb-0 [&>*]:shrink-0">
       <div
         role="radiogroup"
-        aria-label="View"
+        aria-label={t("View")}
         className="flex rounded-full bg-surface-raised p-0.5"
       >
         {(Object.keys(VIEW_MODES) as ViewMode[]).map((mode) => {
@@ -139,8 +143,8 @@ export function LibraryToolbar({
               type="button"
               role="radio"
               aria-checked={state.view === mode}
-              aria-label={VIEW_MODES[mode]}
-              title={VIEW_MODES[mode]}
+              aria-label={t(VIEW_MODES[mode])}
+              title={t(VIEW_MODES[mode])}
               onClick={() => update({ view: mode })}
               className={cn(
                 "grid h-8 w-9 place-items-center rounded-full transition-colors duration-[120ms]",
@@ -158,7 +162,7 @@ export function LibraryToolbar({
       <DropdownMenu.Root>
         <MenuButton>
           <ArrowDownUp aria-hidden className="size-4" />
-          {SORTS[state.sort].label}
+          {t(SORTS[state.sort].label)}
         </MenuButton>
         <DropdownMenu.Portal>
           <DropdownMenu.Content align="start" sideOffset={6} className={MENU_CONTENT}>
@@ -169,7 +173,7 @@ export function LibraryToolbar({
               {kind.sorts.map((sort) => (
                 <DropdownMenu.RadioItem key={sort} value={sort} className={MENU_ITEM}>
                   <Indicator />
-                  {SORTS[sort].label}
+                  {t(SORTS[sort].label)}
                 </DropdownMenu.RadioItem>
               ))}
             </DropdownMenu.RadioGroup>
@@ -182,7 +186,7 @@ export function LibraryToolbar({
                   className={MENU_ITEM}
                 >
                   <Indicator />
-                  Reverse order
+                  {t("Reverse order")}
                 </DropdownMenu.CheckboxItem>
               </>
             )}
@@ -192,7 +196,7 @@ export function LibraryToolbar({
 
       {kind.genres && genres.length > 0 && (
         <DropdownMenu.Root>
-          <MenuButton active={Boolean(state.genre)}>{state.genre ?? "Genre"}</MenuButton>
+          <MenuButton active={Boolean(state.genre)}>{state.genre ?? t("Genre")}</MenuButton>
           <DropdownMenu.Portal>
             <DropdownMenu.Content align="start" sideOffset={6} className={MENU_CONTENT}>
               <DropdownMenu.RadioGroup
@@ -201,7 +205,7 @@ export function LibraryToolbar({
               >
                 <DropdownMenu.RadioItem value="" className={MENU_ITEM}>
                   <Indicator />
-                  All genres
+                  {t("All genres")}
                 </DropdownMenu.RadioItem>
                 {genres.map((genre) => (
                   <DropdownMenu.RadioItem key={genre} value={genre} className={MENU_ITEM}>
@@ -218,19 +222,22 @@ export function LibraryToolbar({
       {kind.advancedFilters && (
         <>
           <ChoiceMenu
-            label="Year"
+            label={t("Year")}
+            anyLabel={t("Any year")}
             value={state.year ? String(state.year) : null}
             options={years.map((year) => ({ value: String(year), label: String(year) }))}
             onChange={(value) => update({ year: value ? Number(value) : null })}
           />
           <ChoiceMenu
-            label="Rating"
+            label={t("Rating")}
+            anyLabel={t("Any rating")}
             value={state.rating}
             options={ratings.map((rating) => ({ value: rating, label: rating }))}
             onChange={(rating) => update({ rating })}
           />
           <ChoiceMenu
-            label="Resolution"
+            label={t("Resolution")}
+            anyLabel={t("Any resolution")}
             value={state.resolution}
             options={(Object.keys(RESOLUTIONS) as Resolution[]).map((key) => ({
               value: key,
@@ -242,24 +249,27 @@ export function LibraryToolbar({
             }
           />
           <ChoiceMenu
-            label="Studio"
+            label={t("Studio")}
+            anyLabel={t("Any studio")}
             value={state.studio}
             options={studios.map((studio) => ({ value: studio.id, label: studio.name }))}
             onChange={(studio) => update({ studio })}
           />
           <ChoiceMenu
-            label="Tag"
+            label={t("Tag")}
+            anyLabel={t("Any tag")}
             value={state.tag}
             options={tags.map((tag) => ({ value: tag, label: tag }))}
             onChange={(tag) => update({ tag })}
           />
           {kind.seriesStatus && (
             <ChoiceMenu
-              label="Status"
+              label={t("Status")}
+              anyLabel={t("Any status")}
               value={state.status}
               options={[
-                { value: "Continuing", label: "Continuing" },
-                { value: "Ended", label: "Ended" },
+                { value: "Continuing", label: t("Continuing") },
+                { value: "Ended", label: t("Ended") },
               ]}
               onChange={(status) => update({ status: status as SeriesStatus | null })}
             />
@@ -267,10 +277,10 @@ export function LibraryToolbar({
           <DropdownMenu.Root>
             <MenuButton active={state.features.length > 0}>
               {state.features.length === 1
-                ? FEATURES[state.features[0]!]
+                ? t(FEATURES[state.features[0]!])
                 : state.features.length > 1
-                  ? `${state.features.length} features`
-                  : "Features"}
+                  ? tn(state.features.length, "{count} feature", "{count} features")
+                  : t("Features")}
             </MenuButton>
             <DropdownMenu.Portal>
               <DropdownMenu.Content align="start" sideOffset={6} className={MENU_CONTENT}>
@@ -289,7 +299,7 @@ export function LibraryToolbar({
                     className={MENU_ITEM}
                   >
                     <Indicator />
-                    {FEATURES[feature]}
+                    {t(FEATURES[feature])}
                   </DropdownMenu.CheckboxItem>
                 ))}
               </DropdownMenu.Content>
@@ -327,7 +337,7 @@ export function LibraryToolbar({
                 : "bg-surface-raised text-on-surface-muted hover:bg-surface-overlay hover:text-on-surface",
             )}
           >
-            {FILTERS[filter]}
+            {t(FILTERS[filter])}
           </button>
         );
       })}
@@ -336,7 +346,7 @@ export function LibraryToolbar({
           type="button"
           aria-pressed={state.subtitles}
           onClick={() => update({ subtitles: !state.subtitles, resolution: null })}
-          title="Can't be combined with a resolution filter"
+          title={t("Can't be combined with a resolution filter")}
           className={cn(
             "h-9 rounded-full px-3.5 text-label-md transition-colors duration-[120ms]",
             state.subtitles
@@ -344,7 +354,7 @@ export function LibraryToolbar({
               : "bg-surface-raised text-on-surface-muted hover:bg-surface-overlay hover:text-on-surface",
           )}
         >
-          Has subtitles
+          {t("Has subtitles")}
         </button>
       )}
       <button
@@ -359,7 +369,7 @@ export function LibraryToolbar({
         )}
       >
         <CheckSquare aria-hidden className="size-4" />
-        {selecting ? "Done" : "Select"}
+        {selecting ? t("Done") : t("Select")}
       </button>
     </div>
   );

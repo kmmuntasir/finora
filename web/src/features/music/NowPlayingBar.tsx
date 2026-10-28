@@ -5,6 +5,7 @@ import { useAudioClock } from "./audio-clock";
 import { currentEntry, useQueue } from "./queue-store";
 import { trackArt } from "./stream-url";
 import { TransportControls } from "./TransportControls";
+import { t } from "@/i18n";
 
 function ThinProgress() {
   const current = useAudioClock((state) => state.current);
@@ -38,7 +39,7 @@ function VolumeControl() {
       <button
         type="button"
         onClick={toggleMute}
-        aria-label={muted ? "Unmute" : "Mute"}
+        aria-label={muted ? t("Unmute") : t("Mute")}
         className="grid size-9 place-items-center rounded-full text-on-surface-muted hover:text-on-surface"
       >
         {muted || volume === 0 ? (
@@ -54,7 +55,7 @@ function VolumeControl() {
         step={0.05}
         value={muted ? 0 : volume}
         onChange={(event) => setVolume(Number(event.target.value))}
-        aria-label="Volume"
+        aria-label={t("Volume")}
         className="w-24 accent-primary"
       />
     </div>
@@ -72,7 +73,7 @@ export function NowPlayingBar() {
   return (
     <div
       role="region"
-      aria-label="Now playing"
+      aria-label={t("Now playing")}
       className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t border-border bg-surface/95 backdrop-blur md:bottom-0 md:left-[var(--spacing-sidebar)]"
     >
       <ThinProgress />
@@ -81,7 +82,7 @@ export function NowPlayingBar() {
           type="button"
           onClick={() => setExpanded(true)}
           className="flex min-w-0 items-center gap-3 rounded-md text-left"
-          aria-label="Open now playing"
+          aria-label={t("Open now playing")}
         >
           <Artwork
             image={trackArt(item)}
@@ -109,7 +110,7 @@ export function NowPlayingBar() {
           <button
             type="button"
             onClick={() => setExpanded(true)}
-            aria-label="Queue"
+            aria-label={t("Queue")}
             className="grid size-9 place-items-center rounded-full text-on-surface-muted hover:text-on-surface"
           >
             <ListMusic aria-hidden className="size-5" />
@@ -117,7 +118,7 @@ export function NowPlayingBar() {
           <button
             type="button"
             onClick={() => setExpanded(true)}
-            aria-label="Expand player"
+            aria-label={t("Expand player")}
             className="grid size-9 place-items-center rounded-full text-on-surface-muted hover:text-on-surface"
           >
             <ChevronUp aria-hidden className="size-5" />

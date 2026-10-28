@@ -15,3 +15,12 @@ describe("t", () => {
     expect(t("Sign in")).toBe("Sign in");
   });
 });
+
+describe("numbers in placeholders", () => {
+  it("use Bengali digits in Bengali", async () => {
+    await setLanguage("bn");
+    expect(t("{count} test value", { count: 25 })).toBe("২৫ test value");
+    await setLanguage("en");
+    expect(t("{count} test value", { count: 25 })).toBe("25 test value");
+  });
+});

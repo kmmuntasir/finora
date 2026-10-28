@@ -6,6 +6,7 @@ import { Spinner } from "@/components/Spinner";
 import { useSession } from "@/features/auth/context";
 import { cn } from "@/lib/cn";
 import { useAudioClock } from "./audio-clock";
+import { t } from "@/i18n";
 
 /** Lyrics for the current track; synced lyrics follow playback and can be tapped to seek. */
 export function Lyrics({ item }: { item: BaseItemDto }) {
@@ -35,10 +36,10 @@ export function Lyrics({ item }: { item: BaseItemDto }) {
   }, [activeIndex]);
 
   if (!item.HasLyrics)
-    return <p className="text-body-md text-on-surface-muted">No lyrics for this track.</p>;
+    return <p className="text-body-md text-on-surface-muted">{t("No lyrics for this track.")}</p>;
   if (isPending) return <Spinner />;
   if (!lines.length)
-    return <p className="text-body-md text-on-surface-muted">No lyrics for this track.</p>;
+    return <p className="text-body-md text-on-surface-muted">{t("No lyrics for this track.")}</p>;
 
   return (
     <ol className="space-y-3 pb-24">

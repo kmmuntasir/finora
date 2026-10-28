@@ -2,6 +2,7 @@ import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { ListEnd, ListStart, Play } from "lucide-react";
 import { currentEntry, useQueue } from "@/features/music/queue-store";
 import { cn } from "@/lib/cn";
+import { t } from "@/i18n";
 
 function duration(item: BaseItemDto): string {
   const ticks = item.RunTimeTicks;
@@ -21,12 +22,12 @@ export function TrackList({ album, tracks }: { album: BaseItemDto; tracks: BaseI
   const albumArtist = album.AlbumArtist;
 
   return (
-    <section aria-label="Tracks" className="px-page-x-mobile md:px-page-x">
+    <section aria-label={t("Tracks")} className="px-page-x-mobile md:px-page-x">
       <ol className="divide-y divide-border/60 rounded-lg bg-surface">
         {tracks.map((track, index) => {
           const disc = track.ParentIndexNumber ?? 1;
           const previousDisc = index > 0 ? (tracks[index - 1]?.ParentIndexNumber ?? 1) : null;
-          const header = multiDisc && disc !== previousDisc ? `Disc ${disc}` : null;
+          const header = multiDisc && disc !== previousDisc ? t("Disc {disc}", { disc }) : null;
           const artists = track.Artists?.join(", ");
           const current = track.Id === playingId;
           return (
@@ -48,7 +49,7 @@ export function TrackList({ album, tracks }: { album: BaseItemDto; tracks: BaseI
                   type="button"
                   onClick={() => useQueue.getState().play(tracks, index)}
                   className="min-w-0 text-left"
-                  aria-label={`Play ${track.Name}`}
+                  aria-label={t("Play {title}", { title: track.Name ?? "" })}
                 >
                   <span className={cn("block truncate text-body-md", current && "text-primary")}>
                     {track.Name}
@@ -63,8 +64,8 @@ export function TrackList({ album, tracks }: { album: BaseItemDto; tracks: BaseI
                   <button
                     type="button"
                     onClick={() => useQueue.getState().playNext([track])}
-                    aria-label={`Play ${track.Name} next`}
-                    title="Play next"
+                    aria-label={t("Play {title} next", { title: track.Name ?? "" })}
+                    title={t("Play next")}
                     className={ACTION}
                   >
                     <ListStart aria-hidden className="size-4" />
@@ -72,8 +73,8 @@ export function TrackList({ album, tracks }: { album: BaseItemDto; tracks: BaseI
                   <button
                     type="button"
                     onClick={() => useQueue.getState().addToQueue([track])}
-                    aria-label={`Add ${track.Name} to queue`}
-                    title="Add to queue"
+                    aria-label={t("Add {title} to queue", { title: track.Name ?? "" })}
+                    title={t("Add to queue")}
                     className={ACTION}
                   >
                     <ListEnd aria-hidden className="size-4" />

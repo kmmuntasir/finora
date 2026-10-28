@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/Button";
 import { TextField } from "@/components/TextField";
 import { useRuntimeConfig } from "@/config/context";
+import { t } from "@/i18n";
 
 type Step = "name" | "pin" | "done";
 
@@ -34,15 +35,15 @@ export function ForgotPasswordPanel({
         forgotPasswordDto: { EnteredUsername: username.trim() },
       });
       if (data.Action === "ContactAdmin") {
-        setError("Password reset is turned off. Ask the server's administrator.");
+        setError(t("Password reset is turned off. Ask the server's administrator."));
       } else if (data.Action === "InNetworkRequired") {
-        setError("Password reset only works from the server's home network.");
+        setError(t("Password reset only works from the server's home network."));
       } else {
         setPinFile(data.PinFile ?? null);
         setStep("pin");
       }
     } catch {
-      setError("The server didn't respond. Try again.");
+      setError(t("The server didn't respond. Try again."));
     } finally {
       setBusy(false);
     }
@@ -56,9 +57,9 @@ export function ForgotPasswordPanel({
         forgotPasswordPinDto: { Pin: pin.trim() },
       });
       if (data.Success) setStep("done");
-      else setError("That PIN didn't match. Check it and try again.");
+      else setError(t("That PIN didn't match. Check it and try again."));
     } catch {
-      setError("That PIN didn't match, or it has expired.");
+      setError(t("That PIN didn't match, or it has expired."));
     } finally {
       setBusy(false);
     }
@@ -66,7 +67,7 @@ export function ForgotPasswordPanel({
 
   return (
     <div>
-      <h1 className="text-headline-md">Reset password</h1>
+      <h1 className="text-headline-md">{t("Reset password")}</h1>
       {step === "name" && (
         <form
           className="mt-6 space-y-4"
@@ -76,12 +77,12 @@ export function ForgotPasswordPanel({
           }}
         >
           <p className="text-body-sm text-on-surface-muted">
-            Jellyfin writes a one-time PIN to a file on the server. This only works when you're on
-            the server's home network, and someone with access to the server must read the PIN for
-            you.
+            {t(
+              "Jellyfin writes a one-time PIN to a file on the server. This only works when you're on the server's home network, and someone with access to the server must read the PIN for you.",
+            )}
           </p>
           <TextField
-            label="Username"
+            label={t("Username")}
             autoComplete="username"
             autoCapitalize="none"
             required
@@ -94,7 +95,7 @@ export function ForgotPasswordPanel({
             </p>
           )}
           <Button type="submit" className="w-full" disabled={busy || !username.trim()}>
-            Request a PIN
+            {t("Request a PIN")}
           </Button>
         </form>
       )}
@@ -107,8 +108,10 @@ export function ForgotPasswordPanel({
           }}
         >
           <p className="text-body-sm text-on-surface-muted">
-            If <strong className="text-on-surface">{username}</strong> exists and you're on the home
-            network, the PIN is in this file on the server for the next 30 minutes:
+            {t("If")} <strong className="text-on-surface">{username}</strong>{" "}
+            {t(
+              "exists and you're on the home network, the PIN is in this file on the server for the next 30 minutes:",
+            )}
           </p>
           {pinFile && (
             <code className="block rounded-md bg-surface-overlay px-3 py-2 text-caption break-all">
@@ -116,7 +119,7 @@ export function ForgotPasswordPanel({
             </code>
           )}
           <TextField
-            label="PIN"
+            label={t("PIN")}
             autoComplete="one-time-code"
             autoCapitalize="characters"
             required
@@ -130,24 +133,25 @@ export function ForgotPasswordPanel({
             </p>
           )}
           <Button type="submit" className="w-full" disabled={busy || !pin.trim()}>
-            Reset password
+            {t("Reset password")}
           </Button>
         </form>
       )}
       {step === "done" && (
         <div className="mt-6 space-y-4" role="status">
           <p className="text-body-md">
-            Done. Your password is now the PIN, exactly as you typed it. Sign in with it, then
-            choose a new password in Settings.
+            {t(
+              "Done. Your password is now the PIN, exactly as you typed it. Sign in with it, then choose a new password in Settings.",
+            )}
           </p>
           <Button className="w-full" onClick={() => onDone(username.trim())}>
-            Back to sign in
+            {t("Back to sign in")}
           </Button>
         </div>
       )}
       {step !== "done" && (
         <Button variant="ghost" className="mt-3 w-full" onClick={() => onDone(username.trim())}>
-          Back to sign in
+          {t("Back to sign in")}
         </Button>
       )}
     </div>

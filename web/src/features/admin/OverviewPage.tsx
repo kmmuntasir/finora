@@ -14,16 +14,17 @@ import {
   useSessions,
   useSystemInfo,
 } from "./queries";
+import { msg, t } from "@/i18n";
 
 const COUNTS: { key: string; label: string }[] = [
-  { key: "MovieCount", label: "Movies" },
-  { key: "SeriesCount", label: "Shows" },
-  { key: "EpisodeCount", label: "Episodes" },
-  { key: "AlbumCount", label: "Albums" },
-  { key: "SongCount", label: "Songs" },
-  { key: "BoxSetCount", label: "Collections" },
-  { key: "BookCount", label: "Books" },
-  { key: "MusicVideoCount", label: "Music videos" },
+  { key: "MovieCount", label: msg("Movies") },
+  { key: "SeriesCount", label: msg("Shows") },
+  { key: "EpisodeCount", label: msg("Episodes") },
+  { key: "AlbumCount", label: msg("Albums") },
+  { key: "SongCount", label: msg("Songs") },
+  { key: "BoxSetCount", label: msg("Collections") },
+  { key: "BookCount", label: msg("Books") },
+  { key: "MusicVideoCount", label: msg("Music videos") },
 ];
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -49,7 +50,7 @@ export function OverviewPage() {
   if (info.isError)
     return (
       <p role="alert" className="text-body-md text-error">
-        Couldn't load the server information.
+        {t("Couldn't load the server information.")}
       </p>
     );
   const system = info.data;
@@ -61,18 +62,24 @@ export function OverviewPage() {
           {system.ServerName}
         </h2>
         <p className="mt-1 text-body-sm text-on-surface-muted">
-          Jellyfin {system.Version}
-          {system.OperatingSystemDisplayName ? ` on ${system.OperatingSystemDisplayName}` : ""}
+          {system.OperatingSystemDisplayName
+            ? t("Jellyfin {version} on {os}", {
+                version: system.Version ?? "",
+                os: system.OperatingSystemDisplayName,
+              })
+            : `Jellyfin ${system.Version ?? ""}`}
         </p>
         {system.HasPendingRestart && (
           <div
             role="status"
             className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md bg-warning/15 px-4 py-3"
           >
-            <p className="text-body-md">The server needs a restart to finish applying changes.</p>
+            <p className="text-body-md">
+              {t("The server needs a restart to finish applying changes.")}
+            </p>
             <Button size="sm" variant="secondary" onClick={() => setConfirm(true)}>
               <RotateCw aria-hidden className="size-4" />
-              Restart
+              {t("Restart")}
             </Button>
           </div>
         )}
@@ -80,13 +87,15 @@ export function OverviewPage() {
 
       <section aria-labelledby="library-title">
         <h2 id="library-title" className="mb-3 text-title">
-          Library
+          {t("Library")}
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Stat label="Playing now" value={formatNumber(playing)} />
+          <Stat label={t("Playing now")} value={formatNumber(playing)} />
           {COUNTS.map(({ key, label }) => {
             const value = (counts.data as Record<string, number> | undefined)?.[key] ?? 0;
-            return value > 0 ? <Stat key={key} label={label} value={formatNumber(value)} /> : null;
+            return value > 0 ? (
+              <Stat key={key} label={t(label)} value={formatNumber(value)} />
+            ) : null;
           })}
         </div>
       </section>
@@ -94,10 +103,10 @@ export function OverviewPage() {
       <section aria-labelledby="activity-title">
         <div className="mb-3 flex items-baseline justify-between">
           <h2 id="activity-title" className="text-title">
-            Recent activity
+            {t("Recent activity")}
           </h2>
           <Link to="/admin/activity" className="text-label-md text-primary hover:underline">
-            All activity
+            {t("All activity")}
           </Link>
         </div>
         {activity.isPending ? (
@@ -110,21 +119,21 @@ export function OverviewPage() {
       <ConfirmDialog
         open={confirm}
         onOpenChange={setConfirm}
-        title="Restart the server?"
-        confirmLabel="Restart"
+        title={t("Restart the server?")}
+        confirmLabel={t("Restart")}
         destructive
         busy={restart.isPending}
         onConfirm={() =>
           restart.mutate(undefined, {
             onSuccess: () => {
               setConfirm(false);
-              toast.success("Restarting. Playback stops for everyone for a minute or so.");
+              toast.success(t("Restarting. Playback stops for everyone for a minute or so."));
             },
-            onError: () => toast.error("Couldn't restart the server."),
+            onError: () => toast.error(t("Couldn't restart the server.")),
           })
         }
       >
-        Everyone watching right now will be interrupted for about a minute.
+        {t("Everyone watching right now will be interrupted for about a minute.")}
       </ConfirmDialog>
     </div>
   );

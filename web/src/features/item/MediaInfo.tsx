@@ -1,4 +1,5 @@
 import type { MediaSourceInfo } from "@jellyfin/sdk/lib/generated-client/models";
+import { t } from "@/i18n";
 
 function formatSize(bytes: number | null | undefined): string | null {
   if (!bytes) return null;
@@ -36,15 +37,15 @@ export function MediaInfo({ source }: { source: MediaSourceInfo }) {
         <span className="inline-block transition-transform duration-150 group-open:rotate-90">
           ›
         </span>{" "}
-        Media info
+        {t("Media info")}
       </summary>
       <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 px-5 pb-5 text-body-sm">
-        <Row label="File" value={source.Path?.split(/[\\/]/).pop()} />
-        <Row label="Container" value={source.Container?.toUpperCase()} />
-        <Row label="Size" value={formatSize(source.Size)} />
-        <Row label="Bitrate" value={formatBitrate(source.Bitrate)} />
+        <Row label={t("File")} value={source.Path?.split(/[\\/]/).pop()} />
+        <Row label={t("Container")} value={source.Container?.toUpperCase()} />
+        <Row label={t("Size")} value={formatSize(source.Size)} />
+        <Row label={t("Bitrate")} value={formatBitrate(source.Bitrate)} />
         <Row
-          label="Video"
+          label={t("Video")}
           value={
             video
               ? [
@@ -58,13 +59,17 @@ export function MediaInfo({ source }: { source: MediaSourceInfo }) {
           }
         />
         {audio.map((stream) => (
-          <Row key={stream.Index} label="Audio" value={stream.DisplayTitle} />
+          <Row key={stream.Index} label={t("Audio")} value={stream.DisplayTitle} />
         ))}
         {subtitles.map((stream) => (
           <Row
             key={stream.Index}
-            label="Subtitle"
-            value={`${stream.DisplayTitle ?? ""}${stream.IsExternal ? " (external)" : ""}`}
+            label={t("Subtitle")}
+            value={
+              stream.IsExternal
+                ? t("{title} (external)", { title: stream.DisplayTitle ?? "" })
+                : (stream.DisplayTitle ?? "")
+            }
           />
         ))}
       </dl>

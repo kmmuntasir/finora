@@ -13,6 +13,7 @@ import { currentEntry, useQueue } from "./queue-store";
 import { QueueList } from "./QueueList";
 import { trackArt } from "./stream-url";
 import { TransportControls } from "./TransportControls";
+import { t } from "@/i18n";
 
 function Progress() {
   const current = useAudioClock((state) => state.current);
@@ -43,7 +44,7 @@ function Volume() {
       <button
         type="button"
         onClick={toggleMute}
-        aria-label={muted ? "Unmute" : "Mute"}
+        aria-label={muted ? t("Unmute") : t("Mute")}
         className="grid size-9 place-items-center rounded-full text-on-surface-muted hover:text-on-surface"
       >
         {muted || volume === 0 ? (
@@ -59,7 +60,7 @@ function Volume() {
         step={0.05}
         value={muted ? 0 : volume}
         onChange={(event) => setVolume(Number(event.target.value))}
-        aria-label="Volume"
+        aria-label={t("Volume")}
         className="w-40 accent-primary"
       />
     </div>
@@ -91,7 +92,7 @@ export function NowPlayingView() {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Now playing"
+      aria-label={t("Now playing")}
       className="fixed inset-0 z-40 overflow-hidden bg-background animate-[fade-in_200ms_ease-out]"
     >
       {art && (
@@ -109,14 +110,14 @@ export function NowPlayingView() {
           <button
             type="button"
             onClick={() => setExpanded(false)}
-            aria-label="Close"
+            aria-label={t("Close")}
             className="grid size-11 place-items-center rounded-full hover:bg-white/10 light:hover:bg-black/5"
           >
             <ChevronDown aria-hidden className="size-6" />
           </button>
           {item.Album && (
             <p className="min-w-0 flex-1 truncate text-label-md text-on-surface-muted">
-              Playing from{" "}
+              {t("Playing from")}{" "}
               {item.AlbumId ? (
                 <Link
                   to={`/items/${item.AlbumId}`}
@@ -135,7 +136,7 @@ export function NowPlayingView() {
             onClick={() => useQueue.getState().clear()}
             className="ml-auto h-9 shrink-0 rounded-full px-4 text-label-md text-on-surface-muted hover:bg-white/10 light:hover:bg-black/5 hover:text-on-surface"
           >
-            Clear queue
+            {t("Clear queue")}
           </button>
         </div>
 
@@ -189,7 +190,7 @@ export function NowPlayingView() {
                       : "bg-white/10 light:bg-black/5 text-on-surface-muted hover:text-on-surface",
                   )}
                 >
-                  {name === "queue" ? "Up next" : "Lyrics"}
+                  {name === "queue" ? t("Up next") : t("Lyrics")}
                 </button>
               ))}
             </div>

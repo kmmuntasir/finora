@@ -5,8 +5,10 @@ import { Link } from "react-router";
 import { Spinner } from "@/components/Spinner";
 import { useRuntimeConfig } from "@/config/context";
 import { relativeTime } from "@/lib/format";
+import { SUBTITLE_MODES } from "@/features/settings/subtitle-options";
 import { BulkSubtitleDialog } from "./BulkSubtitleDialog";
 import { useSessions, useUsers } from "./queries";
+import { t } from "@/i18n";
 
 function Avatar({ user }: { user: UserDto }) {
   const { config } = useRuntimeConfig();
@@ -72,7 +74,7 @@ export function UsersPage() {
   if (isError)
     return (
       <p role="alert" className="text-body-md text-error">
-        Couldn't load users.
+        {t("Couldn't load users.")}
       </p>
     );
 
@@ -88,8 +90,8 @@ export function UsersPage() {
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder={`Search ${users.length} users`}
-            aria-label="Search users"
+            placeholder={t("Search {count} users", { count: users.length })}
+            aria-label={t("Search users")}
             className="h-10 w-full rounded-full border border-border-strong bg-surface pr-4 pl-9 text-body-sm placeholder:text-on-surface-subtle"
           />
         </div>
@@ -100,7 +102,7 @@ export function UsersPage() {
             className="inline-flex h-10 items-center gap-2 rounded-full bg-surface-raised px-4 text-label-md hover:bg-surface-overlay"
           >
             <Captions aria-hidden className="size-4" />
-            Subtitle settings for {selected.size}
+            {t("Subtitle settings for {count}", { count: selected.size })}
           </button>
         )}
         <Link
@@ -108,7 +110,7 @@ export function UsersPage() {
           className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-label-md text-on-primary hover:bg-primary-hover"
         >
           <Plus aria-hidden className="size-4" />
-          Add user
+          {t("Add user")}
         </Link>
       </div>
 
@@ -119,7 +121,7 @@ export function UsersPage() {
               <th scope="col" className="w-10 py-3 pl-4">
                 <input
                   type="checkbox"
-                  aria-label="Select all shown users"
+                  aria-label={t("Select all shown users")}
                   checked={allShown}
                   onChange={(event) =>
                     setSelected(
@@ -130,19 +132,19 @@ export function UsersPage() {
                 />
               </th>
               <th scope="col" className="px-4 py-3 font-bold">
-                User
+                {t("User")}
               </th>
               <th scope="col" className="px-4 py-3 font-bold">
-                Libraries
+                {t("Libraries")}
               </th>
               <th scope="col" className="px-4 py-3 font-bold">
-                Last active
+                {t("Last active")}
               </th>
               <th scope="col" className="px-4 py-3 font-bold">
-                Subtitles
+                {t("Subtitles")}
               </th>
               <th scope="col" className="px-4 py-3 font-bold">
-                Status
+                {t("Status")}
               </th>
             </tr>
           </thead>
@@ -154,7 +156,7 @@ export function UsersPage() {
                   <td className="py-2.5 pl-4">
                     <input
                       type="checkbox"
-                      aria-label={`Select ${user.Name}`}
+                      aria-label={t("Select {name}", { name: user.Name ?? "" })}
                       checked={selected.has(user.Id!)}
                       onChange={(event) => toggle(user.Id!, event.target.checked)}
                       className="size-4 accent-primary"
@@ -171,15 +173,19 @@ export function UsersPage() {
                   </td>
                   <td className="px-4 py-2.5 text-on-surface-muted">
                     {policy?.EnableAllFolders
-                      ? "All"
-                      : `${policy?.EnabledFolders?.length ?? 0} selected`}
+                      ? t("All")
+                      : t("{count} selected", { count: policy?.EnabledFolders?.length ?? 0 })}
                   </td>
                   <td className="px-4 py-2.5 text-on-surface-muted">
                     {relativeTime(user.LastActivityDate)}
                   </td>
                   <td className="px-4 py-2.5 text-on-surface-muted">
                     {[
-                      user.Configuration?.SubtitleMode ?? "Default",
+                      t(
+                        SUBTITLE_MODES.find(
+                          (mode) => mode.value === user.Configuration?.SubtitleMode,
+                        )?.label ?? SUBTITLE_MODES[0]!.label,
+                      ),
                       user.Configuration?.SubtitleLanguagePreference || null,
                     ]
                       .filter(Boolean)
@@ -187,9 +193,9 @@ export function UsersPage() {
                   </td>
                   <td className="px-4 py-2.5">
                     <span className="flex flex-wrap gap-1.5">
-                      {online.has(user.Id) && <Badge tone="primary">Online</Badge>}
-                      {policy?.IsAdministrator && <Badge>Admin</Badge>}
-                      {policy?.IsDisabled && <Badge tone="warning">Disabled</Badge>}
+                      {online.has(user.Id) && <Badge tone="primary">{t("Online")}</Badge>}
+                      {policy?.IsAdministrator && <Badge>{t("Admin")}</Badge>}
+                      {policy?.IsDisabled && <Badge tone="warning">{t("Disabled")}</Badge>}
                     </span>
                   </td>
                 </tr>
@@ -199,7 +205,7 @@ export function UsersPage() {
         </table>
         {filtered.length === 0 && (
           <p className="px-4 py-8 text-center text-body-md text-on-surface-muted">
-            No users match “{query}”.
+            {t("No users match “{query}”.", { query })}
           </p>
         )}
       </div>

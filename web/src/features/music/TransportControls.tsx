@@ -2,6 +2,7 @@ import { Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward } from "lu
 import { cn } from "@/lib/cn";
 import { useAudioClock } from "./audio-clock";
 import { useQueue } from "./queue-store";
+import { t } from "@/i18n";
 
 const BUTTON =
   "grid place-items-center rounded-full text-on-surface-muted transition-colors duration-[120ms] hover:text-on-surface disabled:opacity-40";
@@ -36,8 +37,8 @@ export function TransportControls({
           type="button"
           onClick={toggleShuffle}
           aria-pressed={shuffled}
-          aria-label="Shuffle"
-          title="Shuffle"
+          aria-label={t("Shuffle")}
+          title={t("Shuffle")}
           className={cn(
             BUTTON,
             large ? "size-11" : "size-9",
@@ -50,7 +51,7 @@ export function TransportControls({
       <button
         type="button"
         onClick={onPrevious}
-        aria-label="Previous"
+        aria-label={t("Previous")}
         className={cn(BUTTON, "text-on-surface", large ? "size-12" : "size-9")}
       >
         <SkipBack aria-hidden className={cn("fill-current", large ? "size-7" : "size-5")} />
@@ -58,7 +59,7 @@ export function TransportControls({
       <button
         type="button"
         onClick={() => setPlaying(!playing)}
-        aria-label={playing ? "Pause" : "Play"}
+        aria-label={playing ? t("Pause") : t("Play")}
         className={cn(
           "grid place-items-center rounded-full bg-on-surface text-background transition-transform duration-[120ms] active:scale-95",
           large ? "size-16" : "size-10",
@@ -77,7 +78,7 @@ export function TransportControls({
         type="button"
         onClick={next}
         disabled={!hasNext}
-        aria-label="Next"
+        aria-label={t("Next")}
         className={cn(BUTTON, "text-on-surface", large ? "size-12" : "size-9")}
       >
         <SkipForward aria-hidden className={cn("fill-current", large ? "size-7" : "size-5")} />
@@ -86,8 +87,20 @@ export function TransportControls({
         <button
           type="button"
           onClick={cycleRepeat}
-          aria-label={`Repeat: ${repeat}`}
-          title={repeat === "off" ? "Repeat off" : repeat === "all" ? "Repeat all" : "Repeat one"}
+          aria-label={
+            repeat === "off"
+              ? t("Repeat: off")
+              : repeat === "all"
+                ? t("Repeat: all")
+                : t("Repeat: one")
+          }
+          title={
+            repeat === "off"
+              ? t("Repeat off")
+              : repeat === "all"
+                ? t("Repeat all")
+                : t("Repeat one")
+          }
           className={cn(
             BUTTON,
             large ? "size-11" : "size-9",

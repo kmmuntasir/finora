@@ -7,15 +7,16 @@ import { Sheet } from "@/components/Sheet";
 import { Spinner } from "@/components/Spinner";
 import { useRuntimeConfig } from "@/config/context";
 import { useImageMutations, useItemImages, useRemoteImages } from "./api";
+import { msg, t } from "@/i18n";
 
 const TYPES: { type: ImageType; label: string }[] = [
-  { type: "Primary", label: "Poster" },
-  { type: "Backdrop", label: "Backdrop" },
-  { type: "Logo", label: "Logo" },
-  { type: "Thumb", label: "Thumbnail" },
-  { type: "Banner", label: "Banner" },
-  { type: "Art", label: "Clear art" },
-  { type: "Disc", label: "Disc" },
+  { type: "Primary", label: msg("Poster") },
+  { type: "Backdrop", label: msg("Backdrop") },
+  { type: "Logo", label: msg("Logo") },
+  { type: "Thumb", label: msg("Thumbnail") },
+  { type: "Banner", label: msg("Banner") },
+  { type: "Art", label: msg("Clear art") },
+  { type: "Disc", label: msg("Disc") },
 ];
 
 /** Shows the item's images; replace them from providers or an upload, or delete them. */
@@ -29,8 +30,10 @@ export function ImageEditor({ item, onClose }: { item: BaseItemDto; onClose: () 
       onOpenChange={(open) => !open && onClose()}
       title={
         browsing
-          ? `Choose ${TYPES.find((t) => t.type === browsing)?.label.toLowerCase()}`
-          : "Edit images"
+          ? t("Choose {image}", {
+              image: t(TYPES.find((entry) => entry.type === browsing)?.label ?? "").toLowerCase(),
+            })
+          : t("Edit images")
       }
       description={item.Name ?? undefined}
       className="md:w-[min(56rem,calc(100%-2rem))]"
@@ -41,7 +44,7 @@ export function ImageEditor({ item, onClose }: { item: BaseItemDto; onClose: () 
         <Spinner className="flex justify-center py-8" />
       ) : images.isError ? (
         <p role="alert" className="text-body-md text-error">
-          Couldn't load the images.
+          {t("Couldn't load the images.")}
         </p>
       ) : (
         <div className="space-y-6">
@@ -50,7 +53,7 @@ export function ImageEditor({ item, onClose }: { item: BaseItemDto; onClose: () 
               key={type}
               item={item}
               type={type}
-              label={label}
+              label={t(label)}
               images={images.data.filter((image) => image.ImageType === type)}
               onBrowse={() => setBrowsing(type)}
             />
@@ -87,7 +90,7 @@ function ImageTypeRow({
         <div className="flex gap-2">
           <Button size="sm" variant="secondary" onClick={onBrowse}>
             <Search aria-hidden className="size-4" />
-            Search online
+            {t("Search online")}
           </Button>
           <Button
             size="sm"
@@ -96,7 +99,7 @@ function ImageTypeRow({
             disabled={upload.isPending}
           >
             <Upload aria-hidden className="size-4" />
-            Upload
+            {t("Upload")}
           </Button>
           <input
             ref={fileInput}
@@ -110,8 +113,8 @@ function ImageTypeRow({
               upload.mutate(
                 { type, file },
                 {
-                  onSuccess: () => toast.success(`${label} uploaded.`),
-                  onError: () => toast.error("Upload failed."),
+                  onSuccess: () => toast.success(t("{image} uploaded.", { image: label })),
+                  onError: () => toast.error(t("Upload failed.")),
                 },
               );
             }}
@@ -119,14 +122,14 @@ function ImageTypeRow({
         </div>
       </div>
       {images.length === 0 ? (
-        <p className="text-body-sm text-on-surface-subtle">None</p>
+        <p className="text-body-sm text-on-surface-subtle">{t("None")}</p>
       ) : (
         <ul className="flex flex-wrap gap-3">
           {images.map((image) => (
             <li key={`${image.ImageIndex ?? 0}-${image.ImageTag}`} className="relative">
               <img
                 src={`${config.jellyfinUrl}/Items/${item.Id}/Images/${type}/${image.ImageIndex ?? 0}?tag=${image.ImageTag}&maxWidth=320`}
-                alt={`${label} ${(image.ImageIndex ?? 0) + 1}`}
+                alt={t("{image} {number}", { image: label, number: (image.ImageIndex ?? 0) + 1 })}
                 className={`${tall ? "h-40" : "h-24"} max-w-72 rounded-md bg-surface-raised object-contain`}
               />
               {image.Width && image.Height ? (
@@ -136,12 +139,15 @@ function ImageTypeRow({
               ) : null}
               <button
                 type="button"
-                aria-label={`Delete ${label.toLowerCase()} ${(image.ImageIndex ?? 0) + 1}`}
+                aria-label={t("Delete {image} {number}", {
+                  image: label.toLowerCase(),
+                  number: (image.ImageIndex ?? 0) + 1,
+                })}
                 disabled={remove.isPending}
                 onClick={() =>
                   remove.mutate(
                     { type, index: image.ImageIndex ?? 0 },
-                    { onError: () => toast.error("Couldn't delete the image.") },
+                    { onError: () => toast.error(t("Couldn't delete the image.")) },
                   )
                 }
                 className="absolute top-1 right-1 grid size-8 place-items-center rounded-full bg-scrim text-on-surface hover:bg-error hover:text-background"
@@ -171,17 +177,17 @@ function RemoteImages({
     <div>
       <Button size="sm" variant="ghost" onClick={onBack} className="mb-4">
         <ArrowLeft aria-hidden className="size-4" />
-        Back
+        {t("Back")}
       </Button>
       {remote.isPending ? (
-        <Spinner className="flex justify-center py-8" label="Searching providers" />
+        <Spinner className="flex justify-center py-8" label={t("Searching providers")} />
       ) : remote.isError ? (
         <p role="alert" className="text-body-md text-error">
-          The image search failed.
+          {t("The image search failed.")}
         </p>
       ) : !remote.data.Images?.length ? (
         <p className="text-body-md text-on-surface-muted">
-          No images found. The item may need to be identified first.
+          {t("No images found. The item may need to be identified first.")}
         </p>
       ) : (
         <ul className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-3">
@@ -195,10 +201,10 @@ function RemoteImages({
                     { type, url: image.Url! },
                     {
                       onSuccess: () => {
-                        toast.success("Image saved.");
+                        toast.success(t("Image saved."));
                         onBack();
                       },
-                      onError: () => toast.error("Couldn't download the image."),
+                      onError: () => toast.error(t("Couldn't download the image.")),
                     },
                   )
                 }

@@ -72,9 +72,18 @@ function useDisplayPreferences() {
   });
 }
 
-export function usePreferences(): { preferences: FinoraPreferences; isLoading: boolean } {
+export function usePreferences(): {
+  preferences: FinoraPreferences;
+  isLoading: boolean;
+  /** Whether the account has saved this preference (rather than using the default). */
+  isSaved: (key: keyof FinoraPreferences) => boolean;
+} {
   const { data, isPending } = useDisplayPreferences();
-  return { preferences: parsePreferences(data?.CustomPrefs), isLoading: isPending };
+  return {
+    preferences: parsePreferences(data?.CustomPrefs),
+    isLoading: isPending,
+    isSaved: (key) => Boolean(data?.CustomPrefs?.[key]),
+  };
 }
 
 /**

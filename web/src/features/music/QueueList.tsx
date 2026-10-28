@@ -20,6 +20,7 @@ import { formatClock } from "@/features/player/player-preferences";
 import { cn } from "@/lib/cn";
 import { useQueue, type QueueEntry } from "./queue-store";
 import { trackArt } from "./stream-url";
+import { t } from "@/i18n";
 
 function Row({
   entry,
@@ -49,7 +50,7 @@ function Row({
         type="button"
         {...attributes}
         {...listeners}
-        aria-label={`Reorder ${item.Name}`}
+        aria-label={t("Reorder {name}", { name: item.Name ?? "" })}
         className="grid size-8 shrink-0 cursor-grab place-items-center text-on-surface-subtle touch-none active:cursor-grabbing"
       >
         <GripVertical aria-hidden className="size-4" />
@@ -81,7 +82,7 @@ function Row({
       <button
         type="button"
         onClick={() => remove(position)}
-        aria-label={`Remove ${item.Name} from queue`}
+        aria-label={t("Remove {name} from queue", { name: item.Name ?? "" })}
         className="grid size-8 shrink-0 place-items-center rounded-full text-on-surface-subtle opacity-0 group-hover:opacity-100 hover:text-on-surface focus-visible:opacity-100 [@media(pointer:coarse)]:opacity-100"
       >
         <X aria-hidden className="size-4" />
@@ -112,7 +113,7 @@ export function QueueList() {
         items={queue.map((entry) => entry.key)}
         strategy={verticalListSortingStrategy}
       >
-        <ol aria-label="Queue" className="space-y-0.5">
+        <ol aria-label={t("Queue")} className="space-y-0.5">
           {queue.map((entry, position) => (
             <Row key={entry.key} entry={entry} position={position} current={position === index} />
           ))}

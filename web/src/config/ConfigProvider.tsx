@@ -1,10 +1,24 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/Button";
 import { MessageScreen } from "@/components/MessageScreen";
 import { Spinner } from "@/components/Spinner";
 import { createJellyfinApi } from "@/api/jellyfin";
 import { ConfigContext } from "./context";
 import { loadRuntimeConfig, type ConfigProblem, type ConfigResult } from "./runtime-config";
+import { t } from "@/i18n";
+
+/** Fills `{name}` placeholders in translated text with `<code>` elements. */
+function withCode(text: string, values: Record<string, string>): ReactNode[] {
+  return text
+    .split(/\{(\w+)\}/)
+    .map((part, index) =>
+      index % 2 === 1 && part in values ? (
+        <code key={index}>{values[part]}</code>
+      ) : (
+        <Fragment key={index}>{part}</Fragment>
+      ),
+    );
+}
 
 /** Loads config.json before anything else renders, and explains problems clearly. */
 export function ConfigProvider({ children }: { children: ReactNode }) {
@@ -23,7 +37,7 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
   if (!result) {
     return (
       <div className="grid min-h-dvh place-items-center">
-        <Spinner label="Loading configuration" />
+        <Spinner label={t("Loading configuration")} />
       </div>
     );
   }
@@ -42,41 +56,58 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
 function ConfigProblemScreen({ problem }: { problem: ConfigProblem }) {
   const reload = (
     <Button onClick={() => window.location.reload()} variant="secondary">
-      Try again
+      {t("Try again")}
     </Button>
   );
 
   switch (problem.kind) {
     case "missing":
       return (
-        <MessageScreen title="Finora is not configured yet" actions={reload}>
+        <MessageScreen title={t("Finora is not configured yet")} actions={reload}>
           <p>
-            Finora could not load <code>config.json</code>. Copy <code>config.example.json</code> to{" "}
-            <code>config.json</code> next to <code>index.html</code> and set{" "}
-            <code>jellyfinUrl</code> to your Jellyfin server.
+            {withCode(
+              t(
+                "Finora could not load {config}. Copy {example} to {config} next to {index} and set {field} to your Jellyfin server.",
+              ),
+              {
+                config: "config.json",
+                example: "config.example.json",
+                index: "index.html",
+                field: "jellyfinUrl",
+              },
+            )}
           </p>
-          <p className="text-body-sm text-on-surface-subtle">Details: {problem.detail}</p>
+          <p className="text-body-sm text-on-surface-subtle">
+            {t("Details: {detail}", { detail: problem.detail })}
+          </p>
         </MessageScreen>
       );
     case "invalid":
       return (
-        <MessageScreen title="config.json has a problem" actions={reload}>
+        <MessageScreen title={t("config.json has a problem")} actions={reload}>
           <p>{problem.detail}.</p>
           <p className="text-body-sm text-on-surface-subtle">
-            Expected: {'{ "jellyfinUrl": "http://<server>:<port>", "apiUrl": null }'}
+            {t("Expected: {example}", {
+              example: '{ "jellyfinUrl": "http://<server>:<port>", "apiUrl": null }',
+            })}
           </p>
         </MessageScreen>
       );
     case "insecure-mix":
       return (
-        <MessageScreen title="This page is HTTPS, but a server address is HTTP">
+        <MessageScreen title={t("This page is HTTPS, but a server address is HTTP")}>
           <p>
-            Finora is loaded over HTTPS, and browsers block requests from HTTPS pages to HTTP
-            addresses. <code>{problem.field}</code> is set to <code>{problem.url}</code>.
+            {withCode(
+              t(
+                "Finora is loaded over HTTPS, and browsers block requests from HTTPS pages to HTTP addresses. {field} is set to {url}.",
+              ),
+              { field: problem.field, url: problem.url },
+            )}
           </p>
           <p>
-            Either give that server an HTTPS address, or serve Finora over HTTP as well. Both setups
-            are supported.
+            {t(
+              "Either give that server an HTTPS address, or serve Finora over HTTP as well. Both setups are supported.",
+            )}
           </p>
         </MessageScreen>
       );

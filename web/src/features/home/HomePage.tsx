@@ -25,6 +25,7 @@ import { ContinueListeningRow, LatestRows, NextUpRow } from "./LibraryRows";
 import { useLatest, useResumeItems, useUserViews } from "./queries";
 import { RowSkeleton } from "./RowSkeleton";
 import { parseHomeSections, type HomeSectionId } from "./sections";
+import { t } from "@/i18n";
 
 /** Home page in the layout the user picked (saved per user in Jellyfin). */
 export function HomePage() {
@@ -162,7 +163,7 @@ function Hero({ items }: { items: BaseItemDto[] }) {
   return (
     <section
       aria-roledescription="carousel"
-      aria-label="Featured"
+      aria-label={t("Featured")}
       onPointerEnter={() => setPaused(true)}
       onPointerLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
@@ -201,7 +202,7 @@ function Hero({ items }: { items: BaseItemDto[] }) {
             className="inline-flex h-12 items-center gap-2 rounded-full bg-white/15 light:bg-black/10 px-5 text-label-md backdrop-blur-sm hover:bg-white/25 light:hover:bg-black/15"
           >
             <Info aria-hidden className="size-5" />
-            More info
+            {t("More info")}
           </Link>
         </div>
         {items.length > 1 && (
@@ -210,7 +211,7 @@ function Hero({ items }: { items: BaseItemDto[] }) {
               <button
                 key={entry.Id}
                 type="button"
-                aria-label={`Show ${entry.Name}`}
+                aria-label={t("Show {title}", { title: entry.Name ?? "" })}
                 aria-current={position === index}
                 onClick={() => setIndex(position)}
                 className={cn(
@@ -237,12 +238,12 @@ const VIEW_ICONS: Record<string, typeof Film> = {
   homevideos: Clapperboard,
 };
 
-function greeting(): string {
+function greeting(name: string): string {
   const hour = new Date().getHours();
-  if (hour < 5) return "Good night";
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
+  if (hour < 5) return t("Good night, {name}", { name });
+  if (hour < 12) return t("Good morning, {name}", { name });
+  if (hour < 18) return t("Good afternoon, {name}", { name });
+  return t("Good evening, {name}", { name });
 }
 
 function DashboardHome() {
@@ -259,10 +260,8 @@ function DashboardHome() {
   return (
     <Rows>
       <header className="px-page-x-mobile pt-8 md:px-page-x md:pt-10">
-        <h1 className="text-headline-lg">
-          {greeting()}, {user.Name}
-        </h1>
-        <nav aria-label="Libraries" className="mt-5 flex flex-wrap gap-2">
+        <h1 className="text-headline-lg">{greeting(user.Name ?? "")}</h1>
+        <nav aria-label={t("Libraries")} className="mt-5 flex flex-wrap gap-2">
           {views
             ?.filter((view) => !user.Configuration?.MyMediaExcludes?.includes(view.Id ?? ""))
             .map((view) => {
@@ -284,7 +283,7 @@ function DashboardHome() {
       {first && (
         <section aria-labelledby="dash-continue" className="px-page-x-mobile md:px-page-x">
           <h2 id="dash-continue" className="mb-3 text-title">
-            Continue watching
+            {t("Continue watching")}
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {spotlight.map((item) => (
@@ -319,7 +318,9 @@ function DashboardHome() {
       )}
       <OrderedSections
         resume={
-          rest.length > 2 && <ContinueWatchingRow items={rest.slice(2)} title="More in progress" />
+          rest.length > 2 && (
+            <ContinueWatchingRow items={rest.slice(2)} title={t("More in progress")} />
+          )
         }
       />
     </Rows>
@@ -367,7 +368,9 @@ function FocusHome() {
               )}
             </Link>
             <div>
-              <p className="text-label-sm uppercase text-primary">Pick up where you left off</p>
+              <p className="text-label-sm uppercase text-primary">
+                {t("Pick up where you left off")}
+              </p>
               <h1 id="focus-title" className="mt-2 text-headline-lg">
                 {cardTitle(focus)}
               </h1>
@@ -381,7 +384,7 @@ function FocusHome() {
                 </p>
               )}
               <div className="mt-6 flex flex-wrap items-center gap-4">
-                <PlayButton label="Resume" />
+                <PlayButton label={t("Resume")} />
                 <span className="text-body-sm text-on-surface-muted">{timeLeft(focus)}</span>
               </div>
             </div>
@@ -389,7 +392,9 @@ function FocusHome() {
         </section>
       )}
       {resume.isPending && <RowSkeleton shape="landscape" />}
-      <OrderedSections resume={<ContinueWatchingRow items={others} title="Also in progress" />} />
+      <OrderedSections
+        resume={<ContinueWatchingRow items={others} title={t("Also in progress")} />}
+      />
     </Rows>
   );
 }
