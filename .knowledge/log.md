@@ -10,6 +10,17 @@ links to the notes that changed.
 
 ## 2026-10-29
 
+- **Phone player gestures** (deployed). Full screen on a landscape video
+  calls `screen.orientation.lock("landscape")`, which Chrome on Android maps
+  to `SCREEN_ORIENTATION_SENSOR_LANDSCAPE`
+  (`content/public/android/java/src/org/chromium/content/browser/ScreenOrientationProviderImpl.java:186`),
+  so the video follows the sensor to either side even with auto-rotate
+  off. In landscape, vertical swipes on the left half change brightness and
+  on the right half volume. Web pages can't set the screen backlight or the
+  system volume: brightness is a CSS filter on the video (20–150 %), volume
+  is the player's own (up to the system volume; not adjustable on iOS, so
+  that swipe is off there).
+
 - **Card play button** (deployed). Video, series and season cards and the
   season episode list show a centred play button on hover, like
   jellyfin-web 10.11.11 (`cardBuilder.js:983`). It plays or resumes

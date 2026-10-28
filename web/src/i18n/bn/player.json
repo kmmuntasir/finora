@@ -196,5 +196,7 @@
   "Adding": "যোগ হচ্ছে",
   "Use": "ব্যবহার করুন",
   "{count} download": "{count} বার ডাউনলোড",
-  "{count} downloads": "{count} বার ডাউনলোড"
+  "{count} downloads": "{count} বার ডাউনলোড",
+  "Brightness {percent}%": "উজ্জ্বলতা {percent}%",
+  "Volume {percent}%": "ভলিউম {percent}%"
 }

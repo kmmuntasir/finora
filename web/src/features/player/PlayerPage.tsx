@@ -10,6 +10,7 @@ import {
   Play,
   RotateCcw,
   RotateCw,
+  Sun,
   Volume1,
   Volume2,
   VolumeX,
@@ -42,6 +43,12 @@ import { SeekBar } from "./SeekBar";
 import { useAssRenderer } from "./ass-renderer";
 import { adjustCues, offsetLabel } from "./subtitle-timing";
 import { trickplayFrame, trickplayInfo } from "./trickplay";
+import {
+  BRIGHTNESS_RANGE,
+  canAdjustVolume,
+  useSwipeAdjust,
+  type SwipeKind,
+} from "./useSwipeAdjust";
 import { msg, t } from "@/i18n";
 
 const TICKS_PER_SECOND = 10_000_000;
@@ -153,6 +160,9 @@ function Player({ item }: { item: BaseItemDto }) {
   const [buffered, setBuffered] = useState(0);
   const [volume, setVolume] = useState(preferences.volume);
   const [muted, setMuted] = useState(preferences.muted);
+  /** Picture brightness from the left-side swipe; per playback, not saved. */
+  const [brightness, setBrightness] = useState(1);
+  const volumeAdjustable = useMemo(canAdjustVolume, []);
   const [speed, setSpeed] = useState(1);
   const { preferences: finoraPrefs } = usePreferences();
   const [subtitleOffset, setSubtitleOffset] = useState(0);
@@ -422,7 +432,21 @@ function Player({ item }: { item: BaseItemDto }) {
   }, []);
 
   useEffect(() => {
-    const onChange = () => setFullscreen(Boolean(document.fullscreenElement));
+    const onChange = () => {
+      const active = Boolean(document.fullscreenElement);
+      setFullscreen(active);
+      // Like YouTube on phones: a landscape video turns the screen sideways,
+      // following the sensor to either side even with auto-rotate off
+      // (Chrome maps "landscape" to Android's SENSOR_LANDSCAPE). Browsers
+      // without orientation lock (desktop, iOS) reject, which is fine.
+      const orientation = screen.orientation as ScreenOrientation & {
+        lock?: (type: "landscape") => Promise<void>;
+      };
+      const video = videoRef.current;
+      const landscape = !video?.videoHeight || video.videoWidth >= video.videoHeight;
+      if (active && landscape) orientation?.lock?.("landscape").catch(() => {});
+      else if (!active) orientation?.unlock?.();
+    };
     document.addEventListener("fullscreenchange", onChange);
     return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
@@ -433,6 +457,14 @@ function Player({ item }: { item: BaseItemDto }) {
     setMuted(next === 0);
     savePlayerPreferences({ volume: next, muted: next === 0 });
   }, []);
+
+  const swipe = useSwipeAdjust({
+    brightness,
+    volume: muted ? 0 : volume,
+    setBrightness,
+    setVolume: changeVolume,
+    volumeAdjustable,
+  });
 
   const toggleMute = useCallback(() => {
     setMuted((value) => {
@@ -624,7 +656,9 @@ function Player({ item }: { item: BaseItemDto }) {
         crossOrigin="anonymous"
         playsInline
         poster={poster ? imageUrl(config.jellyfinUrl, poster, 1280) : undefined}
-        className="size-full object-contain"
+        className="size-full touch-none object-contain"
+        style={brightness === 1 ? undefined : { filter: `brightness(${brightness})` }}
+        {...swipe.handlers}
         onClick={(event) => {
           if (event.detail === 1 && window.matchMedia("(pointer: fine)").matches) togglePlay();
         }}
@@ -677,6 +711,8 @@ function Player({ item }: { item: BaseItemDto }) {
           <Spinner label={t("Buffering")} className="[&_svg]:size-12 [&_svg]:text-white" />
         </div>
       )}
+
+      {swipe.indicator && <SwipeIndicator {...swipe.indicator} />}
 
       {showInfo && source && (
         <PlaybackInfoPanel source={source} onClose={() => setShowInfo(false)} />
@@ -1035,6 +1071,37 @@ function PlaybackInfoPanel({ source, onClose }: { source: PlaybackSource; onClos
             </div>
           ))}
       </dl>
+    </div>
+  );
+}
+
+/** Shows the level while swiping: brightness on the left, volume on the right. */
+function SwipeIndicator({ kind, value }: { kind: SwipeKind; value: number }) {
+  const brightness = kind === "brightness";
+  const share = brightness
+    ? (value - BRIGHTNESS_RANGE.min) / (BRIGHTNESS_RANGE.max - BRIGHTNESS_RANGE.min)
+    : value;
+  const Icon = brightness ? Sun : value === 0 ? VolumeX : value < 0.5 ? Volume1 : Volume2;
+  return (
+    <div
+      role="status"
+      aria-label={
+        brightness
+          ? t("Brightness {percent}%", { percent: Math.round(value * 100) })
+          : t("Volume {percent}%", { percent: Math.round(value * 100) })
+      }
+      className={cn(
+        "pointer-events-none absolute top-1/2 flex -translate-y-1/2 flex-col items-center gap-3 rounded-full bg-black/60 px-3 py-4 text-white backdrop-blur-sm",
+        brightness ? "left-[12%]" : "right-[12%]",
+      )}
+    >
+      <Icon aria-hidden className="size-5" />
+      <div className="relative h-28 w-1.5 overflow-hidden rounded-full bg-white/25">
+        <div
+          className="absolute inset-x-0 bottom-0 rounded-full bg-white"
+          style={{ height: `${Math.round(share * 100)}%` }}
+        />
+      </div>
     </div>
   );
 }
