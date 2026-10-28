@@ -1,7 +1,7 @@
 ---
 tags: [decision, i18n]
 updated: 2026-10-28
-status: accepted
+status: superseded by 0009
 ---
 
 # 0008 — Display language: formats now, translation later

@@ -41,11 +41,13 @@ their reasons, research, and a running log.
 | [0005](decisions/0005-subtitle-delivery.md) | Subtitles uploaded through the API with immediate fallback | Accepted |
 | [0006](decisions/0006-typeface-solaimanlipi.md) | Typeface: SolaimanLipi | Accepted |
 | [0007](decisions/0007-design-workflow.md) | Design workflow without a designer | Accepted |
-| [0008](decisions/0008-display-language.md) | Display language: formats now, interface translation later | Accepted |
+| [0008](decisions/0008-display-language.md) | Display language: formats now, interface translation later | Superseded by 0009 |
+| [0009](decisions/0009-bengali-draft.md) | Ship the interface translation with a Bengali draft | Accepted |
 
 ### Jellyfin
 
 - [jellyfin/api-notes.md](jellyfin/api-notes.md) — verified API behaviour with source references
+- [web/i18n.md](web/i18n.md) — interface translation: rules, Bengali glossary
 - [jellyfin/sandbox.md](jellyfin/sandbox.md) — throwaway local Jellyfin in Docker for testing writes
 - [jellyfin/reference-server.md](jellyfin/reference-server.md) — what the reference server looks like (anonymised)
 
