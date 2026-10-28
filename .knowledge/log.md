@@ -10,6 +10,16 @@ links to the notes that changed.
 
 ## 2026-10-29
 
+- **First production deploy** to the owner's homelab, now production
+  ([production](deploy/production.md)): a Debian 12 LXC with nginx-light
+  and the API binary, 19 MB RAM in use. Web over HTTP by a router port
+  forward, API over HTTPS through Zoraxy, API to Jellyfin over the LAN.
+  The deploy found that plain HTTP on a real address is not a secure
+  context: `crypto.randomUUID` crashed the app at start and
+  `navigator.clipboard` broke "Copy stream link". Fixed with fallbacks, an
+  oxlint rule and a `plain-http` Playwright project. Updates go out with
+  `deploy/deploy-lxc.sh`, only when the owner asks.
+
 - **Release pass (unattended).**
   - Interface translation: every string goes through `t`/`tn`/`msg`; full
     Bengali draft awaiting the owner's review

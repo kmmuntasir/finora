@@ -1,5 +1,6 @@
 import { getQuickConnectApi } from "@jellyfin/sdk/lib/utils/api/quick-connect-api";
 import { createJellyfinApi } from "@/api/jellyfin";
+import { randomId } from "@/lib/random-id";
 
 /**
  * Google admin sign-in (decision 0004): Finora Web starts Quick Connect on a
@@ -35,7 +36,7 @@ export async function startGoogleSignIn(
   apiUrl: string,
   remember: boolean,
 ): Promise<void> {
-  const deviceId = crypto.randomUUID();
+  const deviceId = randomId();
   const api = createJellyfinApi(jellyfinUrl, undefined, deviceId);
   const { data } = await getQuickConnectApi(api).initiateQuickConnect();
   if (!data.Code || !data.Secret) throw new Error("Quick Connect returned no code");

@@ -1,7 +1,7 @@
 // Renders made-up posters, backdrops and an album cover from catalogue.json
 // into a Jellyfin media folder, for the README screenshots.
 // Usage (from web/): node scripts/screenshots/render.mjs <media-folder>
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { chromium } from "@playwright/test";
 
 const out = process.argv[2];

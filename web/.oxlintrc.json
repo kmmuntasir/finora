@@ -3,6 +3,25 @@
   "plugins": ["react", "typescript", "oxc"],
   "rules": {
     "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
+    "react/only-export-components": ["warn", { "allowConstantExport": true }],
+    "no-restricted-properties": [
+      "error",
+      {
+        "object": "crypto",
+        "property": "randomUUID",
+        "message": "Missing over plain HTTP; use randomId() from @/lib/random-id."
+      },
+      {
+        "object": "navigator",
+        "property": "clipboard",
+        "message": "Missing over plain HTTP; use copyText() from @/lib/clipboard."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/lib/random-id.ts", "src/lib/clipboard.ts"],
+      "rules": { "no-restricted-properties": "off" }
+    }
+  ]
 }

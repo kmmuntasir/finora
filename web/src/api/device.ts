@@ -1,10 +1,12 @@
+import { randomId } from "@/lib/random-id";
+
 const DEVICE_ID_KEY = "finora.deviceId";
 
 /** A stable random ID for this browser, as Jellyfin expects from every client. */
 export function getDeviceId(storage: Storage = window.localStorage): string {
   const existing = storage.getItem(DEVICE_ID_KEY);
   if (existing) return existing;
-  const id = crypto.randomUUID();
+  const id = randomId();
   storage.setItem(DEVICE_ID_KEY, id);
   return id;
 }

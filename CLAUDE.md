@@ -65,4 +65,6 @@ Open other notes only when the task needs them.
 - **Support both HTTP and HTTPS deployments** (decision 0003).
 - Validate Markdown after writing it (the `markdown-writer` skill, if
   available).
+- **Production is the owner's homelab** ([.knowledge/deploy/production.md](.knowledge/deploy/production.md)).
+  Develop locally; deploy to production only when the owner asks.
 - Commit only when asked.

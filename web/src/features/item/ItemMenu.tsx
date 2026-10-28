@@ -36,6 +36,7 @@ import {
 import { Button } from "@/components/Button";
 import { Sheet } from "@/components/Sheet";
 import { TextField } from "@/components/TextField";
+import { copyText } from "@/lib/clipboard";
 import { canAddToCollection, canAddToPlaylist } from "@/features/collections/eligibility";
 import { t } from "@/i18n";
 
@@ -107,7 +108,7 @@ export function ItemMenu({ item, className }: ItemMenuProps) {
               <DropdownMenu.Item
                 className={MENU_ITEM}
                 onSelect={() =>
-                  void navigator.clipboard.writeText(streamUrl).then(
+                  void copyText(streamUrl).then(
                     () =>
                       toast.success(t("Stream link copied."), {
                         description: t(

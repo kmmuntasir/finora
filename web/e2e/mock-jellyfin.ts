@@ -1,10 +1,10 @@
 import type { Page, Route } from "@playwright/test";
 
 /**
- * The fake Jellyfin lives on the app's own origin (under /jf), so the video
- * stream can come from the dev server without cross-origin trouble.
+ * The fake Jellyfin lives on the app's own origin (under /jf), whichever host
+ * the test uses, so the video stream can come from the dev server without
+ * cross-origin trouble.
  */
-export const JELLYFIN = "http://127.0.0.1:4173/jf";
 const USER_ID = "user1";
 const TOKEN = "test-token";
 
@@ -62,10 +62,10 @@ export async function mockJellyfin(
 ) {
   const me = options.admin ? { ...user, Policy: { ...user.Policy, IsAdministrator: true } } : user;
   await page.route("**/config.json", (route) =>
-    json(route, { jellyfinUrl: JELLYFIN, apiUrl: null }),
+    json(route, { jellyfinUrl: `${new URL(route.request().url()).origin}/jf`, apiUrl: null }),
   );
 
-  await page.route(`${JELLYFIN}/**`, async (route) => {
+  await page.route("**/jf/**", async (route) => {
     const request = route.request();
     const url = new URL(request.url());
     const path = url.pathname.replace(/^\/jf/, "");

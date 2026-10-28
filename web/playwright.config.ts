@@ -19,9 +19,22 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } },
     },
     { name: "phone", use: { ...devices["Pixel 7"] } },
+    {
+      // Plain HTTP on a real host name is not a secure context (127.0.0.1 is),
+      // so APIs like crypto.randomUUID and navigator.clipboard are missing,
+      // as in the HTTP deployment.
+      name: "plain-http",
+      testMatch: ["http.spec.ts", "auth.spec.ts", "browse.spec.ts", "play.spec.ts"],
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: "http://finora.test:4173",
+        launchOptions: { args: ["--host-resolver-rules=MAP finora.test 127.0.0.1"] },
+      },
+    },
   ],
   webServer: {
     command: "pnpm exec vite --port 4173 --strictPort --host 127.0.0.1",
+    env: { __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS: "finora.test" },
     url: "http://127.0.0.1:4173",
     reuseExistingServer: !process.env.CI,
   },
