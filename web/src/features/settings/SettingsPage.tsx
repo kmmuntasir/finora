@@ -32,6 +32,7 @@ import {
   type HomeSection,
 } from "@/features/home/sections";
 import { cn } from "@/lib/cn";
+import { readTvMode, saveTvMode } from "@/features/tv/tv-mode";
 import { languageOptions, SUBTITLE_MODES } from "./subtitle-options";
 import {
   useChangePassword,
@@ -217,6 +218,8 @@ function AppearanceSection() {
   const themeId = useId();
   const layoutId = useId();
   const localeId = useId();
+  const tvId = useId();
+  const [tvMode, setTvMode] = useState(readTvMode);
   return (
     <Section
       title="Appearance"
@@ -261,6 +264,20 @@ function AppearanceSection() {
         htmlFor={localeId}
       >
         <PreferenceSelect id={localeId} name="dateLocale" options={DATE_LOCALES} />
+      </Row>
+      <Row
+        label="Remote-control navigation"
+        hint="For TVs: arrow keys move between items, Back goes back. This device only."
+        htmlFor={tvId}
+      >
+        <Toggle
+          id={tvId}
+          checked={tvMode}
+          onChange={(on) => {
+            setTvMode(on);
+            saveTvMode(on);
+          }}
+        />
       </Row>
     </Section>
   );

@@ -99,3 +99,14 @@ video::cue {
   background-color: transparent;
   text-shadow: none;
 }
+
+/* TV mode (Settings → Appearance): a focus ring you can see from the sofa. */
+html[data-tv] :focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+  border-radius: 0.5rem;
+}
+html[data-tv] a:focus-visible img {
+  transform: scale(1.04);
+  transition: transform 150ms ease-out;
+}
