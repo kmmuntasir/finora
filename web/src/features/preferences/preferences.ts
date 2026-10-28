@@ -15,6 +15,8 @@ const CHOICES = {
   subtitleBackground: ["box", "shadow", "none"],
   subtitlePosition: ["bottom", "raised"],
   skipSegments: ["button", "auto", "off"],
+  /** Theme songs (and optionally theme videos) on detail pages. */
+  themeMedia: ["off", "music", "all"],
   /** "auto" follows the browser; otherwise a BCP 47 locale for dates and numbers. */
   dateLocale: ["auto", "en-US", "en-GB", "bn-BD", "en-IN", "de-DE", "fr-FR", "es-ES", "ja-JP"],
 } as const;

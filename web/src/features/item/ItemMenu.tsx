@@ -1,6 +1,7 @@
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import {
   Download,
+  Link2,
   FileSearch,
   FolderPlus,
   ImageIcon,
@@ -61,8 +62,14 @@ export function ItemMenu({ item, className }: ItemMenuProps) {
   const download = Boolean(user.Policy?.EnableContentDownloading && item.CanDownload);
   const deletable = Boolean(item.CanDelete);
   const isContainer = item.Type === "Playlist" || item.Type === "BoxSet";
-  if (!playlist && !collection && !download && !deletable && !renamable && !admin) return null;
+  // For VLC and other players: the original file, untouched (like Jellyfin's "Copy stream URL").
+  const streamable =
+    Boolean(item.MediaSources?.length) &&
+    (item.MediaType === "Video" || item.MediaType === "Audio");
+  if (!playlist && !collection && !download && !deletable && !renamable && !admin && !streamable)
+    return null;
 
+  const streamUrl = `${config.jellyfinUrl}/${item.MediaType === "Audio" ? "Audio" : "Videos"}/${item.Id}/stream?static=true&mediaSourceId=${item.MediaSources?.[0]?.Id ?? item.Id}&ApiKey=${encodeURIComponent(api.accessToken)}`;
   const downloadUrl = `${config.jellyfinUrl}/Items/${item.Id}/Download?ApiKey=${encodeURIComponent(api.accessToken)}`;
 
   return (
@@ -89,6 +96,24 @@ export function ItemMenu({ item, className }: ItemMenuProps) {
               <DropdownMenu.Item className={MENU_ITEM} onSelect={() => setDialog("rename")}>
                 <Pencil aria-hidden className="size-4" />
                 Rename…
+              </DropdownMenu.Item>
+            )}
+            {streamable && (
+              <DropdownMenu.Item
+                className={MENU_ITEM}
+                onSelect={() =>
+                  void navigator.clipboard.writeText(streamUrl).then(
+                    () =>
+                      toast.success("Stream link copied.", {
+                        description:
+                          "It contains your sign-in, so share it only with people you trust. Signing out of this device ends it.",
+                      }),
+                    () => toast.error("Couldn't copy the link."),
+                  )
+                }
+              >
+                <Link2 aria-hidden className="size-4" />
+                Copy stream link
               </DropdownMenu.Item>
             )}
             {download && (

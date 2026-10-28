@@ -517,6 +517,7 @@ function PlaybackSection() {
     rememberAudio: useId(),
     rememberSubs: useId(),
     skip: useId(),
+    theme: useId(),
   };
 
   return (
@@ -577,6 +578,13 @@ function PlaybackSection() {
         htmlFor={ids.skip}
       >
         <PreferenceSelect id={ids.skip} name="skipSegments" options={SKIP_SEGMENTS} />
+      </Row>
+      <Row
+        label="Theme music on detail pages"
+        hint="When the library has theme songs or videos"
+        htmlFor={ids.theme}
+      >
+        <PreferenceSelect id={ids.theme} name="themeMedia" options={THEME_MEDIA} />
       </Row>
       <Row label="Remember audio choices" hint="Per series" htmlFor={ids.rememberAudio}>
         <Toggle
@@ -859,6 +867,12 @@ const SUBTITLE_BACKGROUNDS = [
 const SUBTITLE_POSITIONS = [
   { value: "bottom", label: "Bottom" },
   { value: "raised", label: "Raised" },
+] as const;
+
+const THEME_MEDIA = [
+  { value: "off", label: "Off" },
+  { value: "music", label: "Theme songs" },
+  { value: "all", label: "Theme songs and videos" },
 ] as const;
 
 const SKIP_SEGMENTS = [

@@ -25,6 +25,7 @@ import {
 import { SeasonEpisodes } from "./SeasonEpisodes";
 import { TrackList } from "./TrackList";
 import { selectedSource, type PlaySelection } from "./selection";
+import { ThemeMusic, ThemeVideo } from "./ThemeMedia";
 import { TrackPickers } from "./TrackPickers";
 import { CollectionItems, PlaylistItems } from "@/features/collections/ContainerItems";
 import { SubtitleFinder } from "@/features/subtitles/SubtitleFinder";
@@ -115,6 +116,7 @@ function ItemDetails({ item }: { item: BaseItemDto }) {
 
   return (
     <article className="pb-24">
+      <ThemeMusic item={item} />
       <section className="relative overflow-hidden">
         {backdrop ? (
           <img
@@ -132,6 +134,7 @@ function ItemDetails({ item }: { item: BaseItemDto }) {
             />
           )
         )}
+        <ThemeVideo item={item} className="absolute inset-0 size-full object-cover object-top" />
         <div className="absolute inset-0 bg-linear-to-t from-background via-background/70 to-background/10" />
         <div className="absolute inset-0 bg-linear-to-r from-background/90 via-background/30 to-transparent" />
 

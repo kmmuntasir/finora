@@ -1,6 +1,6 @@
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { Clapperboard, Film, Folder, Info, Music, Tv } from "lucide-react";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { backdropImage, imageUrl, logoImage, wideArtwork } from "@/api/images";
 import { Artwork } from "@/components/media/Artwork";
@@ -92,28 +92,34 @@ function OrderedSections({
 
 /* ───────────────────────── A · Spotlight ───────────────────────── */
 
-function useFeatured(): BaseItemDto[] {
+function useFeatured(): { items: BaseItemDto[]; loading: boolean } {
   const { data: views } = useUserViews();
   const movies = views?.find((view) => view.CollectionType === "movies");
   const shows = views?.find((view) => view.CollectionType === "tvshows");
   const latestMovies = useLatest(movies ?? {}, 12);
   const latestShows = useLatest(shows ?? {}, 12);
-  return useMemo(() => {
+  const items = useMemo(() => {
     const pool = [...(latestMovies.data ?? []), ...(latestShows.data ?? [])];
     // Only items with real backdrop artwork and an overview make a good spotlight.
     return pool.filter((item) => backdropImage(item) && item.Overview).slice(0, 6);
   }, [latestMovies.data, latestShows.data]);
+  // Disabled queries (no such library) never load, so only wait for enabled ones.
+  const loading =
+    !views ||
+    (Boolean(movies) && latestMovies.isPending) ||
+    (Boolean(shows) && latestShows.isPending);
+  return { items, loading };
 }
 
 function SpotlightHome() {
-  const featured = useFeatured();
+  const { items: featured, loading } = useFeatured();
   const resume = useResumeItems();
   return (
     <>
-      <Hero items={featured} />
+      {(loading || featured.length > 0) && <Hero items={featured} />}
       <Rows>
         <OrderedSections
-          first={(row) => <div className={featured.length ? "relative -mt-20" : "pt-8"}>{row}</div>}
+          first={(row) => <div className={featured.length ? "relative -mt-20" : "pt-16"}>{row}</div>}
           resume={
             resume.isPending ? (
               <RowSkeleton shape="landscape" />
@@ -130,7 +136,20 @@ function SpotlightHome() {
 function Hero({ items }: { items: BaseItemDto[] }) {
   const { config } = useRuntimeConfig();
   const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
   const item = items[index % Math.max(1, items.length)];
+
+  // Rotates every 8 s; pauses while hovered or focused, when the tab is
+  // hidden, and never moves for people who prefer reduced motion.
+  useEffect(() => {
+    if (paused || items.length < 2) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible")
+        setIndex((current) => (current + 1) % items.length);
+    }, 8000);
+    return () => window.clearInterval(timer);
+  }, [paused, items.length]);
   if (!item)
     return (
       <div className="h-[min(60vh,560px)] animate-pulse bg-surface motion-reduce:animate-none" />
@@ -142,6 +161,12 @@ function Hero({ items }: { items: BaseItemDto[] }) {
     <section
       aria-roledescription="carousel"
       aria-label="Featured"
+      onPointerEnter={() => setPaused(true)}
+      onPointerLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false);
+      }}
       className="relative h-[min(78vh,680px)] min-h-[440px] overflow-hidden"
     >
       {backdrop && (
