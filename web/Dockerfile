@@ -5,7 +5,7 @@ FROM node:24-alpine AS build
 WORKDIR /src
 RUN corepack enable
 COPY DESIGN.md ./DESIGN.md
-COPY web/package.json web/pnpm-lock.yaml ./web/
+COPY web/package.json web/pnpm-lock.yaml web/pnpm-workspace.yaml ./web/
 RUN cd web && pnpm install --frozen-lockfile
 COPY web ./web
 RUN cd web && pnpm build

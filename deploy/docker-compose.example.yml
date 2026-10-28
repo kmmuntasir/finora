@@ -1,17 +1,20 @@
 # Example: Finora Web and the optional Finora API on one host.
 # From the repository root:
 #   cp deploy/docker-compose.example.yml docker-compose.yml
-#   cp web/public/config.example.json config.json   # then edit both
+#   cp deploy/compose.env.example .env                 # then edit it
+#   cp web/public/config.example.json config.json      # then edit it
 #   docker compose up -d --build
+# The API prints a one-time setup code in `docker compose logs api` unless
+# FINORA_JELLYFIN_URL and FINORA_JELLYFIN_API_KEY are set.
 services:
   web:
     build:
       context: .
       dockerfile: web/Dockerfile
     ports:
-      - "<web-port>:80"
+      - "${FINORA_WEB_PORT:-8080}:80"
     volumes:
-      # { "jellyfinUrl": "http://<public-ip>:<port>", "apiUrl": "https://finora-api.example.com" }
+      # { "jellyfinUrl": "http://<public-ip>:<port>", "apiUrl": "http://<public-ip>:<api-port>" }
       - ./config.json:/usr/share/nginx/html/config.json:ro
     restart: unless-stopped
 
@@ -19,15 +22,15 @@ services:
     build:
       context: api
     ports:
-      - "<api-port>:8080"
+      - "${FINORA_API_PORT:-8081}:8080"
     environment:
-      FINORA_JELLYFIN_URL: "http://<public-ip>:<port>"
-      FINORA_JELLYFIN_API_KEY: "<jellyfin-api-key>"
-      FINORA_ALLOWED_ORIGINS: "http://<public-ip>:<web-port>"
+      FINORA_JELLYFIN_URL: ${FINORA_JELLYFIN_URL:-}
+      FINORA_JELLYFIN_API_KEY: ${FINORA_JELLYFIN_API_KEY:-}
+      FINORA_ALLOWED_ORIGINS: ${FINORA_ALLOWED_ORIGINS:-}
       # Needed only for Google sign-in (the public URL must be HTTPS):
-      # FINORA_PUBLIC_URL: "https://finora-api.example.com"
-      # FINORA_GOOGLE_CLIENT_ID: "<client-id>"
-      # FINORA_GOOGLE_CLIENT_SECRET: "<client-secret>"
+      FINORA_PUBLIC_URL: ${FINORA_PUBLIC_URL:-}
+      FINORA_GOOGLE_CLIENT_ID: ${FINORA_GOOGLE_CLIENT_ID:-}
+      FINORA_GOOGLE_CLIENT_SECRET: ${FINORA_GOOGLE_CLIENT_SECRET:-}
     volumes:
       - finora-data:/data
     restart: unless-stopped

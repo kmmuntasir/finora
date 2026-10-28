@@ -79,10 +79,16 @@ A systemd unit is in [`deploy/finora-api.service`](../deploy/finora-api.service)
 
 ```bash
 cp deploy/docker-compose.example.yml docker-compose.yml
-cp web/public/config.example.json config.json
-# edit both, then:
+cp deploy/compose.env.example .env                # ports, Jellyfin address, origins
+cp web/public/config.example.json config.json     # what browsers use
 docker compose up -d --build
 ```
+
+Finora Web listens on `FINORA_WEB_PORT` (default 8080) and the API on
+`FINORA_API_PORT` (default 8081). Without `FINORA_JELLYFIN_API_KEY`, finish
+the API setup under **Admin → Finora** with the code from
+`docker compose logs api`. The API keeps its database and subtitles in the
+`finora-data` volume.
 
 ## 5. Google sign-in for admins (optional)
 

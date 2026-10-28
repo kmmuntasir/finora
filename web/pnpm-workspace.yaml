@@ -1,0 +1,5 @@
+# pnpm settings for this single package (no workspace packages).
+# Install scripts that are not needed: lfa-ponyfill comes with JASSUB and
+# works without running its build step.
+allowBuilds:
+  lfa-ponyfill: false
