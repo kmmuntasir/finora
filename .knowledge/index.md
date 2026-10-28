@@ -29,6 +29,7 @@ their reasons, research, and a running log.
 - [docs/ui-plan.md](../docs/ui-plan.md) — UI approach, visual direction, quality gates
 - [api/README.md](../api/README.md) — Finora API configuration and environment variables
 - [log.md](log.md) — chronological project log
+- [release-checklist.md](release-checklist.md) — first-release definition of done, item by item
 
 ### Decisions
 

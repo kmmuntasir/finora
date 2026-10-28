@@ -1,6 +1,6 @@
 ---
 tags: [jellyfin, testing]
-updated: 2026-10-28
+updated: 2026-10-29
 ---
 
 # Local Jellyfin sandbox
@@ -26,6 +26,18 @@ metadata edits, user policies), so the reference server stays read-only.
 Start and stop it with `docker start finora-sandbox-jf` and
 `docker stop finora-sandbox-jf`. Extra test files: a video with chapters and
 an MKV with a styled ASS track and an attached font.
+
+## README screenshots
+
+`docs/screenshots/` comes from the sandbox filled with made-up titles, so no
+copyrighted artwork is shown. `web/scripts/screenshots/catalogue.json` lists
+the titles; `render.mjs <media-folder>` draws posters, backdrops and an album
+cover next to long, low-bitrate generated clips; after a library scan,
+`shots.mjs` (with `pnpm dev` running against the sandbox) signs in and saves
+the screenshots. The server name was set to "Home Media" through
+`/System/Configuration`.
+
+## Recreate
 
 Recreate from scratch: `docker rm -f finora-sandbox-jf`, delete
 `../finora-sandbox/config`, then repeat the steps above.

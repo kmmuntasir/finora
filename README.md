@@ -12,6 +12,25 @@ such as a built-in subtitle finder.
 Finora talks to your existing Jellyfin server. It needs no server plugins and
 never stores your media.
 
+## Screenshots
+
+![Home: a large featured title above rows of continue watching and recently added](docs/screenshots/home.jpg)
+
+| | |
+| --- | --- |
+| ![A movie library as a poster grid with sorting and filters](docs/screenshots/library.jpg) | ![A movie's detail page with play, trailer and cast](docs/screenshots/item.jpg) |
+| ![A series page with seasons and episodes](docs/screenshots/series.jpg) | ![An album with its track list and the music bar](docs/screenshots/music.jpg) |
+| ![The video player with its controls showing](docs/screenshots/player.jpg) | ![The admin overview with server activity](docs/screenshots/admin.jpg) |
+
+<p align="center">
+  <img src="docs/screenshots/phone-home.jpg" alt="Home on a phone" width="260">
+  <img src="docs/screenshots/phone-item.jpg" alt="A detail page on a phone" width="260">
+</p>
+
+The titles and artwork are made up for these screenshots
+([web/scripts/screenshots](web/scripts/screenshots)); your library shows your
+own media.
+
 ## Features
 
 - **Browse everything:** home with Continue Watching, Next Up, Continue

@@ -20,7 +20,9 @@ export function timeLeft(item: BaseItemDto): string | null {
   const total = item.RunTimeTicks;
   const position = item.UserData?.PlaybackPositionTicks;
   if (!total || !position) return null;
-  return t("{time} left", { time: formatMinutes((total - position) / TICKS_PER_MINUTE) });
+  const minutes = (total - position) / TICKS_PER_MINUTE;
+  if (minutes < 1) return t("Less than a minute left");
+  return t("{time} left", { time: formatMinutes(minutes) });
 }
 
 /** Watched fraction between 0 and 1, or null when not started. */

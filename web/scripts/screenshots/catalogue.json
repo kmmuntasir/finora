@@ -1,0 +1,123 @@
+{
+  "movies": [
+    {
+      "title": "The Lantern Keeper",
+      "year": 2019,
+      "genres": ["Drama"],
+      "rating": "PG",
+      "score": 7.8,
+      "minutes": 112,
+      "plot": "On a storm-battered island, the last lighthouse keeper takes in a runaway who claims the light is calling ships that sank a century ago.",
+      "a": "#f59e0b",
+      "b": "#7c2d12",
+      "c": "#1c1917"
+    },
+    {
+      "title": "Northbound Static",
+      "year": 2021,
+      "genres": ["Thriller"],
+      "rating": "PG-13",
+      "score": 7.1,
+      "minutes": 104,
+      "plot": "A late-night radio host starts hearing tomorrow's news between the songs, and only she can decide which stories get to happen.",
+      "a": "#22d3ee",
+      "b": "#1e3a8a",
+      "c": "#020617"
+    },
+    {
+      "title": "Paper Moons",
+      "year": 2016,
+      "genres": ["Romance", "Comedy"],
+      "rating": "PG",
+      "score": 6.9,
+      "minutes": 98,
+      "plot": "Two rival origami artists are forced to share a tiny stall at the busiest night market in town.",
+      "a": "#f9a8d4",
+      "b": "#9d174d",
+      "c": "#1f0a1a"
+    },
+    {
+      "title": "Salt & Signal",
+      "year": 2022,
+      "genres": ["Science Fiction"],
+      "rating": "PG-13",
+      "score": 7.6,
+      "minutes": 126,
+      "plot": "A crew of salvage divers finds a transmitter on the sea floor that is still broadcasting — in their own voices.",
+      "a": "#34d399",
+      "b": "#065f46",
+      "c": "#03140f"
+    },
+    {
+      "title": "নদীর গান",
+      "sort": "Nodir Gaan",
+      "original": "River Song",
+      "year": 2020,
+      "genres": ["Drama", "Music"],
+      "rating": "G",
+      "score": 8.2,
+      "minutes": 118,
+      "plot": "A boatman who sings the river's old songs teaches them to a city girl before the last ferry is replaced by a bridge.",
+      "a": "#fbbf24",
+      "b": "#0f766e",
+      "c": "#042f2e"
+    },
+    {
+      "title": "The Quiet Orbit",
+      "year": 2023,
+      "genres": ["Science Fiction", "Drama"],
+      "rating": "PG",
+      "score": 7.4,
+      "minutes": 109,
+      "plot": "Alone on a research station, an engineer receives a message from the crew that left her behind — dated next week.",
+      "a": "#a78bfa",
+      "b": "#312e81",
+      "c": "#0b0a1f"
+    },
+    {
+      "title": "Copper Hollow",
+      "year": 2015,
+      "genres": ["Mystery"],
+      "rating": "PG-13",
+      "score": 6.8,
+      "minutes": 101,
+      "plot": "In a mining town where nobody admits to remembering 1987, a new schoolteacher finds a classroom that was never on the plans.",
+      "a": "#fb923c",
+      "b": "#78350f",
+      "c": "#1a0d05"
+    },
+    {
+      "title": "Last Train to Ballyfield",
+      "year": 2017,
+      "genres": ["Comedy"],
+      "rating": "PG",
+      "score": 7.0,
+      "minutes": 95,
+      "plot": "Six strangers miss the last train and spend one very long night in a village that takes its pub quiz far too seriously.",
+      "a": "#60a5fa",
+      "b": "#1e40af",
+      "c": "#0a1530"
+    }
+  ],
+  "show": {
+    "title": "Harbour Lights",
+    "year": 2020,
+    "genres": ["Drama"],
+    "rating": "TV-14",
+    "score": 8.0,
+    "plot": "Three generations of a fishing family hold their harbour town together through one hard year.",
+    "a": "#38bdf8",
+    "b": "#0c4a6e",
+    "c": "#020c17",
+    "episodes": ["The Tide Comes In", "Nets and Knots", "A Lantern in the Window", "Low Water"]
+  },
+  "album": {
+    "title": "Night Market",
+    "artist": "Lumen Field",
+    "year": 2021,
+    "a": "#f472b6",
+    "b": "#6d28d9",
+    "c": "#12051f",
+    "tracks": ["Lanterns", "Steam and Neon", "Paper Moons", "Last Call", "Walk Home"]
+  }
+}

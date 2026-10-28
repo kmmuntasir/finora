@@ -716,16 +716,18 @@ need only Finora Web; the Finora API arrives in phase 6.
       and the reason is visible.
 - [ ] Resume positions and watched state stay in sync with other Jellyfin
       clients.
-- [ ] Admins can manage users, library access and permissions without the
+- [x] Admins can manage users, library access and permissions without the
       Jellyfin dashboard.
-- [ ] Finora Web works fully without the Finora API, except the features
+- [x] Finora Web works fully without the Finora API, except the features
       that are documented as needing it.
 - [ ] A subtitle downloaded through Finora is usable immediately and appears
       in other Jellyfin clients after Jellyfin indexes it.
-- [ ] No secret (API key, Google secret, provider credentials) ever reaches
+- [x] No secret (API key, Google secret, provider credentials) ever reaches
       the browser.
-- [ ] Works on desktop and phone browsers.
-- [ ] Critical flows (sign-in, browse, play, admin user edit) have automated
+- [x] Works on desktop and phone browsers.
+- [x] Critical flows (sign-in, browse, play, admin user edit) have automated
       tests.
-- [ ] Deployment is documented and reproducible.
-- [ ] No credentials or secrets in the repository.
+- [x] Deployment is documented and reproducible.
+- [x] No credentials or secrets in the repository.
+
+Status and evidence per item: [.knowledge/release-checklist.md](../.knowledge/release-checklist.md).

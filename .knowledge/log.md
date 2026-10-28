@@ -1,6 +1,6 @@
 ---
 tags: [log]
-updated: 2026-10-28
+updated: 2026-10-29
 ---
 
 # Project Log
@@ -9,6 +9,21 @@ Newest first. One entry per meaningful step: what happened, what was learned,
 links to the notes that changed.
 
 ## 2026-10-29
+
+- **Release pass (unattended).**
+  - Interface translation: every string goes through `t`/`tn`/`msg`; full
+    Bengali draft awaiting the owner's review
+    ([i18n](web/i18n.md), [decision 0009](decisions/0009-bengali-draft.md)).
+  - Performance: pages load as separate chunks (main bundle 1.77 MB →
+    535 kB) with a loading bar.
+  - Accessibility: axe checks on the main screens (no serious or critical
+    issues), skip link, a friendly error screen instead of a crash.
+  - Release: both images build and run, runnable Compose example with an
+    env file, e2e tests for playback and the admin user edit, README
+    screenshots from made-up titles ([sandbox](jellyfin/sandbox.md#readme-screenshots)).
+  - Definition of done walked through in the
+    [release checklist](release-checklist.md); the items left need the owner
+    on the reference server.
 
 - **Tier 3 built.**
   - Admin overview (version, pending restart with a restart button, library

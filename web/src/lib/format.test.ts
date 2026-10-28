@@ -61,3 +61,11 @@ describe("formatDate", () => {
     expect(formatDate(null)).toBe("");
   });
 });
+
+describe("timeLeft", () => {
+  it("says so when less than a minute is left", () => {
+    expect(
+      timeLeft({ RunTimeTicks: 300_000_000, UserData: { PlaybackPositionTicks: 120_000_000 } }),
+    ).toBe("Less than a minute left");
+  });
+});
