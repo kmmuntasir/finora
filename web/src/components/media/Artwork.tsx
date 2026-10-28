@@ -3,14 +3,9 @@ import markUrl from "@/assets/brand/finora-mark.svg";
 import { imageUrl, type ImageRef } from "@/api/images";
 import { useRuntimeConfig } from "@/config/context";
 import { cn } from "@/lib/cn";
+import { ASPECT, type ArtworkShape } from "./aspect";
 
-export type ArtworkShape = "poster" | "landscape" | "square";
-
-const ASPECT: Record<ArtworkShape, string> = {
-  poster: "aspect-[2/3]",
-  landscape: "aspect-video",
-  square: "aspect-square",
-};
+export type { ArtworkShape };
 
 interface ArtworkProps {
   image: ImageRef | null;

@@ -4,7 +4,9 @@ import { posterImage, wideArtwork } from "@/api/images";
 import { cardSubtitle, cardTitle, progress } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { itemHref } from "@/lib/routes";
-import { Artwork, type ArtworkShape } from "./Artwork";
+import { CardPlayButton } from "@/features/item/CardPlayButton";
+import { Artwork } from "./Artwork";
+import { ASPECT, type ArtworkShape } from "./aspect";
 import { ProgressBar } from "./ProgressBar";
 
 interface CardProps {
@@ -17,8 +19,23 @@ interface CardProps {
   priority?: boolean;
 }
 
+const CARD = "group relative";
 const CARD_LINK =
-  "group block rounded-md focus-visible:outline-offset-4 [&_img]:transition-transform [&_img]:duration-300 [&_img]:ease-out hover:[&_img]:scale-[1.03]";
+  "block rounded-md focus-visible:outline-offset-4 [&_img]:transition-transform [&_img]:duration-300 [&_img]:ease-out group-hover:[&_img]:scale-[1.03]";
+
+/** Centres the play button on the artwork; it sits beside the link, not inside it. */
+function PlayOverlay({ item, shape }: { item: BaseItemDto; shape: ArtworkShape }) {
+  return (
+    <div
+      className={cn(
+        "pointer-events-none absolute inset-x-0 top-0 grid place-items-center",
+        ASPECT[shape],
+      )}
+    >
+      <CardPlayButton item={item} />
+    </div>
+  );
+}
 
 function CardText({
   title,
@@ -53,22 +70,25 @@ export function PosterCard({ item, className, subtitle, priority, href }: CardPr
     item.Type === "MusicAlbum" || item.Type === "Audio" ? "square" : "poster";
   const watched = progress(item);
   return (
-    <Link to={href ?? itemHref(item)} className={cn(CARD_LINK, className)}>
-      <div className="relative">
-        <Artwork
-          image={posterImage(item)}
-          shape={shape}
-          width={180}
-          title={title}
-          priority={priority}
-          className="rounded-md"
-        />
-        {watched !== null && (
-          <ProgressBar value={watched} className="absolute inset-x-2 bottom-2" />
-        )}
-      </div>
-      <CardText title={title} subtitle={subtitle === undefined ? cardSubtitle(item) : subtitle} />
-    </Link>
+    <div className={cn(CARD, className)}>
+      <Link to={href ?? itemHref(item)} className={CARD_LINK}>
+        <div className="relative">
+          <Artwork
+            image={posterImage(item)}
+            shape={shape}
+            width={180}
+            title={title}
+            priority={priority}
+            className="rounded-md"
+          />
+          {watched !== null && (
+            <ProgressBar value={watched} className="absolute inset-x-2 bottom-2" />
+          )}
+        </div>
+        <CardText title={title} subtitle={subtitle === undefined ? cardSubtitle(item) : subtitle} />
+      </Link>
+      <PlayOverlay item={item} shape={shape} />
+    </div>
   );
 }
 
@@ -85,26 +105,29 @@ export function LandscapeCard({
   const watched = progress(item);
   const artwork = wideArtwork(item);
   return (
-    <Link to={href ?? itemHref(item)} className={cn(CARD_LINK, className)}>
-      <div className="relative">
-        <Artwork
-          image={artwork.image}
-          letterbox={artwork.letterbox}
-          shape="landscape"
-          width={width}
+    <div className={cn(CARD, className)}>
+      <Link to={href ?? itemHref(item)} className={CARD_LINK}>
+        <div className="relative">
+          <Artwork
+            image={artwork.image}
+            letterbox={artwork.letterbox}
+            shape="landscape"
+            width={width}
+            title={title}
+            priority={priority}
+            className="rounded-md"
+          />
+          {watched !== null && (
+            <ProgressBar value={watched} className="absolute inset-x-3 bottom-3" />
+          )}
+        </div>
+        <CardText
+          lines={2}
           title={title}
-          priority={priority}
-          className="rounded-md"
+          subtitle={subtitle === undefined ? cardSubtitle(item) : subtitle}
         />
-        {watched !== null && (
-          <ProgressBar value={watched} className="absolute inset-x-3 bottom-3" />
-        )}
-      </div>
-      <CardText
-        lines={2}
-        title={title}
-        subtitle={subtitle === undefined ? cardSubtitle(item) : subtitle}
-      />
-    </Link>
+      </Link>
+      <PlayOverlay item={item} shape="landscape" />
+    </div>
   );
 }

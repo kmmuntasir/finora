@@ -212,5 +212,8 @@
   "Trailer": "ট্রেলার",
   "Trailer for {title}": "{title}-এর ট্রেলার",
   "Press Escape to close.": "বন্ধ করতে Escape চাপুন।",
-  "Close": "বন্ধ করুন"
+  "Close": "বন্ধ করুন",
+  "Resume {title}": "{title} যেখানে থেমেছিলেন সেখান থেকে চালান",
+  "There is nothing to play yet.": "এখনো চালানোর মতো কিছু নেই।",
+  "Couldn't start playback.": "চালানো শুরু করা যায়নি।"
 }

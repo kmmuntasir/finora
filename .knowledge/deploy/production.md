@@ -53,5 +53,9 @@ web folder and restarts the API. Afterwards check
   Use `randomId()` and `copyText()` from `web/src/lib/`; an oxlint rule
   forbids the originals, and the `plain-http` Playwright project runs the
   app on `http://finora.test:4173` to catch the rest.
+- Chrome on Android offers only "Create shortcut", not "Install": Chrome
+  installs a web app only when it is served over HTTPS
+  ([install criteria](https://web.dev/articles/install-criteria)), and
+  Finora registers its service worker only in secure contexts.
 - The router supports NAT loopback, so the public Jellyfin address also
   works from inside the home network.

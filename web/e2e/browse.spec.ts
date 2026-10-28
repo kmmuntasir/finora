@@ -31,3 +31,20 @@ test("search finds items as you type", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /Movies \(\d+\)/ })).toBeVisible();
   await expect(page.getByText("Movie 12")).toBeVisible();
 });
+
+test("a card's play button plays; the rest of the card opens details", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name === "phone", "Hover only; touch screens open the card");
+  await signIn(page);
+  await page.goto("/libraries/view-movies");
+  const play = page.getByRole("button", { name: "Play Movie 03" });
+  await page.getByText("Movie 03").first().hover();
+  await expect(play).toBeVisible();
+  await play.click();
+  await expect(page).toHaveURL(/\/play\/movie3$/);
+
+  await page.goto("/libraries/view-movies");
+  await page.getByText("Movie 03").first().click();
+  await expect(page).toHaveURL(/\/items\/movie3$/);
+});

@@ -10,6 +10,14 @@ links to the notes that changed.
 
 ## 2026-10-29
 
+- **Card play button** (deployed). Video, series and season cards and the
+  season episode list show a centred play button on hover, like
+  jellyfin-web 10.11.11 (`cardBuilder.js:983`). It plays or resumes
+  directly; the rest of the card still opens the details page. Series start
+  at next up, seasons at the first unwatched episode, as in jellyfin-web's
+  `playbackmanager.js` (`getSeriesOrSeasonPlaybackPromise`). Mouse only:
+  skipped by Tab and TV-mode arrows, hidden on touch screens.
+
 - **First production deploy** to the owner's homelab, now production
   ([production](deploy/production.md)): a Debian 12 LXC with nginx-light
   and the API binary, 19 MB RAM in use. Web over HTTP by a router port

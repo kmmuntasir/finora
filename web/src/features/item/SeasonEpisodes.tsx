@@ -8,6 +8,7 @@ import { Spinner } from "@/components/Spinner";
 import { cn } from "@/lib/cn";
 import { formatDate, progress, runtime } from "@/lib/format";
 import { itemHref } from "@/lib/routes";
+import { CardPlayButton } from "./CardPlayButton";
 import { useEpisodes } from "./queries";
 import { t } from "@/i18n";
 
@@ -59,7 +60,7 @@ export function SeasonEpisodes({ series, seasons, seasonId, onSeasonChange }: Se
           {episodes.data?.map((episode) => {
             const watched = progress(episode);
             return (
-              <li key={episode.Id}>
+              <li key={episode.Id} className="group relative">
                 <Link
                   to={itemHref(episode)}
                   className="grid grid-cols-[8.5rem_1fr] gap-4 rounded-lg p-2 transition-colors duration-[120ms] hover:bg-surface sm:grid-cols-[13rem_1fr]"
@@ -102,6 +103,10 @@ export function SeasonEpisodes({ series, seasons, seasonId, onSeasonChange }: Se
                     )}
                   </div>
                 </Link>
+                {/* Over the thumbnail: same column width and padding as the link's grid. */}
+                <div className="pointer-events-none absolute top-2 left-2 grid aspect-video w-[8.5rem] place-items-center sm:w-[13rem]">
+                  <CardPlayButton item={episode} compact />
+                </div>
               </li>
             );
           })}
