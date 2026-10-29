@@ -24,7 +24,11 @@ and `.env.deploy`, both git-ignored.
 
 `api.env` sets `FINORA_LISTEN=:8081`, the Jellyfin URL and API key,
 `FINORA_ALLOWED_ORIGINS` (the public web address and the LAN one),
-`FINORA_PUBLIC_URL` and the OpenSubtitles key. Google sign-in is not set up
+`FINORA_PUBLIC_URL`, the OpenSubtitles key, and the automatic subtitle job
+(`FINORA_AUTO_SUBTITLES=on`, English, 100 downloads per night at 03:00).
+The container's time zone is Asia/Dhaka, so the hour is the owner's. The
+job replaced subtitle-fetcher (last run 2026-09-02); its history was
+imported. Follow a run with `journalctl -u finora-api -f`. Google sign-in is not set up
 yet, so the admin console stays locked on this HTTP setup until it is
 ([deployment guide](../../docs/deployment.md#5-google-sign-in-for-admins-optional)).
 

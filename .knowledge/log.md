@@ -8,6 +8,17 @@ updated: 2026-10-29
 Newest first. One entry per meaningful step: what happened, what was learned,
 links to the notes that changed.
 
+## 2026-10-30
+
+- **Automatic subtitles take over from subtitle-fetcher** (production). The
+  job now covers the whole library (it stopped at the 5,000 newest videos)
+  with a cap of 400 searches per run; `finora-api import-subtitle-fetcher`
+  imported subtitle-fetcher's misses (4,494 matched). Turned on in
+  production: English, 100 downloads per night at 03:00 Asia/Dhaka.
+  subtitle-fetcher had not run since 2026-09-02. OpenSubtitles sometimes
+  answers 520 or an empty body; the job moves on to the other providers.
+  See [providers](subtitles/providers.md#automatic-downloads-tier-3).
+
 ## 2026-10-29
 
 - **Double tap to seek; Suggestions fixed** (deployed). On touch screens a

@@ -13,8 +13,10 @@ import (
 	"github.com/kmmuntasir/finora/api/internal/subtitles"
 )
 
-// The automatic job fetches missing subtitles across the library, newest
-// additions first, at most AutoPerRun per run. It follows subtitle-fetcher's
+// The automatic job fetches missing subtitles across the whole library,
+// newest additions first, at most AutoPerRun downloads and autoMaxChecked
+// searches per run (items that fail wait a week, so each night reaches
+// further back). It follows subtitle-fetcher's
 // rules: new items before retries, a failed item waits a week before the next
 // try, and gives up after three tries; a provider that hits its quota rests
 // (see providerSet.noteQuota). It never runs unless an admin turns it on.
@@ -22,10 +24,13 @@ const (
 	autoMaxAttempts = 3
 	autoRetryAfter  = 7 * 24 * time.Hour
 	autoPageSize    = 200
-	autoMaxScanned  = 5000
-	autoActorID     = "finora-auto"
-	autoActorName   = "Finora (automatic)"
-	keyAutoLastRun  = "auto_subtitle_last_run"
+	// autoMaxChecked bounds the searches in one run (each takes a few
+	// seconds across the providers), so a large library with many misses
+	// still finishes in well under an hour.
+	autoMaxChecked = 400
+	autoActorID    = "finora-auto"
+	autoActorName  = "Finora (automatic)"
+	keyAutoLastRun = "auto_subtitle_last_run"
 )
 
 // autoRun summarises one run of the job.
@@ -143,7 +148,7 @@ func (s *Server) runAutoSubtitles(ctx context.Context, settings config.Settings)
 		if !ok {
 			continue
 		}
-		for start := 0; start < autoMaxScanned && budget > 0; start += autoPageSize {
+		for start := 0; budget > 0 && run.Checked < autoMaxChecked; start += autoPageSize {
 			items, total, err := client.VideosNewestFirst(ctx, start, autoPageSize)
 			if err != nil {
 				run.Stopped = "Jellyfin didn't answer: " + err.Error()
@@ -172,7 +177,7 @@ func (s *Server) autoPage(ctx context.Context, settings config.Settings, client 
 		return "database unavailable"
 	}
 	for _, item := range items {
-		if *budget <= 0 {
+		if *budget <= 0 || run.Checked >= autoMaxChecked {
 			return ""
 		}
 		if ctx.Err() != nil {

@@ -77,8 +77,10 @@ The Finora API can fetch missing subtitles across the library every night
 (Admin → Finora → Automatic subtitles; off by default). It follows the
 rules of the owner's `subtitle-fetcher`:
 
-- It goes through movies and episodes, newest additions first, one language
-  at a time, with at most "downloads per night" per run.
+- It goes through all movies and episodes, newest additions first, one
+  language at a time, with at most "downloads per night" downloads and 400
+  searches per run. (Until 2026-10-30 it only looked at the 5,000 newest
+  videos; the reference library has about 18,000.)
 - An item counts as covered when it has any non-forced subtitle stream in
   that language, or a Finora copy that Jellyfin hasn't indexed yet.
 - A miss waits a week before the next try, and the job gives up after three
@@ -88,6 +90,13 @@ rules of the owner's `subtitle-fetcher`:
   run stops.
 - It runs once a day at the chosen local hour. A server that was off at that
   hour catches up when it starts. "Run now" starts a run immediately.
+
+`finora-api import-subtitle-fetcher state.json` takes over subtitle-fetcher's
+misses (status `failed`, with their try count and date), matched to Jellyfin
+items by path without drive or host, lower case
+(`api/internal/fetcherstate`). On the reference library 4,494 of 4,523
+misses matched. None had reached three tries, so they are retried once or
+twice more rather than skipped.
 
 Unattended downloads accept only results that are certainly for the item
 (`subtitles.Trustworthy`):

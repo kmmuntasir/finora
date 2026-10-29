@@ -212,7 +212,7 @@ func (c *Client) VideosNewestFirst(ctx context.Context, start, limit int) ([]Ite
 		"isMissing":        {"false"},
 		"sortBy":           {"DateCreated,SortName"},
 		"sortOrder":        {"Descending"},
-		"fields":           {"MediaStreams"},
+		"fields":           {"MediaStreams,Path"},
 		"enableUserData":   {"false"},
 		"enableImages":     {"false"},
 		"startIndex":       {strconv.Itoa(start)},

@@ -179,3 +179,32 @@ func TestSubtitles(t *testing.T) {
 		t.Fatalf("deleted subtitle still found: %v", err)
 	}
 }
+
+func TestImportAutoAttemptNeverLowersACount(t *testing.T) {
+	s := open(t)
+	ctx := context.Background()
+	if err := s.RecordAutoAttempt(ctx, "a", "en", "finora miss"); err != nil {
+		t.Fatal(err)
+	}
+	old := time.Date(2026, 9, 2, 7, 0, 0, 0, time.UTC)
+	if err := s.ImportAutoAttempt(ctx, "a", "en", 3, old, "fetcher miss"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.ImportAutoAttempt(ctx, "b", "en", 1, old, "fetcher miss"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.ImportAutoAttempt(ctx, "b", "en", 1, old.Add(-time.Hour), "older"); err != nil {
+		t.Fatal(err)
+	}
+	got, err := s.AutoAttempts(ctx, "en", []string{"a", "b"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// a: the higher imported count wins, the newer (Finora) time stays.
+	if got["a"].Attempts != 3 || got["a"].LastError != "fetcher miss" || !got["a"].LastAttempt.After(old) {
+		t.Fatalf("a = %+v", got["a"])
+	}
+	if got["b"].Attempts != 1 || !got["b"].LastAttempt.Equal(old) || got["b"].LastError != "fetcher miss" {
+		t.Fatalf("b = %+v", got["b"])
+	}
+}

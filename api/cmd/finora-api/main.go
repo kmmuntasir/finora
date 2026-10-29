@@ -23,6 +23,13 @@ import (
 
 func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	if len(os.Args) > 1 && os.Args[1] == "import-subtitle-fetcher" {
+		if err := importSubtitleFetcher(os.Args[2:]); err != nil {
+			fmt.Fprintln(os.Stderr, "import-subtitle-fetcher:", err)
+			os.Exit(1)
+		}
+		return
+	}
 	if err := run(logger); err != nil {
 		logger.Error("fatal", "error", err)
 		os.Exit(1)

@@ -595,6 +595,18 @@ func (s *Store) RecordAutoAttempt(ctx context.Context, itemID, language, failure
 	return err
 }
 
+// ImportAutoAttempt records misses from another tool (subtitle-fetcher). It
+// never lowers a count Finora already has.
+func (s *Store) ImportAutoAttempt(ctx context.Context, itemID, language string, attempts int, when time.Time, failure string) error {
+	_, err := s.db.ExecContext(ctx, `INSERT INTO auto_subtitle_attempts (item_id, language, attempts, last_attempt, last_error) VALUES (?, ?, ?, ?, ?)
+		ON CONFLICT(item_id, language) DO UPDATE SET
+			attempts = max(attempts, excluded.attempts),
+			last_attempt = max(last_attempt, excluded.last_attempt),
+			last_error = CASE WHEN excluded.attempts > attempts THEN excluded.last_error ELSE last_error END`,
+		itemID, language, attempts, when.UTC().Format(time.RFC3339), failure)
+	return err
+}
+
 // ClearAutoAttempt forgets an item once it has a subtitle in that language.
 func (s *Store) ClearAutoAttempt(ctx context.Context, itemID, language string) error {
 	_, err := s.db.ExecContext(ctx, `DELETE FROM auto_subtitle_attempts WHERE item_id = ? AND language = ?`, itemID, language)
