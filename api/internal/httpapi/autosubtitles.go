@@ -216,6 +216,12 @@ func (s *Server) autoPage(ctx context.Context, settings config.Settings, client 
 		if len(statuses) > 0 && resting == len(statuses) {
 			return "every provider has reached its limit for now"
 		}
+		// A provider that failed (down, overloaded) may have had it: such a
+		// miss doesn't use up one of the item's tries.
+		inconclusive := false
+		for _, status := range statuses {
+			inconclusive = inconclusive || status.Status == "error" || status.Status == "quota"
+		}
 		failure := "no subtitles found"
 		// Unattended, only results that are certainly for this item count.
 		trusted := results[:0:0]
@@ -252,7 +258,9 @@ func (s *Server) autoPage(ctx context.Context, settings config.Settings, client 
 			s.log.Info("automatic subtitle added", "item", item.Name, "language", language.Code)
 		} else {
 			run.Failed++
-			_ = s.store.RecordAutoAttempt(ctx, item.ID, language.Code, failure)
+			if !inconclusive || len(trusted) > 0 {
+				_ = s.store.RecordAutoAttempt(ctx, item.ID, language.Code, failure)
+			}
 		}
 	}
 	return ""

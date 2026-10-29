@@ -68,6 +68,9 @@ func (a *Addic7ed) Search(ctx context.Context, q Query) ([]Candidate, error) {
 			continue
 		}
 		body, err := readBody(resp)
+		if throttled(resp.StatusCode) {
+			return nil, &QuotaError{Message: "Addic7ed is throttling requests; try again later"}
+		}
 		if err != nil || resp.StatusCode != http.StatusOK {
 			return nil, fmt.Errorf("Addic7ed search failed (%d)", resp.StatusCode)
 		}
@@ -88,6 +91,9 @@ func (a *Addic7ed) Search(ctx context.Context, q Query) ([]Candidate, error) {
 		return nil, err
 	}
 	page, err := readBody(resp)
+	if throttled(resp.StatusCode) {
+		return nil, &QuotaError{Message: "Addic7ed is throttling requests; try again later"}
+	}
 	if err != nil || resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("Addic7ed episode page failed (%d)", resp.StatusCode)
 	}
@@ -189,4 +195,10 @@ func addic7edShow(path string) string {
 		show = parts[1]
 	}
 	return strings.ReplaceAll(show, "_", " ")
+}
+
+// throttled reports Addic7ed's "slow down" answers: 429, and the 503 it
+// sends when one address asks too often.
+func throttled(status int) bool {
+	return status == http.StatusTooManyRequests || status == http.StatusServiceUnavailable
 }

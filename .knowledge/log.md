@@ -15,8 +15,12 @@ links to the notes that changed.
   with a cap of 400 searches per run; `finora-api import-subtitle-fetcher`
   imported subtitle-fetcher's misses (4,494 matched). Turned on in
   production: English, 100 downloads per night at 03:00 Asia/Dhaka.
-  subtitle-fetcher had not run since 2026-09-02. OpenSubtitles sometimes
-  answers 520 or an empty body; the job moves on to the other providers.
+  subtitle-fetcher had not run since 2026-09-02. First production run:
+  288 checked, 100 downloaded (the limit), 188 failed, 33 minutes; the
+  releases all matched their titles. OpenSubtitles answered 520 or a
+  Cloudflare HTML page 121 times and Addic7ed 503 or 429 85 times. Since
+  then a miss during a provider error no longer uses up one of the item's
+  tries, and Addic7ed's 503/429 on search make it rest 15 minutes.
   See [providers](subtitles/providers.md#automatic-downloads-tier-3).
 
 ## 2026-10-29

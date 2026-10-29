@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -494,6 +495,7 @@ func TestProviderHealthIsAdminOnly(t *testing.T) {
 // fakeProvider returns one English result (or none) for the automatic job tests.
 type fakeProvider struct {
 	empty     bool
+	broken    bool
 	title     string
 	downloads int
 }
@@ -502,6 +504,9 @@ func (p *fakeProvider) ID() string                    { return "fake" }
 func (p *fakeProvider) Name() string                  { return "Fake" }
 func (p *fakeProvider) Supports(subtitles.Query) bool { return true }
 func (p *fakeProvider) Search(context.Context, subtitles.Query) ([]subtitles.Candidate, error) {
+	if p.broken {
+		return nil, errors.New("provider answered 520")
+	}
 	if p.empty {
 		return nil, nil
 	}
@@ -574,6 +579,28 @@ func TestAutoSubtitlesWaitAfterAMiss(t *testing.T) {
 	h.server.runAutoSubtitles(ctx, settings)
 	if last := h.server.lastAutoRun(ctx); last.Checked != 1 {
 		t.Fatalf("after a week = %+v", last)
+	}
+}
+
+func TestAutoSubtitlesProviderErrorsDontUseUpTries(t *testing.T) {
+	h := newHarness(t, true)
+	ctx := context.Background()
+	h.server.providers.override = []subtitles.Provider{&fakeProvider{broken: true}}
+	settings, _ := h.server.settings(ctx)
+	settings.AutoLanguages, settings.AutoPerRun = []string{"en"}, 5
+
+	h.server.runAutoSubtitles(ctx, settings)
+	if last := h.server.lastAutoRun(ctx); last.Failed != 1 {
+		t.Fatalf("first run = %+v", last)
+	}
+	attempts, _ := h.store.AutoAttempts(ctx, "en", []string{"item1"})
+	if attempts["item1"].Attempts != 0 {
+		t.Fatalf("a provider error counted as a try: %+v", attempts["item1"])
+	}
+	// Checked again on the next run, not a week later.
+	h.server.runAutoSubtitles(ctx, settings)
+	if last := h.server.lastAutoRun(ctx); last.Checked != 1 {
+		t.Fatalf("second run = %+v", last)
 	}
 }
 

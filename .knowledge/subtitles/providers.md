@@ -84,7 +84,10 @@ rules of the owner's `subtitle-fetcher`:
 - An item counts as covered when it has any non-forced subtitle stream in
   that language, or a Finora copy that Jellyfin hasn't indexed yet.
 - A miss waits a week before the next try, and the job gives up after three
-  tries (`auto_subtitle_attempts` table).
+  tries (`auto_subtitle_attempts` table). A miss while a provider failed or
+  was resting is inconclusive and doesn't count as a try.
+- Addic7ed answers 503 (and sometimes 429) when one address asks too often;
+  both make it rest.
 - A provider that reports a quota or throttling error rests until midnight
   UTC (daily limits) or for 15 minutes. If every provider is resting, the
   run stops.
